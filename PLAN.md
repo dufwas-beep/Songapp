@@ -79,8 +79,9 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **Skärmen släcks aldrig** medan Potpurri är öppen.
 - **Ångra:** de senaste ändringarna av ackord, markeringar, notes och grupper kan ångras
   (och göras om).
-- **Kvällslogg:** varje spelning sparas som en logg (datum, plats/namn och vilka låtar som
-  spelades, i ordning). "Ny spelning" startar en ny logg. Gamla loggar kan bläddras
+- **Kvällslogg:** varje spelning sparas som en logg med vilka låtar som spelades, i ordning.
+  "Ny spelning" startar en ny logg som automatiskt heter datum och tid (t.ex.
+  "Lör 24 okt 21:15") – ingen fråga om namn. Loggen kan döpas om i efterhand. Gamla loggar kan bläddras
   igenom, t.ex. för att se vad som spelades senast på samma ställe.
 - **Säkerhetskopia till fil:** en knapp sparar hela biblioteket (låtar, listor, notes,
   ackord, ljud, inställningar) som en fil i Filer – och kan läsa in den igen, t.ex. på en
@@ -279,7 +280,7 @@ ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritn
 - **Song:** id, titel, tonart, längd (autoscroll), zoom (huvudvy/förhandsruta), typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
   tillagd, senast spelad, antal spelningar, scrollhastighet.
 - **Setlist:** id, namn, ordnade poster (låt + position).
-- **GigLog:** id, datum, namn/plats, spelade låtar med tid.
+- **GigLog:** id, starttid (blir namnet), valfritt eget namn, spelade låtar med tid.
 - **Document:** id, titel, text (importerade anteckningar/quizmanus).
 - **ColorTag:** id, namn, färg, ordning (högst 5). Kopplas till låtar (många-till-många).
 - Per låt sparas också vilka färger som styr förslagen.
