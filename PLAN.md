@@ -171,7 +171,9 @@ vilka låtar som passar efter, eller som medley.
   (de av dem som den låten har). Har den ingen av dem används alla dess färger.
 - Förslagen är låtar som har någon av de valda färgerna. De som har flest av dem
   (t.ex. både lila och gul) kommer först, sedan efter namn.
-- Låtar som redan spelats under kvällen gråmarkeras men kan fortfarande väljas.
+- **Låtar som redan spelats under kvällen visas aldrig igen i förslagen** (inte heller i
+  lyckohjulet) förrän man trycker "Ny spelning". I biblioteket och låtlistorna gråmarkeras
+  de i stället, men kan fortfarande väljas där.
 - En låt räknas som spelad – och gråmarkeras – först när den varit huvudlåt i 30 sekunder
   i sträck. Byter man innan dess blir den inte grå.
 - Knappen "Ny spelning" nollställer gråmarkeringarna.
@@ -253,7 +255,7 @@ vilka låtar som passar efter, eller som medley.
 - I sidospalten ersätter LP:n den runda duvloggan bredvid POTPURRI.
 - **Tryck på LP-loggan – lyckohjul:** skivan snurrar snabbt, saktar in och markeringen
   hoppar mellan förslagen (med en lätt "tick" i fingret) tills den landar på en **slumpad
-  låt** bland förslagen (med de valda färgerna, ospelade låtar i första hand). Låten
+  låt** bland förslagen (med de valda färgerna; redan spelade låtar finns aldrig med). Låten
   öppnas direkt i förhandsrutan. Bra vid hjärnsläpp mellan två låtar.
 - **Dubbeltryck – duvan flyger:** ikonduvan på etiketten lyfter, växer och **förvandlas
   till en riktig duva** (blågrå med skimrande hals, svartbandad stjärt) som flaxar i skurar
