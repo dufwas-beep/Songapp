@@ -219,8 +219,11 @@ vilka låtar som passar efter, eller som medley.
   (t.ex. i vers 2). Avstånden mellan ackorden behålls. Rutan försvinner direkt efter
   inklistringen.
 - **Grupper:** en inklistrad sekvens blir automatiskt en grupp. Ackorden i en grupp sitter ihop och flyttas tillsammans,
-  och "Kopiera" på ett grupperat ackord kopierar hela gruppen. Gruppen visas med en
-  streckad ram när ackordpaletten eller markeringsläget är öppet.
+  och "Kopiera" på ett grupperat ackord kopierar hela gruppen.
+- **Lätt att få tag i grupper:** när ackordpaletten eller markeringsläget är öppet visas
+  varje grupp som en tonad, streckad ram med en rosa flik "Grupp" ovanför. Man kan ta tag
+  i fliken **eller var som helst i ramen** (även mellan ackorden) och dra hela gruppen.
+- Ackordens tryckyta är minst 44 px hög, så de är lätta att träffa med fingret.
 - Ackorden följer låten när den scrollar och sparas per låt.
 
 ### 11. Sök låttext och lägg till från webben
