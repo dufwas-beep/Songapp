@@ -1,6 +1,6 @@
 # Songapp – grundplan
 
-> Status: under diskussion. Ingen kod skrivs förrän planen är godkänd.
+> Status: klar för godkännande. Ingen kod skrivs förrän planen är godkänd.
 
 ## Vision
 
@@ -83,8 +83,11 @@ vilka låtar som passar efter, eller som medley.
 
 **Förslagsruta (liggande läge)**
 - Egen ruta i vänsterspalten, under låtlistan, alltid synlig.
-- Visar låtar som delar färgkod med låten som spelas, sorterade på namn.
+- Visar låtar som delar minst en färgkod med låten som spelas – en enda lista,
+  sorterad på namn. Varje låt visar sina färgkoder som färgmarkeringar.
 - Låtar som redan spelats under kvällen gråmarkeras men kan fortfarande väljas.
+- En låt räknas som spelad när den varit huvudlåt i minst 30 sekunder.
+- Knappen "Ny spelning" nollställer gråmarkeringarna.
 
 **Förhandsruta**
 - Tryck på ett förslag → låten öppnas i en förhandsruta under huvudlåten.
@@ -92,7 +95,8 @@ vilka låtar som passar efter, eller som medley.
 - Autoscroll i huvudlåten fortsätter medan förhandsrutan visas.
 - Tryck på förhandsrutan → förslaget ersätter huvudlåten.
 - Förhandsrutan kan stängas (t.ex. svep nedåt) utan att byta låt.
-- Låtlistan ändras inte när ett förslag spelas.
+- Låtlistan ändras inte när ett förslag spelas. När ett förslag är huvudlåt
+  bläddrar pedalen bara inom förslaget (går inte vidare till nästa låt i listan).
 
 ### 9. Mörkt läge
 - Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
