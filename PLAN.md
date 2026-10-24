@@ -64,6 +64,10 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **All scroll glider vidare** en bit när man släpper fingret (mjuk inbromsning, som i
   vanliga iPad-listor) – i låten, förhandsrutan, låtlistor, biblioteket och lådan – så
   att man kan ta nytt tag utan att det stannar tvärt. Ett nytt tryck stoppar glidningen.
+- **Studs vid kanten:** när man når början eller slutet studsar innehållet lite (som i
+  iPadens egna listor) – drar man förbi kanten följer det med som ett gummiband och
+  fjädrar tillbaka när man släpper. Då syns det tydligt att man nått slutet och att
+  scrollen inte har fastnat.
 - Både huvudlåten och låten i förhandsrutan kan scrollas var för sig med fingret.
 - **Zoom:** huvudlåten och förhandsrutan zoomas var för sig med två fingrar (nyp),
   50–200 %, så att man själv väljer hur mycket som syns i varje fönster.
