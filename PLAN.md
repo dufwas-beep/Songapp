@@ -37,6 +37,10 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **Stående:** låten i helskärm, listan dras fram som meny.
 - Flersidiga låtar visas som en lång scrollbar vy.
 - Både huvudlåten och låten i förhandsrutan kan scrollas var för sig med fingret.
+- **Zoom:** huvudlåten och förhandsrutan zoomas var för sig med två fingrar (nyp),
+  50–200 %, så att man själv väljer hur mycket som syns i varje fönster.
+  Små −/+ knappar med procentvisning finns också. Notes, markeringar och ackord
+  följer med i zoomen.
 - Nästa låt i listan förladdas så att byten går direkt.
 
 ### 4. Autoscroll
@@ -128,6 +132,10 @@ vilka låtar som passar efter, eller som medley.
 - **Kopiera sekvenser:** "Markera och kopiera" → dra en ruta runt flera ackord (eller tryck
   på dem) → Kopiera → tryck där sekvensen ska klistras in (t.ex. i vers 2). Avstånden
   mellan ackorden behålls. Kan klistras in flera gånger.
+- **Grupper:** en inklistrad sekvens blir automatiskt en grupp. Markerade ackord kan också
+  grupperas eller delas upp. Ackorden i en grupp sitter ihop och flyttas tillsammans,
+  och "Kopiera" på ett grupperat ackord kopierar hela gruppen. Gruppen visas med en
+  streckad ram när ackordpaletten eller markeringsläget är öppet.
 - Ackorden följer låten när den scrollar och sparas per låt.
 
 ### 11. Mörkt läge
@@ -159,12 +167,12 @@ vilka låtar som passar efter, eller som medley.
 Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritning.
 
 ## Datamodell (översikt)
-- **Song:** id, titel, tonart, typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
+- **Song:** id, titel, tonart, zoom (huvudvy/förhandsruta), typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
   tillagd, senast spelad, antal spelningar, scrollhastighet.
 - **Setlist:** id, namn, ordnade poster (låt + position).
 - **ColorTag:** id, namn, färg. Kopplas till låtar (många-till-många).
 - **Highlight:** låt, sida, position, bredd, färg.
-- **ChordStamp:** låt, sida, position, grundton, förtecken, färgning, basnot.
+- **ChordStamp:** låt, sida, position, grundton, förtecken, färgning, basnot, grupp.
 - **StickyNote:** låt, text, färg, rektangel, förankring (sida/skärm), sidnummer.
 
 ## Milstolpar
