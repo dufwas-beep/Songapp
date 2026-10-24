@@ -142,11 +142,35 @@ vilka låtar som passar efter, eller som medley.
   streckad ram när ackordpaletten eller markeringsläget är öppet.
 - Ackorden följer låten när den scrollar och sparas per låt.
 
-### 11. Mörkt läge
+### 11. Sök låttext och lägg till från webben
+- **Sökfältet söker både på titel och låttext.** Texten i PDF:er läses in vid import
+  (Word-PDF:er har riktig text). Bilder och inskannade blad textläses i iPaden
+  (Apples inbyggda textigenkänning, utan internet), så även de blir sökbara.
+- **Ingen träff → "Sök på webben".** Två vägar, utan att lämna appen:
+  1. **Direktträffar** från en låttextdatabas (förslag: LRCLIB, gratis och utan konto)
+     visas som en lista med titel och artist. Tryck → förhandsvisning → "Lägg till".
+  2. **Inbyggd webbläsare** med Google-sökning "<sökord> lyrics". Markera texten på
+     valfri sida → knappen "Lägg till som ny låt".
+- Den nya låten blir en **textlåt** med titel/artist förifyllda och kan direkt få tonart,
+  ackord, färgkoder och läggas i en låtlista.
+- Låttexter är upphovsrättsskyddade: funktionen är tänkt för eget bruk. Om appen
+  någon gång ska ut på App Store behöver källan ses över (licensierad tjänst).
+
+### 12. Animationer med LP:n
+- **Start:** skivan snurrar upp i mitten (ca 1 s) och glider sedan upp till sin plats
+  i sidospalten.
+- **Under spelning:** LP:n i sidospalten snurrar långsamt medan autoscroll är igång och
+  stannar mjukt vid paus.
+- **Import:** egen animation – en pickup-arm som långsamt rör sig in över skivan från
+  kanten mot mitten och fungerar som förloppsindikator ("57 av 200 låtar").
+- **Ny spelning:** en snabb snurr när gråmarkeringarna nollställs.
+- I sidospalten ersätter LP:n den runda duvloggan bredvid POTPURRI.
+
+### 13. Mörkt läge
 - Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
 - Kan slås av/på.
 
-### 12. iCloud
+### 14. iCloud
 - Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
 
 ## Utseende
@@ -186,7 +210,7 @@ Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Ap
 4. **Färgkoder & förslag:** färgkoder, filter, förslagsruta, förhandsruta.
 5. **Notes, pennor & ackord:** notes (skapa/flytta/storlek/färg/förankring, textanpassning, dölj),
    markeringspennor, ackordstämplar.
-6. **Redigera:** namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
+6. **Redigera & webben:** sök i låttext, lägg till låt från webben, namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
 7. **iCloud:** synk och backup.
 8. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
 
