@@ -147,6 +147,14 @@ vilka låtar som passar efter, eller som medley.
 **Färgkoder**
 - **Högst 5 färgkoder**, med egna namn, t.ex. "Upptempo".
 - En låt kan ha flera färgkoder.
+- **Sätta färger – tre sätt:**
+  1. **Direkt i listan:** knappen "Färger" ovanför kolumnerna slår på färgläge. Då kan man
+     trycka i en låts ruta under en kolumn för att tända/släcka färgen. (Av som standard,
+     så att inget ändras av misstag under spelning.)
+  2. **Inne i låten:** Redigera → Färgkoder visar fem stora knappar för låten som är öppen.
+  3. **Många på en gång:** i färgläget kryssar man i flera låtar och trycker på en
+     kolumnrubrik → alla markerade får färgen (har alla redan den tas den bort).
+- **Byta namn på en färg:** håll in kolumnrubriken och skriv det nya namnet.
 - Färgkoderna har en fast, låst ordning och visas som **kolumner** i listorna: tunna
   linjer mellan kolumnerna och en liten rubrik (färgens namn) överst. Varje låt har en
   prick i de kolumner den hör till – lila alltid längst till höger, rosa näst längst.
