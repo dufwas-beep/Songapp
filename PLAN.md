@@ -74,7 +74,7 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 ### 6. Sticky notes
 - Knapp skapar ny note. Flera notes per låt.
 - **Flytta:** dra i noten. **Storlek:** dra i hörnet nere till höger (bredd/höjd fritt).
-- **Redigera:** tryck på noten → ruta med text, färg, förankring och "Ta bort".
+- **Redigera:** ett tryck på noten → ruta med text, färg, förankring och "Ta bort".
 - Text skrivs med skärmtangentbord eller Bluetooth-tangentbord.
 - **Textanpassning:** användarens radbrytningar behålls, och teckenstorleken
   räknas om automatiskt så att all text alltid får plats i noten
@@ -207,6 +207,7 @@ vilka låtar som passar efter, eller som medley.
 - Ett litet **handtag** i högerkanten av låtvyn. Dra ut det → en låda glider fram med
   anteckningen (stor, lättläst text som kan scrollas). Skjut tillbaka den → lådan glider
   in och bromsar mjukt och långsamt i slutet. Ett tryck på handtaget öppnar/stänger.
+- Lådan rymmer **en anteckning åt gången**; en ny ersätter den gamla.
 - En anteckning läggs i lådan genom att **dra den från biblioteket till handtaget**
   (handtaget lyser upp), eller trycka på den i biblioteket.
 - När soundboarden är öppen lägger sig handtaget och lådan till vänster om den.
@@ -279,4 +280,4 @@ Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 - PDF-redigering görs genom konvertering till textlåt (som OnSong), inte genom redigering ovanpå PDF:en.
 
 ## Öppna frågor
-- Synpunkter på den klickbara skissen.
+- Inga just nu.
