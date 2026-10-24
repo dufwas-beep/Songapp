@@ -54,6 +54,9 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **Liggande:** lista till vänster (bibliotek eller aktuell låtlista), låten till höger. Tryck i listan = byt låt direkt.
 - **Stående:** låten i helskärm, listan dras fram som meny.
 - Flersidiga låtar visas som en lång scrollbar vy.
+- **All scroll glider vidare** en bit när man släpper fingret (mjuk inbromsning, som i
+  vanliga iPad-listor) – i låten, förhandsrutan, låtlistor, biblioteket och lådan – så
+  att man kan ta nytt tag utan att det stannar tvärt. Ett nytt tryck stoppar glidningen.
 - Både huvudlåten och låten i förhandsrutan kan scrollas var för sig med fingret.
 - **Zoom:** huvudlåten och förhandsrutan zoomas var för sig med två fingrar (nyp),
   50–200 %, så att man själv väljer hur mycket som syns i varje fönster.
@@ -61,6 +64,10 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   och i förhandsrutan) och återställer den när låten öppnas igen. Notes, markeringar och ackord
   följer med i zoomen.
 - Nästa låt i listan förladdas så att byten går direkt.
+
+### 3b. Klocka
+- En **tydlig digital klocka** (TT:MM, 24-timmars, stora siffror) i sidospaltens topp.
+- När sidospalten är dold visas klockan i en liten etikett överst i mitten av låtvyn.
 
 ### 4. Autoscroll (som i OnSong)
 - En egen rund knapp **längst ner i högra hörnet** – ingen meny behövs.
