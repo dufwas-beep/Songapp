@@ -24,6 +24,10 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - Import av PDF och bilder (JPG/PNG/HEIC) via Filer-appen (där Dropbox finns). Flera filer åt gången.
 - Låtens namn = filnamnet (kan byta namn i appen).
 - Sök på namn.
+- Listan scrollas med fingret. Vid sidan av biblioteket finns ett **alfabet (A–Ö)** att dra
+  fingret längs: bokstäverna närmast fingret förstoras som Dock på en Mac, en stor bokstav
+  visas bredvid, listan hoppar direkt till bokstaven och varje bokstavsbyte ger en kort
+  haptisk "tick" i fingret. Bokstäver utan låtar är nedtonade.
 - Sortering: namn, tillagd datum, senast spelad, mest spelad.
 - Bilder behandlas som en sida i en låt.
 
