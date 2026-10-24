@@ -46,7 +46,8 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **Lägga till låtar:** en vy med färgfilter (samma som i biblioteket) och kryssrutor.
   Välj "Markera alla" för att ta med alla som matchar, eller kryssa i bara några,
   och tryck "Lägg till".
-- Byta namn på och ta bort listor.
+- Byta namn på, **duplicera** och ta bort listor. En kopia (t.ex. av "Bröllop") blir en
+  ny lista med samma låtar i samma ordning, som man döper om och ändrar fritt.
 - Samma låt kan ligga i flera listor.
 - Egen ordning genom att dra låtar.
 
@@ -64,6 +65,12 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   och i förhandsrutan) och återställer den när låten öppnas igen. Notes, markeringar och ackord
   följer med i zoomen.
 - Nästa låt i listan förladdas så att byten går direkt.
+
+### 2b. Statistik
+- En statistikvy (nås från ⋯-menyn) som bygger på kvällsloggarna:
+  - **Mest spelade låtar** (antal gånger och senast spelad).
+  - **Mest körda färgkoder** – hur stor andel av det spelade som var t.ex. Upptempo eller Allsång.
+- Kan visas för valfri period (senaste månaden, året, allt).
 
 ### 3b. Klocka
 - En **tydlig digital klocka** (TT:MM, 24-timmars, stora siffror) i sidospaltens topp.
