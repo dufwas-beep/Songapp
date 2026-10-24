@@ -1,4 +1,4 @@
-# Duva Live – grundplan
+# Potpurri – grundplan
 
 > Status: under diskussion. Ingen kod skrivs förrän planen är godkänd.
 
@@ -36,6 +36,7 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **Liggande:** lista till vänster (bibliotek eller aktuell låtlista), låten till höger. Tryck i listan = byt låt direkt.
 - **Stående:** låten i helskärm, listan dras fram som meny.
 - Flersidiga låtar visas som en lång scrollbar vy.
+- Både huvudlåten och låten i förhandsrutan kan scrollas var för sig med fingret.
 - Nästa låt i listan förladdas så att byten går direkt.
 
 ### 4. Autoscroll
@@ -106,20 +107,28 @@ vilka låtar som passar efter, eller som medley.
 - Genomskinliga överstrykningspennor i flera färger (gul, grön, rosa, blå, orange).
 - Ett drag med pennan blir alltid en rak, vågrät markering över textraden.
 - Ritas med fingret när pennläget är på (av = vanlig scrollning).
+- När pennan är på visas en tydlig knapp "Penna på · Stäng av" bredvid de flytande knapparna.
 - Sudd för att ta bort markeringar.
 - Markeringarna följer låten när den scrollar och sparas per låt.
 
 ### 10. Ackordstämplar
-- Knapp öppnar en ackordpalett med C-skalans toner: C D E F G A B.
-- Dra en ton från paletten och släpp den var som helst på låten.
+- Varje låt har en **tonart** (väljs i ackordpaletten, dur eller moll).
+- Ackordpaletten visar överst **ackorden i låtens tonart**, i ordning efter hur vanliga
+  de är (i G: G, C, D, Em, Am, Bm, D7, F#dim) – färdiga att dra ut direkt.
+  Under dem finns C-skalans toner C D E F G A B för allt annat.
+- Dra ett ackord från paletten och släpp det var som helst på låten.
 - **Håll inne** ett utplacerat ackord → en meny öppnas runt det. Dra fingret åt ett håll
   och släpp på ett val (eller släpp direkt och tryck i menyn):
-  - **Vänster – förtecken:** ♯ höj, ♮ ingen, ♭ sänk (t.ex. G → G# eller Gb).
+  - **Vänster – förtecken:** ♯ höj, ♮ ingen, ♭ sänk.
   - **Höger – färgning:** vanligaste först (dur, m, 7, m7, maj7, sus4, sus2, add9);
     "Fler" visar ovanligare (6, m6, 9, m9, maj9, 7sus4, dim, dim7, m7b5, aug, 11, 13).
-  - **Ner – bas:** ingen, eller basnot C, C#, D, Eb, E, F, F#, G, G#, A, Bb, B (t.ex. D/F#).
-  - **Upp – ta bort.**
-- Kort drag flyttar ackordet. Ackorden följer låten när den scrollar och sparas per låt.
+  - **Ner – bas:** ingen, eller C, C#, D, Eb, E, F, F#, G, G#, A, Bb, B (t.ex. D/F#).
+  - **Upp – kopiera / ta bort.**
+- Kort drag flyttar ackordet.
+- **Kopiera sekvenser:** "Markera och kopiera" → dra en ruta runt flera ackord (eller tryck
+  på dem) → Kopiera → tryck där sekvensen ska klistras in (t.ex. i vers 2). Avstånden
+  mellan ackorden behålls. Kan klistras in flera gånger.
+- Ackorden följer låten när den scrollar och sparas per låt.
 
 ### 11. Mörkt läge
 - Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
@@ -129,7 +138,7 @@ vilka låtar som passar efter, eller som medley.
 - Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
 
 ## Utseende
-- **Namn:** Duva Live (kopplat till Duva Event, duvaevent.com).
+- **Namn:** Potpurri (gammalt ord för medley). Undertitel "av Duva Event" (duvaevent.com).
 - **Stil från hemsidan:** ren, luftig och minimalistisk. Vit bakgrund, svart text,
   tunt geometriskt sans-serif-typsnitt, rosa accentfärg.
 - **Färger:** accent rosa `#FB91FF`, svart `#000000`, vit `#FFFFFF`.
@@ -137,7 +146,7 @@ vilka låtar som passar efter, eller som medley.
 - **Logga:** svart duva i profil i en cirkel med texten
   "TRUBADUR | BAND | QUIZ | KONFERENCIER" (`design/duva-logo.png`).
 - **Ikon:** rosa duva (`#FB91FF`) på svart bakgrund, utan texten runt om.
-- Appen följer iPadens ljusa/mörka läge; låtar har eget mörkt läge (se ovan).
+- Menyer/bibliotek: följer iPaden, eller väljs ljust/mörkt i appen. Låtar har eget mörkt läge.
 - **Vänsterspalt (liggande):** kan döljas med ett tryck och ändras i bredd.
   Innehåll uppifrån: flikar Bibliotek/Låtlistor → sökfält → låtlista → förslagsruta → "Ny spelning".
 - Listrader: titel + färgmarkeringar, normal textstorlek, inga miniatyrer.
@@ -150,7 +159,7 @@ vilka låtar som passar efter, eller som medley.
 Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritning.
 
 ## Datamodell (översikt)
-- **Song:** id, titel, typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
+- **Song:** id, titel, tonart, typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
   tillagd, senast spelad, antal spelningar, scrollhastighet.
 - **Setlist:** id, namn, ordnade poster (låt + position).
 - **ColorTag:** id, namn, färg. Kopplas till låtar (många-till-många).
