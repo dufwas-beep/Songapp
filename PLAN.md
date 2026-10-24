@@ -1,4 +1,4 @@
-# Songapp – grundplan
+# Duva Live – grundplan
 
 > Status: under diskussion. Ingen kod skrivs förrän planen är godkänd.
 
@@ -106,7 +106,14 @@ vilka låtar som passar efter, eller som medley.
 - Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
 
 ## Utseende
-- Inspiration: användarens hemsida duvaevent.com (färger/typsnitt bestäms när sidan granskats).
+- **Namn:** Duva Live (kopplat till Duva Event, duvaevent.com).
+- **Stil från hemsidan:** ren, luftig och minimalistisk. Vit bakgrund, svart text,
+  tunt geometriskt sans-serif-typsnitt, rosa accentfärg.
+- **Färger:** accent rosa `#FB91FF`, svart `#000000`, vit `#FFFFFF`.
+  I mörkt läge: svart/mörkgrå bakgrund med rosa accent (påminner om scenljus).
+- **Logga:** svart duva i profil i en cirkel med texten
+  "TRUBADUR | BAND | QUIZ | KONFERENCIER" (`design/duva-logo.png`).
+- **Ikon:** utgår från duvan i loggan (förslag tas fram).
 - Appen följer iPadens ljusa/mörka läge; låtar har eget mörkt läge (se ovan).
 - **Vänsterspalt (liggande):** kan döljas med ett tryck och ändras i bredd.
   Innehåll uppifrån: flikar Bibliotek/Låtlistor → sökfält → låtlista → förslagsruta → "Ny spelning".
@@ -145,5 +152,4 @@ Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 - PDF-redigering görs genom konvertering till textlåt (som OnSong), inte genom redigering ovanpå PDF:en.
 
 ## Öppna frågor
-- Appens namn och ikon.
-- Färger/typsnitt från duvaevent.com.
+- Appikonens utformning.
