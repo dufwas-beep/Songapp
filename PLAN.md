@@ -176,7 +176,8 @@ vilka låtar som passar efter, eller som medley.
 ### 13. Soundboard (ljudklipp)
 - Inspirerad av Soundboard Studio. Högtalarknapp bland de flytande knapparna öppnar en
   smal kolumn längs högerkanten med små färgade ljudknappar (ca 15 st, fler går att scrolla).
-- **Tryck** = spela; tryck igen = stoppa. Flera klipp kan spela samtidigt.
+- **Tryck** = spela; tryck igen = stoppa direkt (ingen uttoning). Flera klipp kan spela samtidigt.
+- En gemensam soundboard. Ljudens ordning ändras genom att dra dem i redigeringsläget.
   Knappen visar en förloppsrand medan klippet spelas. "Stoppa alla" längst ner.
 - Ljuden importeras från **Filer** (mp3, m4a, wav, aiff m.fl.).
 - **Redigera** (pennan i kolumnens topp, tryck sedan på ett ljud):
