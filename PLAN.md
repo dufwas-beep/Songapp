@@ -12,6 +12,11 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 2. Få knappar, stor text, tydligt scenläge.
 3. Originalfiler ändras aldrig – alla ändringar sparas separat och kan ångras.
 
+## Målgrupp
+- I nuläget endast för användaren själv (installeras via Mac/TestFlight).
+- Kan bli publik på App Store senare – därför byggs appen så att det inte kräver
+  omskrivning (t.ex. utbytbar låttextkälla, inga hårdkodade personliga uppgifter).
+
 ## Plattform
 
 - Endast iPad (användarens: iPad 13"), senaste iPadOS.
@@ -153,8 +158,10 @@ vilka låtar som passar efter, eller som medley.
      valfri sida → knappen "Lägg till som ny låt".
 - Den nya låten blir en **textlåt** med titel/artist förifyllda och kan direkt få tonart,
   ackord, färgkoder och läggas i en låtlista.
-- Låttexter är upphovsrättsskyddade: funktionen är tänkt för eget bruk. Om appen
-  någon gång ska ut på App Store behöver källan ses över (licensierad tjänst).
+- Endast låttext hämtas (inga ackord) – ackord läggs med ackordstämplarna.
+- Låttexter är upphovsrättsskyddade. Appen är i nuläget för eget bruk, men kan bli
+  publik senare. Därför byggs textkällan **utbytbar**: LRCLIB nu, och en licensierad
+  tjänst (t.ex. Musixmatch) kan kopplas in utan att resten av appen ändras.
 
 ### 12. Animationer med LP:n
 - **Start:** skivan snurrar upp i mitten (ca 1 s) och glider sedan upp till sin plats
