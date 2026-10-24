@@ -229,13 +229,15 @@ vilka låtar som passar efter, eller som medley.
 - Originalfilen ändras aldrig – trim och volym sparas som inställningar.
 - Ljudet går ut där iPaden spelar ljud (inbyggd högtalare, kabel eller Bluetooth till PA).
 
-### 14. Lådan (quizmanus och anteckningar)
+### 14. Lådan (låtar, quizmanus och anteckningar)
 - Ett litet **handtag** i högerkanten av låtvyn. Dra ut det → en låda glider fram med
-  anteckningen (stor, lättläst text som kan scrollas). Skjut tillbaka den → lådan glider
+  innehållet: en anteckning (stor, lättläst text) eller **vilken låt som helst** ur
+  biblioteket (låtbladet visas i lådan, går att scrolla och nypa-zooma). Skjut tillbaka den → lådan glider
   in och bromsar mjukt och långsamt i slutet. Ett tryck på handtaget öppnar/stänger.
-- Lådan rymmer **en anteckning åt gången**; en ny ersätter den gamla.
-- En anteckning läggs i lådan genom att **dra den från biblioteket till handtaget**
-  (handtaget lyser upp), eller trycka på den i biblioteket.
+- Lådan rymmer **en sak åt gången**; en ny ersätter den gamla.
+- **Håll inne** en låt eller anteckning i listan (bibliotek eller låtlista) → den lossnar
+  med en liten vibration och kan **dras visuellt** till lådans handtag (handtaget lyser
+  upp) och släppas där. Anteckningar kan även läggas i lådan med ett tryck.
 - När soundboarden är öppen lägger sig handtaget och lådan till vänster om den.
 
 ### 15. Spotify
