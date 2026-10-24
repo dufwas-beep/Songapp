@@ -80,6 +80,9 @@ vilka låtar som passar efter, eller som medley.
 - Egna färgkoder med namn, t.ex. "Röd = upptempo".
 - En låt kan ha flera färgkoder.
 - Biblioteket kan filtreras på färgkod.
+- Färgkoderna har en fast ordning (som användaren bestämmer). I listorna har varje
+  färgkod alltid samma plats, så att prickarna bildar raka kolumner – t.ex. lila alltid
+  längst till höger, rosa näst längst. Saknas en färgkod lämnas platsen tom.
 
 **Förslagsruta (liggande läge)**
 - Egen ruta i vänsterspalten, under låtlistan, alltid synlig.
@@ -91,18 +94,32 @@ vilka låtar som passar efter, eller som medley.
 
 **Förhandsruta**
 - Tryck på ett förslag → låten öppnas i en förhandsruta under huvudlåten.
-- Förhandsrutan är mindre än huvudlåten och kan ändras i storlek i bestämda steg.
+- Förhandsrutan är mindre än huvudlåten och ändras i storlek genom att dra i dess
+  överkant (fritt, mellan en min- och maxhöjd).
 - Autoscroll i huvudlåten fortsätter medan förhandsrutan visas.
 - Tryck på förhandsrutan → förslaget ersätter huvudlåten.
 - Förhandsrutan kan stängas (t.ex. svep nedåt) utan att byta låt.
 - Låtlistan ändras inte när ett förslag spelas. När ett förslag är huvudlåt
   bläddrar pedalen bara inom förslaget (går inte vidare till nästa låt i listan).
 
-### 9. Mörkt läge
+### 9. Markeringspennor
+- Genomskinliga överstrykningspennor i flera färger (gul, grön, rosa, blå, orange).
+- Ett drag med pennan blir alltid en rak, vågrät markering över textraden.
+- Sudd för att ta bort markeringar.
+- Markeringarna följer låten när den scrollar och sparas per låt.
+
+### 10. Ackordstämplar
+- Knapp öppnar en ackordpalett med två kolumner: C D E F G A B och C# D# F# G# A#.
+- Dra ett ackord från paletten och släpp det var som helst på låten.
+- Tryck på ett utplacerat ackord → rullista för att välja variant, t.ex. G#m7.
+  Vanligaste först (dur, m, 7, m7, maj7, sus4, sus2, add9), ovanligare under "Fler varianter".
+- Utplacerade ackord kan flyttas och tas bort, följer låten när den scrollar och sparas per låt.
+
+### 11. Mörkt läge
 - Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
 - Kan slås av/på.
 
-### 10. iCloud
+### 12. iCloud
 - Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
 
 ## Utseende
@@ -131,6 +148,8 @@ Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Ap
   tillagd, senast spelad, antal spelningar, scrollhastighet.
 - **Setlist:** id, namn, ordnade poster (låt + position).
 - **ColorTag:** id, namn, färg. Kopplas till låtar (många-till-många).
+- **Highlight:** låt, sida, position, bredd, färg.
+- **ChordStamp:** låt, sida, position, grundton, variant.
 - **StickyNote:** låt, text, färg, rektangel, förankring (sida/skärm), sidnummer.
 
 ## Milstolpar
@@ -138,7 +157,8 @@ Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Ap
 2. **Layout & listor:** delad vy liggande/stående, låtlistor, dra-och-släpp, sök, sortering.
 3. **Spela:** autoscroll per låt, pedal/tangentbord, nästa låt, förladdning.
 4. **Färgkoder & förslag:** färgkoder, filter, förslagsruta, förhandsruta.
-5. **Notes:** skapa/flytta/storlek/färg/förankring, automatisk textanpassning, dölj.
+5. **Notes, pennor & ackord:** notes (skapa/flytta/storlek/färg/förankring, textanpassning, dölj),
+   markeringspennor, ackordstämplar.
 6. **Redigera:** namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
 7. **iCloud:** synk och backup.
 8. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
