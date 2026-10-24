@@ -55,6 +55,7 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **Textanpassning:** användarens radbrytningar behålls, och teckenstorleken
   räknas om automatiskt så att all text alltid får plats i noten
   (mindre note → mindre text, mer text → mindre text).
+- Typiskt innehåll är korta rader, t.ex. "REF: E G A B". Vanligt typsnitt räcker.
 - Färgval (t.ex. gul, rosa, blå, grön, orange, vit).
 - Per note väljs förankring:
   - *Följer sidan* – sitter på en plats i låten och scrollar med.
@@ -71,7 +72,11 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - Ändringarna är ett lager ovanpå originalet – kan ångras när som helst.
 - (Valfritt) Exportera låt som ny PDF med ändringarna inbakade.
 
-### 8. iCloud
+### 8. Mörkt läge
+- Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
+- Kan slås av/på.
+
+### 9. iCloud
 - Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
 
 ## Utanför version 1
@@ -94,5 +99,8 @@ Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Ap
 
 Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 
+## Underlag
+- Biblioteket: ca 200 låtar, mest PDF:er gjorda i Word, några få bilder.
+
 ## Öppna frågor
-Se diskussionen – fylls på tills planen är godkänd.
+- PDF-redigering: konvertera till text (som OnSong) eller redigera ovanpå PDF:en? Se diskussionen.
