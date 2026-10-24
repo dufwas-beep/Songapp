@@ -113,11 +113,14 @@ vilka låtar som passar efter, eller som medley.
 **Förslagsruta (liggande läge)**
 - Egen ruta i vänsterspalten, under låtlistan, alltid synlig.
 - Överst i rutan visas låtens egna färgkoder som knappar. **Man väljer själv vilka
-  färger som styr förslagen** (t.ex. bara lila, eller lila + gul). Valet sparas per låt.
+  färger som styr förslagen** (t.ex. bara lila, eller lila + gul).
+- **Valet följer med** när man byter låt: nästa låt får automatiskt samma valda färger
+  (de av dem som den låten har). Har den ingen av dem används alla dess färger.
 - Förslagen är låtar som har någon av de valda färgerna. De som har flest av dem
   (t.ex. både lila och gul) kommer först, sedan efter namn.
 - Låtar som redan spelats under kvällen gråmarkeras men kan fortfarande väljas.
-- En låt räknas som spelad när den varit huvudlåt i minst 30 sekunder.
+- En låt räknas som spelad – och gråmarkeras – först när den varit huvudlåt i 30 sekunder
+  i sträck. Byter man innan dess blir den inte grå.
 - Knappen "Ny spelning" nollställer gråmarkeringarna.
 
 **Förhandsruta**
@@ -279,8 +282,8 @@ Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 ## Sparas per låt
 Allt som läggs på eller ställs in för en låt följer med låten och finns kvar nästa gång
 den öppnas: notes, markeringar, ackord och grupper, tonart, zoom (huvudvy och
-förhandsruta), autoscroll-hastighet, textstorlek (textlåtar), färgkoder och vilka
-färger som styr förslagen.
+förhandsruta), autoscroll-hastighet, textstorlek (textlåtar), och färgkoder.
+(Valet av förslagsfärger följer däremot med från låt till låt.)
 
 ## Underlag
 - Biblioteket: ca 200 låtar, mest PDF:er gjorda i Word, några få bilder.
