@@ -62,9 +62,29 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   följer med i zoomen.
 - Nästa låt i listan förladdas så att byten går direkt.
 
-### 4. Autoscroll
-- Startas/stoppas med knapp.
-- Hastighet justerbar och **sparas per låt**.
+### 4. Autoscroll (som i OnSong)
+- En egen rund knapp **längst ner i högra hörnet** – ingen meny behövs.
+  Knappen visar låtens längd (t.ex. 3:20) och en ring runt kanten som fylls på i takt
+  med hur långt låten har kommit.
+- **Tryck** = starta / pausa.
+- **Håll inne** = ett reglage för **låtens längd** visas (0:30–10:00). **Dra åt höger för
+  längre**, åt vänster för kortare. Scrollen går sedan så att hela låten passerar på
+  exakt den tiden.
+- Längden **sparas per låt**.
+
+### 4b. Scen-trygghet
+- **Scenlås:** håll inne LP-loggan → appen låses så att fingrarna bara kan scrolla, byta
+  låt, starta/pausa autoscroll och spela ljud. Ackord, notes och markeringar kan inte
+  flyttas av misstag. Håll inne igen för att låsa upp. En tydlig "Scenlås"-etikett visas.
+- **Skärmen släcks aldrig** medan Potpurri är öppen.
+- **Ångra:** de senaste ändringarna av ackord, markeringar, notes och grupper kan ångras
+  (och göras om).
+- **Kvällslogg:** varje spelning sparas som en logg (datum, plats/namn och vilka låtar som
+  spelades, i ordning). "Ny spelning" startar en ny logg. Gamla loggar kan bläddras
+  igenom, t.ex. för att se vad som spelades senast på samma ställe.
+- **Säkerhetskopia till fil:** en knapp sparar hela biblioteket (låtar, listor, notes,
+  ackord, ljud, inställningar) som en fil i Filer – och kan läsa in den igen, t.ex. på en
+  ny iPad. Utöver iCloud.
 
 ### 5. Bläddringspedal (kompatibilitet)
 - Stöd för vanliga Bluetooth-pedaler (som skickar piltangenter/Page Down).
@@ -254,9 +274,10 @@ vilka låtar som passar efter, eller som medley.
 ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritning.
 
 ## Datamodell (översikt)
-- **Song:** id, titel, tonart, zoom (huvudvy/förhandsruta), typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
+- **Song:** id, titel, tonart, längd (autoscroll), zoom (huvudvy/förhandsruta), typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
   tillagd, senast spelad, antal spelningar, scrollhastighet.
 - **Setlist:** id, namn, ordnade poster (låt + position).
+- **GigLog:** id, datum, namn/plats, spelade låtar med tid.
 - **Document:** id, titel, text (importerade anteckningar/quizmanus).
 - **ColorTag:** id, namn, färg, ordning (högst 5). Kopplas till låtar (många-till-många).
 - Per låt sparas också vilka färger som styr förslagen.
@@ -268,13 +289,13 @@ ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritn
 ## Milstolpar
 1. **Grund:** Xcode-projekt, struktur, import, bibliotek, visa PDF/bild.
 2. **Layout & listor:** delad vy liggande/stående, låtlistor (+ ny lista, lägga till via färgfilter), dra-och-släpp, sök, sortering, alfabet.
-3. **Spela:** autoscroll per låt, pedal/tangentbord, nästa låt, förladdning.
+3. **Spela:** autoscroll med låtlängd, pedal/tangentbord, nästa låt, förladdning, skärmen vaken, scenlås.
 4. **Färgkoder & förslag:** färgkolumner, flervalsfilter, förslag styrda av valda färger, förhandsruta.
 5. **Notes, pennor & ackord:** notes (skapa/flytta/storlek/redigera/färg/förankring, textanpassning, dölj),
    markeringspennor, ackordstämplar (radsnäpp, grupper, kopiera, transponera).
 6. **Redigera & webben:** sök i låttext, lägg till låt från webben, namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
 7. **Soundboard, Lådan, Spotify & animationer:** ljudklipp, anteckningar i Lådan, Spotify-knapp, LP-animationer.
-8. **iCloud:** synk och backup.
+8. **iCloud & säkerhet:** synk, säkerhetskopia till fil, ångra, kvällslogg.
 9. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
 
 Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
@@ -282,7 +303,7 @@ Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 ## Sparas per låt
 Allt som läggs på eller ställs in för en låt följer med låten och finns kvar nästa gång
 den öppnas: notes, markeringar, ackord och grupper, tonart, zoom (huvudvy och
-förhandsruta), autoscroll-hastighet, textstorlek (textlåtar), och färgkoder.
+förhandsruta), autoscroll-längd, textstorlek (textlåtar), och färgkoder.
 (Valet av förslagsfärger följer däremot med från låt till låt.)
 
 ## Underlag
