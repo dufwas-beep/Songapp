@@ -255,8 +255,12 @@ vilka låtar som passar efter, eller som medley.
   hoppar mellan förslagen (med en lätt "tick" i fingret) tills den landar på en **slumpad
   låt** bland förslagen (med de valda färgerna, ospelade låtar i första hand). Låten
   öppnas direkt i förhandsrutan. Bra vid hjärnsläpp mellan två låtar.
-- **Dubbeltryck – duvan flyger:** duvan lyfter från loggan, flaxar ett varv över skärmen
-  och landar igen. Ett påskägg.
+- **Dubbeltryck – duvan flyger:** ikonduvan på etiketten lyfter, växer och **förvandlas
+  till en riktig duva** (blågrå med skimrande hals, svartbandad stjärt) som flaxar i skurar
+  och glider emellan i en båge över skärmen och lutar i svängarna. Den bromsar med
+  vingarna uppåt, krymper, **smälter tillbaka till ikonens silhuett** och glider in i
+  LP:ns etikett där den blir ikon igen. Ca 3,5 s. Ett påskägg. (`design/duva-flykt.png`
+  visar vingslaget.)
 - **Håll in** = scenlås (se ovan).
 
 ### 13. Soundboard (ljudklipp)
