@@ -236,9 +236,11 @@ vilka låtar som passar efter, eller som medley.
   biblioteket (låtbladet visas i lådan, går att scrolla och nypa-zooma). Skjut tillbaka den → lådan glider
   in och bromsar mjukt och långsamt i slutet. Ett tryck på handtaget öppnar/stänger.
 - Lådan rymmer **en sak åt gången**; en ny ersätter den gamla.
-- **Håll inne** en låt eller anteckning i listan (bibliotek eller låtlista) → den lossnar
-  med en liten vibration och kan **dras visuellt** till lådans handtag (handtaget lyser
-  upp) och släppas där. Anteckningar kan även läggas i lådan med ett tryck.
+- En låt eller anteckning i listan (bibliotek eller låtlista) **lossnar snabbt** – antingen
+  genom att **dra den åt höger** (direkt, ingen väntan) eller hålla still ett kort ögonblick
+  (ca 0,2 s). Lodrätt drag scrollar listan som vanligt. Den lossnade raden följer fingret
+  och **släpps på lådan** – vid handtaget när lådan är stängd, eller var som helst på den
+  öppna lådan (lådan lyser upp). Det nya innehållet ersätter det gamla. Anteckningar kan även läggas i lådan med ett tryck.
 - När soundboarden är öppen lägger sig handtaget och lådan till vänster om den.
 
 ### 15. Spotify
