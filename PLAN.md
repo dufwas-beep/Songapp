@@ -49,7 +49,13 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - Byta namn på, **duplicera** och ta bort listor. En kopia (t.ex. av "Bröllop") blir en
   ny lista med samma låtar i samma ordning, som man döper om och ändrar fritt.
 - Samma låt kan ligga i flera listor.
-- Egen ordning genom att dra låtar.
+- Egen ordning genom att dra låtar i handtaget (≡) till vänster på raden.
+- **Set:** en låtlista kan delas in i Set 1, 2, 3, 4 … med **setgränser** – en tydlig linje
+  med rubrik ("Set 2 · 5 låtar · 18 min"). Knappen "+ Set" lägger till en gräns.
+  Både låtar och setgränser dras upp och ner tills man är nöjd; × tar bort en gräns.
+  Varje set har en **svag egen färgton** i bakgrunden så att seten syns tydligt isär.
+  Numreringen börjar om i varje set, och varje set visar antal låtar och total speltid
+  (från låtarnas autoscroll-längd).
 
 ### 3. Visningsläge (layout)
 - **Liggande:** lista till vänster (bibliotek eller aktuell låtlista), låten till höger. Tryck i listan = byt låt direkt.
@@ -295,7 +301,7 @@ ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritn
 ## Datamodell (översikt)
 - **Song:** id, titel, tonart, längd (autoscroll), zoom (huvudvy/förhandsruta), typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
   tillagd, senast spelad, antal spelningar, scrollhastighet.
-- **Setlist:** id, namn, ordnade poster (låt + position).
+- **Setlist:** id, namn, ordnade poster (låt eller setgräns + position).
 - **GigLog:** id, starttid (blir namnet), valfritt eget namn, spelade låtar med tid.
 - **Document:** id, titel, text (importerade anteckningar/quizmanus).
 - **ColorTag:** id, namn, färg, ordning (högst 5). Kopplas till låtar (många-till-många).
