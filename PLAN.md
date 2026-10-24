@@ -1,6 +1,6 @@
 # Songapp – grundplan
 
-> Status: klar för godkännande. Ingen kod skrivs förrän planen är godkänd.
+> Status: under diskussion. Ingen kod skrivs förrän planen är godkänd.
 
 ## Vision
 
@@ -72,11 +72,33 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   Dessutom justerbar textstorlek (sparas per låt).
 - Bilder kan inte göras om till text, men kan ha notes.
 
-### 8. Mörkt läge
+### 8. Färgkoder och låtförslag
+Syfte: att det aldrig ska bli tyst mellan låtarna – när en låt börjar ska det synas
+vilka låtar som passar efter, eller som medley.
+
+**Färgkoder**
+- Egna färgkoder med namn, t.ex. "Röd = upptempo".
+- En låt kan ha flera färgkoder.
+- Biblioteket kan filtreras på färgkod.
+
+**Förslagsruta (liggande läge)**
+- Egen ruta i vänsterspalten, under låtlistan, alltid synlig.
+- Visar låtar som delar färgkod med låten som spelas, sorterade på namn.
+- Låtar som redan spelats under kvällen gråmarkeras men kan fortfarande väljas.
+
+**Förhandsruta**
+- Tryck på ett förslag → låten öppnas i en förhandsruta under huvudlåten.
+- Förhandsrutan är mindre än huvudlåten och kan ändras i storlek i bestämda steg.
+- Autoscroll i huvudlåten fortsätter medan förhandsrutan visas.
+- Tryck på förhandsrutan → förslaget ersätter huvudlåten.
+- Förhandsrutan kan stängas (t.ex. svep nedåt) utan att byta låt.
+- Låtlistan ändras inte när ett förslag spelas.
+
+### 9. Mörkt läge
 - Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
 - Kan slås av/på.
 
-### 9. iCloud
+### 10. iCloud
 - Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
 
 ## Utanför version 1
@@ -86,16 +108,18 @@ Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Ap
 - **Song:** id, titel, typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
   tillagd, senast spelad, antal spelningar, scrollhastighet.
 - **Setlist:** id, namn, ordnade poster (låt + position).
+- **ColorTag:** id, namn, färg. Kopplas till låtar (många-till-många).
 - **StickyNote:** låt, text, färg, rektangel, förankring (sida/skärm), sidnummer.
 
 ## Milstolpar
 1. **Grund:** Xcode-projekt, struktur, import, bibliotek, visa PDF/bild.
 2. **Layout & listor:** delad vy liggande/stående, låtlistor, dra-och-släpp, sök, sortering.
 3. **Spela:** autoscroll per låt, pedal/tangentbord, nästa låt, förladdning.
-4. **Notes:** skapa/flytta/storlek/färg/förankring, automatisk textanpassning, dölj.
-5. **Redigera:** namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
-6. **iCloud:** synk och backup.
-7. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
+4. **Färgkoder & förslag:** färgkoder, filter, förslagsruta, förhandsruta.
+5. **Notes:** skapa/flytta/storlek/färg/förankring, automatisk textanpassning, dölj.
+6. **Redigera:** namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
+7. **iCloud:** synk och backup.
+8. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
 
 Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 
