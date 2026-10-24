@@ -113,7 +113,7 @@ vilka låtar som passar efter, eller som medley.
   I mörkt läge: svart/mörkgrå bakgrund med rosa accent (påminner om scenljus).
 - **Logga:** svart duva i profil i en cirkel med texten
   "TRUBADUR | BAND | QUIZ | KONFERENCIER" (`design/duva-logo.png`).
-- **Ikon:** utgår från duvan i loggan (förslag tas fram).
+- **Ikon:** rosa duva (`#FB91FF`) på svart bakgrund, utan texten runt om.
 - Appen följer iPadens ljusa/mörka läge; låtar har eget mörkt läge (se ovan).
 - **Vänsterspalt (liggande):** kan döljas med ett tryck och ändras i bredd.
   Innehåll uppifrån: flikar Bibliotek/Låtlistor → sökfält → låtlista → förslagsruta → "Ny spelning".
@@ -152,4 +152,4 @@ Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 - PDF-redigering görs genom konvertering till textlåt (som OnSong), inte genom redigering ovanpå PDF:en.
 
 ## Öppna frågor
-- Appikonens utformning.
+- Synpunkter på den klickbara skissen.
