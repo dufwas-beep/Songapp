@@ -1,0 +1,25 @@
+name: Bygg appen
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode-version
+        run: xcodebuild -version
+
+      - name: Bygg för iPad-simulatorn
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Potpurri.xcodeproj \
+            -target Potpurri \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tail -n 80
