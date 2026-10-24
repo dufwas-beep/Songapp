@@ -1,6 +1,6 @@
 # Songapp – grundplan
 
-> Status: klar för godkännande. Ingen kod skrivs förrän planen är godkänd.
+> Status: under diskussion. Ingen kod skrivs förrän planen är godkänd.
 
 ## Vision
 
@@ -105,6 +105,17 @@ vilka låtar som passar efter, eller som medley.
 ### 10. iCloud
 - Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
 
+## Utseende
+- Inspiration: användarens hemsida duvaevent.com (färger/typsnitt bestäms när sidan granskats).
+- Appen följer iPadens ljusa/mörka läge; låtar har eget mörkt läge (se ovan).
+- **Vänsterspalt (liggande):** kan döljas med ett tryck och ändras i bredd.
+  Innehåll uppifrån: flikar Bibliotek/Låtlistor → sökfält → låtlista → förslagsruta → "Ny spelning".
+- Listrader: titel + färgmarkeringar, normal textstorlek, inga miniatyrer.
+- **Låtvy:** flytande knappar i ett hörn. Låtlisteknappen syns alltid under spelning;
+  övriga funktioner ligger i en meny.
+- Fast palett med ca 10 tydliga färger för färgkoder och notes.
+- Klickbar skiss tas fram och godkänns innan kodning.
+
 ## Utanför version 1
 Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritning.
 
@@ -134,4 +145,5 @@ Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 - PDF-redigering görs genom konvertering till textlåt (som OnSong), inte genom redigering ovanpå PDF:en.
 
 ## Öppna frågor
-- Inga just nu.
+- Appens namn och ikon.
+- Färger/typsnitt från duvaevent.com.
