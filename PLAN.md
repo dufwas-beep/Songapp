@@ -34,10 +34,19 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   visas bredvid, listan hoppar direkt till bokstaven och varje bokstavsbyte ger en kort
   haptisk "tick" i fingret. Bokstäver utan låtar är nedtonade.
 - Sortering: namn, tillagd datum, senast spelad, mest spelad.
+- **Färgfilter:** tryck på en eller flera färger. Låtar med någon av de valda färgerna
+  visas, och de som har flest av färgerna hamnar först.
+- **Anteckningar (t.ex. quizmanus):** textfiler (.txt) kan importeras från Filer eller
+  delas direkt från Apples Anteckningar till Potpurri. De ligger i biblioteket med en
+  egen ikon och kan läggas i Lådan (se nedan).
 - Bilder behandlas som en sida i en låt.
 
 ### 2. Låtlistor
-- Skapa, byta namn på, ta bort listor.
+- Fliken Låtlistor visar alla listor. **Plustecknet** skapar en ny lista som man döper själv.
+- **Lägga till låtar:** en vy med färgfilter (samma som i biblioteket) och kryssrutor.
+  Välj "Markera alla" för att ta med alla som matchar, eller kryssa i bara några,
+  och tryck "Lägg till".
+- Byta namn på och ta bort listor.
 - Samma låt kan ligga i flera listor.
 - Egen ordning genom att dra låtar.
 
@@ -64,7 +73,8 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 
 ### 6. Sticky notes
 - Knapp skapar ny note. Flera notes per låt.
-- Rektangel som kan flyttas och ändras i storlek (bredd/höjd fritt).
+- **Flytta:** dra i noten. **Storlek:** dra i hörnet nere till höger (bredd/höjd fritt).
+- **Redigera:** tryck på noten → ruta med text, färg, förankring och "Ta bort".
 - Text skrivs med skärmtangentbord eller Bluetooth-tangentbord.
 - **Textanpassning:** användarens radbrytningar behålls, och teckenstorleken
   räknas om automatiskt så att all text alltid får plats i noten
@@ -91,17 +101,18 @@ Syfte: att det aldrig ska bli tyst mellan låtarna – när en låt börjar ska 
 vilka låtar som passar efter, eller som medley.
 
 **Färgkoder**
-- Egna färgkoder med namn, t.ex. "Röd = upptempo".
+- **Högst 5 färgkoder**, med egna namn, t.ex. "Upptempo".
 - En låt kan ha flera färgkoder.
-- Biblioteket kan filtreras på färgkod.
-- Färgkoderna har en fast, låst ordning. I listorna har varje
-  färgkod alltid samma plats, så att prickarna bildar raka kolumner – t.ex. lila alltid
-  längst till höger, rosa näst längst. Saknas en färgkod lämnas platsen tom.
+- Färgkoderna har en fast, låst ordning och visas som **kolumner** i listorna: tunna
+  linjer mellan kolumnerna och en liten rubrik (färgens namn) överst. Varje låt har en
+  prick i de kolumner den hör till – lila alltid längst till höger, rosa näst längst.
 
 **Förslagsruta (liggande läge)**
 - Egen ruta i vänsterspalten, under låtlistan, alltid synlig.
-- Visar låtar som delar minst en färgkod med låten som spelas – en enda lista,
-  sorterad på namn. Varje låt visar sina färgkoder som färgmarkeringar.
+- Överst i rutan visas låtens egna färgkoder som knappar. **Man väljer själv vilka
+  färger som styr förslagen** (t.ex. bara lila, eller lila + gul). Valet sparas per låt.
+- Förslagen är låtar som har någon av de valda färgerna. De som har flest av dem
+  (t.ex. både lila och gul) kommer först, sedan efter namn.
 - Låtar som redan spelats under kvällen gråmarkeras men kan fortfarande väljas.
 - En låt räknas som spelad när den varit huvudlåt i minst 30 sekunder.
 - Knappen "Ny spelning" nollställer gråmarkeringarna.
@@ -126,23 +137,29 @@ vilka låtar som passar efter, eller som medley.
 
 ### 10. Ackordstämplar
 - Varje låt har en **tonart** (väljs i ackordpaletten, dur eller moll).
+- Ackordpaletten kan **flyttas** genom att dra i dess handtag.
+- **Transponera alla:** knapparna ♭/♯ i paletten sänker/höjer samtliga ackord på låten
+  (och låtens tonart) ett halvt tonsteg per tryck, med rätt stavning för den nya tonarten.
 - Ackordpaletten visar överst **ackorden i låtens tonart**, i ordning efter hur vanliga
   de är (i G: G, C, D, Em, Am, Bm, D7, F#dim) – färdiga att dra ut direkt.
   Under dem finns C-skalans toner C D E F G A B för allt annat.
-- Dra ett ackord från paletten och släpp det var som helst på låten.
+- Dra ett ackord från paletten och släpp det på låten. **Ackorden lägger sig på en rak
+  rad:** hamnar ett ackord nära höjden för andra ackord så snäpper det till samma rad
+  (som markeringspennan). I PDF:er/textlåtar snäpper de även till raden ovanför textraden.
 - **Håll inne** ett utplacerat ackord → en meny öppnas runt det. Dra fingret åt ett håll
   och släpp på ett val (eller släpp direkt och tryck i menyn):
   - **Vänster – förtecken:** ♯ höj, ♮ ingen, ♭ sänk.
   - **Höger – färgning:** vanligaste först (dur, m, 7, m7, maj7, sus4, sus2, add9);
     "Fler" visar ovanligare (6, m6, 9, m9, maj9, 7sus4, dim, dim7, m7b5, aug, 11, 13).
   - **Ner – bas:** ingen, eller C, C#, D, Eb, E, F, F#, G, G#, A, Bb, B (t.ex. D/F#).
-  - **Upp – kopiera / ta bort.**
+  - **Kopiera / Ta bort** ligger längst ner, under basnoterna, så att de inte är i vägen.
 - Kort drag flyttar ackordet.
-- **Kopiera sekvenser:** "Markera och kopiera" → dra en ruta runt flera ackord (eller tryck
-  på dem) → Kopiera → tryck där sekvensen ska klistras in (t.ex. i vers 2). Avstånden
-  mellan ackorden behålls. Kan klistras in flera gånger.
-- **Grupper:** en inklistrad sekvens blir automatiskt en grupp. Markerade ackord kan också
-  grupperas eller delas upp. Ackorden i en grupp sitter ihop och flyttas tillsammans,
+- **Välj ackord:** knappen "Välj ackord" i paletten → tryck på de ackord som ska med
+  (eller dra en ruta runt dem) → **Gruppera**, Dela upp, Kopiera eller Ta bort.
+- **Kopiera sekvenser:** välj ackord → Kopiera → tryck där sekvensen ska klistras in
+  (t.ex. i vers 2). Avstånden mellan ackorden behålls. Rutan försvinner direkt efter
+  inklistringen.
+- **Grupper:** en inklistrad sekvens blir automatiskt en grupp. Ackorden i en grupp sitter ihop och flyttas tillsammans,
   och "Kopiera" på ett grupperat ackord kopierar hela gruppen. Gruppen visas med en
   streckad ram när ackordpaletten eller markeringsläget är öppet.
 - Ackorden följer låten när den scrollar och sparas per låt.
@@ -186,11 +203,26 @@ vilka låtar som passar efter, eller som medley.
 - Originalfilen ändras aldrig – trim och volym sparas som inställningar.
 - Ljudet går ut där iPaden spelar ljud (inbyggd högtalare, kabel eller Bluetooth till PA).
 
-### 14. Mörkt läge
+### 14. Lådan (quizmanus och anteckningar)
+- Ett litet **handtag** i högerkanten av låtvyn. Dra ut det → en låda glider fram med
+  anteckningen (stor, lättläst text som kan scrollas). Skjut tillbaka den → lådan glider
+  in och bromsar mjukt och långsamt i slutet. Ett tryck på handtaget öppnar/stänger.
+- En anteckning läggs i lådan genom att **dra den från biblioteket till handtaget**
+  (handtaget lyser upp), eller trycka på den i biblioteket.
+- När soundboarden är öppen lägger sig handtaget och lådan till vänster om den.
+
+### 15. Spotify
+- En knapp bland de flytande knapparna: **ett tryck spelar, ett tryck pausar** Spotify.
+- Byggs med Spotifys officiella iOS-koppling (App Remote). Kräver att Spotify-appen är
+  installerad och inloggad; första gången öppnas Spotify kort för att godkänna kopplingen.
+  Spotify Premium rekommenderas (gratiskonton har begränsningar i vad som kan styras).
+- Soundboard-ljud kan spelas samtidigt som Spotify (blandas, Spotify sänks inte).
+
+### 16. Mörkt läge
 - Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
 - Kan slås av/på.
 
-### 15. iCloud
+### 17. iCloud
 - Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
 
 ## Utseende
@@ -205,20 +237,22 @@ vilka låtar som passar efter, eller som medley.
 - Menyer/bibliotek: följer iPaden, eller väljs ljust/mörkt i appen. Låtar har eget mörkt läge.
 - **Vänsterspalt (liggande):** kan döljas med ett tryck och ändras i bredd.
   Innehåll uppifrån: flikar Bibliotek/Låtlistor → sökfält → låtlista → förslagsruta → "Ny spelning".
-- Listrader: titel + färgmarkeringar, normal textstorlek, inga miniatyrer.
+- Listrader: titel + färgkolumner med rubriker, normal textstorlek, inga miniatyrer.
 - **Låtvy:** flytande knappar i ett hörn. Låtlisteknappen syns alltid under spelning;
   övriga funktioner ligger i en meny.
-- Fast palett med ca 10 tydliga färger för färgkoder och notes.
+- Fem färgkoder. Notes och ljudklipp har en egen fast palett med 6–8 färger.
 - Klickbar skiss tas fram och godkänns innan kodning.
 
 ## Utanför version 1
-Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritning.
+ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritning.
 
 ## Datamodell (översikt)
 - **Song:** id, titel, tonart, zoom (huvudvy/förhandsruta), typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
   tillagd, senast spelad, antal spelningar, scrollhastighet.
 - **Setlist:** id, namn, ordnade poster (låt + position).
-- **ColorTag:** id, namn, färg. Kopplas till låtar (många-till-många).
+- **Document:** id, titel, text (importerade anteckningar/quizmanus).
+- **ColorTag:** id, namn, färg, ordning (högst 5). Kopplas till låtar (många-till-många).
+- Per låt sparas också vilka färger som styr förslagen.
 - **SoundClip:** id, namn, färg, ljudfil, start, slut, volym (dB), ordning.
 - **Highlight:** låt, sida, position, bredd, färg.
 - **ChordStamp:** låt, sida, position, grundton, förtecken, färgning, basnot, grupp.
@@ -226,13 +260,13 @@ Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Ap
 
 ## Milstolpar
 1. **Grund:** Xcode-projekt, struktur, import, bibliotek, visa PDF/bild.
-2. **Layout & listor:** delad vy liggande/stående, låtlistor, dra-och-släpp, sök, sortering.
+2. **Layout & listor:** delad vy liggande/stående, låtlistor (+ ny lista, lägga till via färgfilter), dra-och-släpp, sök, sortering, alfabet.
 3. **Spela:** autoscroll per låt, pedal/tangentbord, nästa låt, förladdning.
-4. **Färgkoder & förslag:** färgkoder, filter, förslagsruta, förhandsruta.
-5. **Notes, pennor & ackord:** notes (skapa/flytta/storlek/färg/förankring, textanpassning, dölj),
-   markeringspennor, ackordstämplar.
+4. **Färgkoder & förslag:** färgkolumner, flervalsfilter, förslag styrda av valda färger, förhandsruta.
+5. **Notes, pennor & ackord:** notes (skapa/flytta/storlek/redigera/färg/förankring, textanpassning, dölj),
+   markeringspennor, ackordstämplar (radsnäpp, grupper, kopiera, transponera).
 6. **Redigera & webben:** sök i låttext, lägg till låt från webben, namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
-7. **Soundboard & animationer:** ljudklipp (import, spela, trimma, volym, färg, namn), LP-animationer.
+7. **Soundboard, Lådan, Spotify & animationer:** ljudklipp, anteckningar i Lådan, Spotify-knapp, LP-animationer.
 8. **iCloud:** synk och backup.
 9. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
 
