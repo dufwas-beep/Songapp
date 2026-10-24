@@ -39,7 +39,7 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - Både huvudlåten och låten i förhandsrutan kan scrollas var för sig med fingret.
 - **Zoom:** huvudlåten och förhandsrutan zoomas var för sig med två fingrar (nyp),
   50–200 %, så att man själv väljer hur mycket som syns i varje fönster.
-  Små −/+ knappar med procentvisning finns också. Notes, markeringar och ackord
+  Inga zoomknappar – bara nyp. Zoomen sparas per låt. Notes, markeringar och ackord
   följer med i zoomen.
 - Nästa låt i listan förladdas så att byten går direkt.
 
