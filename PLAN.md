@@ -157,7 +157,7 @@ vilka låtar som passar efter, eller som medley.
   I mörkt läge: svart/mörkgrå bakgrund med rosa accent (påminner om scenljus).
 - **Logga:** svart duva i profil i en cirkel med texten
   "TRUBADUR | BAND | QUIZ | KONFERENCIER" (`design/duva-logo.png`).
-- **Ikon:** rosa duva (`#FB91FF`) på svart bakgrund, utan texten runt om.
+- **Ikon:** duvan från loggan (`design/dove.svg`, spårad ur `design/duva-logo-rosa.png`) i rosa `#FB91FF` på svart bakgrund, utan texten runt om.
 - Menyer/bibliotek: följer iPaden, eller väljs ljust/mörkt i appen. Låtar har eget mörkt läge.
 - **Vänsterspalt (liggande):** kan döljas med ett tryck och ändras i bredd.
   Innehåll uppifrån: flikar Bibliotek/Låtlistor → sökfält → låtlista → förslagsruta → "Ny spelning".
