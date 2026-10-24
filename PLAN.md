@@ -173,11 +173,23 @@ vilka låtar som passar efter, eller som medley.
 - **Ny spelning:** en snabb snurr när gråmarkeringarna nollställs.
 - I sidospalten ersätter LP:n den runda duvloggan bredvid POTPURRI.
 
-### 13. Mörkt läge
+### 13. Soundboard (ljudklipp)
+- Inspirerad av Soundboard Studio. Högtalarknapp bland de flytande knapparna öppnar en
+  smal kolumn längs högerkanten med små färgade ljudknappar (ca 15 st, fler går att scrolla).
+- **Tryck** = spela; tryck igen = stoppa. Flera klipp kan spela samtidigt.
+  Knappen visar en förloppsrand medan klippet spelas. "Stoppa alla" längst ner.
+- Ljuden importeras från **Filer** (mp3, m4a, wav, aiff m.fl.).
+- **Redigera** (pennan i kolumnens topp, tryck sedan på ett ljud):
+  namn, färg (fast palett), **trimma** start/slut genom att dra i markörer på en
+  vågform, **volym** −12 till +6 dB, förhandslyssna, byt ljudfil, ta bort.
+- Originalfilen ändras aldrig – trim och volym sparas som inställningar.
+- Ljudet går ut där iPaden spelar ljud (inbyggd högtalare, kabel eller Bluetooth till PA).
+
+### 14. Mörkt läge
 - Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
 - Kan slås av/på.
 
-### 14. iCloud
+### 15. iCloud
 - Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
 
 ## Utseende
@@ -206,6 +218,7 @@ Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Ap
   tillagd, senast spelad, antal spelningar, scrollhastighet.
 - **Setlist:** id, namn, ordnade poster (låt + position).
 - **ColorTag:** id, namn, färg. Kopplas till låtar (många-till-många).
+- **SoundClip:** id, namn, färg, ljudfil, start, slut, volym (dB), ordning.
 - **Highlight:** låt, sida, position, bredd, färg.
 - **ChordStamp:** låt, sida, position, grundton, förtecken, färgning, basnot, grupp.
 - **StickyNote:** låt, text, färg, rektangel, förankring (sida/skärm), sidnummer.
@@ -218,8 +231,9 @@ Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Ap
 5. **Notes, pennor & ackord:** notes (skapa/flytta/storlek/färg/förankring, textanpassning, dölj),
    markeringspennor, ackordstämplar.
 6. **Redigera & webben:** sök i låttext, lägg till låt från webben, namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
-7. **iCloud:** synk och backup.
-8. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
+7. **Soundboard & animationer:** ljudklipp (import, spela, trimma, volym, färg, namn), LP-animationer.
+8. **iCloud:** synk och backup.
+9. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
 
 Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 
