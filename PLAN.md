@@ -57,7 +57,8 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - Både huvudlåten och låten i förhandsrutan kan scrollas var för sig med fingret.
 - **Zoom:** huvudlåten och förhandsrutan zoomas var för sig med två fingrar (nyp),
   50–200 %, så att man själv väljer hur mycket som syns i varje fönster.
-  Inga zoomknappar – bara nyp. Zoomen sparas per låt. Notes, markeringar och ackord
+  Inga zoomknappar – bara nyp. **Appen kommer ihåg zoomen per låt** (både i huvudvyn
+  och i förhandsrutan) och återställer den när låten öppnas igen. Notes, markeringar och ackord
   följer med i zoomen.
 - Nästa låt i listan förladdas så att byten går direkt.
 
@@ -85,6 +86,8 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   - *Följer sidan* – sitter på en plats i låten och scrollar med.
   - *Fast på skärmen* – ligger still medan låten scrollar.
 - Visa/dölj alla notes med en knapp.
+- **Notes hör till den låt de skapades i** – både de som följer sidan och de som sitter
+  fast på skärmen – och visas bara när den låten är öppen.
 
 ### 7. Redigera (textlåtar)
 - Byta låttitel i biblioteket (enkelt namnbyte).
@@ -272,6 +275,12 @@ ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritn
 9. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
 
 Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
+
+## Sparas per låt
+Allt som läggs på eller ställs in för en låt följer med låten och finns kvar nästa gång
+den öppnas: notes, markeringar, ackord och grupper, tonart, zoom (huvudvy och
+förhandsruta), autoscroll-hastighet, textstorlek (textlåtar), färgkoder och vilka
+färger som styr förslagen.
 
 ## Underlag
 - Biblioteket: ca 200 låtar, mest PDF:er gjorda i Word, några få bilder.
