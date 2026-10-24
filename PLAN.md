@@ -1,6 +1,6 @@
-# Songapp – grundplan (UTKAST)
+# Songapp – grundplan
 
-> Status: under diskussion. Ingen kod skrivs förrän planen är godkänd.
+> Status: klar för godkännande. Ingen kod skrivs förrän planen är godkänd.
 
 ## Vision
 
@@ -62,15 +62,15 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   - *Fast på skärmen* – ligger still medan låten scrollar.
 - Visa/dölj alla notes med en knapp.
 
-### 7. Redigera PDF
+### 7. Redigera (textlåtar)
 - Byta låttitel i biblioteket (enkelt namnbyte).
-- Ändra text i PDF:en, t.ex. tryckt titel eller textrader:
-  - För PDF:er med riktig text (t.ex. gjorda i Word): tryck på en rad → befintlig
-    text fylls i → redigera → appen täcker gammal text och ritar den nya i liknande
-    storlek på samma plats.
-  - För inskannade PDF:er/bilder: rita en ruta och skriv ny text ovanpå.
-- Ändringarna är ett lager ovanpå originalet – kan ångras när som helst.
-- (Valfritt) Exportera låt som ny PDF med ändringarna inbakade.
+- **"Gör redigerbar":** texten plockas ur en PDF (t.ex. gjord i Word) och låten
+  blir en *textlåt* som kan redigeras fritt – samma princip som i OnSong.
+  PDF:ens ursprungliga layout ersätts av appens textvisning.
+- Originalfilen sparas alltid och låten kan återställas till PDF-visning.
+- Textlåtar har samma funktioner som PDF-låtar: notes, autoscroll, mörkt läge.
+  Dessutom justerbar textstorlek (sparas per låt).
+- Bilder kan inte göras om till text, men kan ha notes.
 
 ### 8. Mörkt läge
 - Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
@@ -83,17 +83,17 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritning.
 
 ## Datamodell (översikt)
-- **Song:** id, titel, fil, tillagd, senast spelad, antal spelningar, scrollhastighet.
+- **Song:** id, titel, typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
+  tillagd, senast spelad, antal spelningar, scrollhastighet.
 - **Setlist:** id, namn, ordnade poster (låt + position).
 - **StickyNote:** låt, text, färg, rektangel, förankring (sida/skärm), sidnummer.
-- **TextEdit:** låt, sida, rektangel, ny text, teckenstorlek, täckfärg.
 
 ## Milstolpar
 1. **Grund:** Xcode-projekt, struktur, import, bibliotek, visa PDF/bild.
 2. **Layout & listor:** delad vy liggande/stående, låtlistor, dra-och-släpp, sök, sortering.
 3. **Spela:** autoscroll per låt, pedal/tangentbord, nästa låt, förladdning.
 4. **Notes:** skapa/flytta/storlek/färg/förankring, automatisk textanpassning, dölj.
-5. **Redigera:** namnbyte, textredigering i PDF, ångra.
+5. **Redigera:** namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
 6. **iCloud:** synk och backup.
 7. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
 
@@ -102,5 +102,8 @@ Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 ## Underlag
 - Biblioteket: ca 200 låtar, mest PDF:er gjorda i Word, några få bilder.
 
+## Beslut
+- PDF-redigering görs genom konvertering till textlåt (som OnSong), inte genom redigering ovanpå PDF:en.
+
 ## Öppna frågor
-- PDF-redigering: konvertera till text (som OnSong) eller redigera ovanpå PDF:en? Se diskussionen.
+- Inga just nu.
