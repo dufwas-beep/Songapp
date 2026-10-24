@@ -251,6 +251,13 @@ vilka låtar som passar efter, eller som medley.
   kanten mot mitten och fungerar som förloppsindikator ("57 av 200 låtar").
 - **Ny spelning:** en snabb snurr när gråmarkeringarna nollställs.
 - I sidospalten ersätter LP:n den runda duvloggan bredvid POTPURRI.
+- **Tryck på LP-loggan – lyckohjul:** skivan snurrar snabbt, saktar in och markeringen
+  hoppar mellan förslagen (med en lätt "tick" i fingret) tills den landar på en **slumpad
+  låt** bland förslagen (med de valda färgerna, ospelade låtar i första hand). Låten
+  öppnas direkt i förhandsrutan. Bra vid hjärnsläpp mellan två låtar.
+- **Dubbeltryck – duvan flyger:** duvan lyfter från loggan, flaxar ett varv över skärmen
+  och landar igen. Ett påskägg.
+- **Håll in** = scenlås (se ovan).
 
 ### 13. Soundboard (ljudklipp)
 - Inspirerad av Soundboard Studio. Högtalarknapp bland de flytande knapparna öppnar en
