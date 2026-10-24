@@ -313,6 +313,13 @@ vilka låtar som passar efter, eller som medley.
 ## Utanför version 1
 ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritning.
 
+## Idéer på hyllan (kanske senare)
+- **Ljusstyrning per låt:** när en låt väljs triggas en chase/preset i ljuset. Användarens
+  Eurolite Bigfoot har ingen MIDI-ingång, så det kräver ny hårdvara. Två vägar:
+  MIDI-signal per låt (kräver ljuskontroller med MIDI in) eller iPaden som ljusbord via en
+  Art-Net-nod. Appen byggs så att en "skicka MIDI när låt väljs"-funktion kan läggas till
+  utan omskrivning.
+
 ## Datamodell (översikt)
 - **Song:** id, titel, tonart, längd (autoscroll), zoom (huvudvy/förhandsruta), typ (pdf/bild/text), originalfil, text (för textlåtar), textstorlek,
   tillagd, senast spelad, antal spelningar, scrollhastighet.
