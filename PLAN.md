@@ -80,7 +80,7 @@ vilka låtar som passar efter, eller som medley.
 - Egna färgkoder med namn, t.ex. "Röd = upptempo".
 - En låt kan ha flera färgkoder.
 - Biblioteket kan filtreras på färgkod.
-- Färgkoderna har en fast ordning (som användaren bestämmer). I listorna har varje
+- Färgkoderna har en fast, låst ordning. I listorna har varje
   färgkod alltid samma plats, så att prickarna bildar raka kolumner – t.ex. lila alltid
   längst till höger, rosa näst längst. Saknas en färgkod lämnas platsen tom.
 
@@ -105,15 +105,21 @@ vilka låtar som passar efter, eller som medley.
 ### 9. Markeringspennor
 - Genomskinliga överstrykningspennor i flera färger (gul, grön, rosa, blå, orange).
 - Ett drag med pennan blir alltid en rak, vågrät markering över textraden.
+- Ritas med fingret när pennläget är på (av = vanlig scrollning).
 - Sudd för att ta bort markeringar.
 - Markeringarna följer låten när den scrollar och sparas per låt.
 
 ### 10. Ackordstämplar
-- Knapp öppnar en ackordpalett med två kolumner: C D E F G A B och C# D# F# G# A#.
-- Dra ett ackord från paletten och släpp det var som helst på låten.
-- Tryck på ett utplacerat ackord → rullista för att välja variant, t.ex. G#m7.
-  Vanligaste först (dur, m, 7, m7, maj7, sus4, sus2, add9), ovanligare under "Fler varianter".
-- Utplacerade ackord kan flyttas och tas bort, följer låten när den scrollar och sparas per låt.
+- Knapp öppnar en ackordpalett med C-skalans toner: C D E F G A B.
+- Dra en ton från paletten och släpp den var som helst på låten.
+- **Håll inne** ett utplacerat ackord → en meny öppnas runt det. Dra fingret åt ett håll
+  och släpp på ett val (eller släpp direkt och tryck i menyn):
+  - **Vänster – förtecken:** ♯ höj, ♮ ingen, ♭ sänk (t.ex. G → G# eller Gb).
+  - **Höger – färgning:** vanligaste först (dur, m, 7, m7, maj7, sus4, sus2, add9);
+    "Fler" visar ovanligare (6, m6, 9, m9, maj9, 7sus4, dim, dim7, m7b5, aug, 11, 13).
+  - **Ner – bas:** ingen, eller basnot C, C#, D, Eb, E, F, F#, G, G#, A, Bb, B (t.ex. D/F#).
+  - **Upp – ta bort.**
+- Kort drag flyttar ackordet. Ackorden följer låten när den scrollar och sparas per låt.
 
 ### 11. Mörkt läge
 - Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
@@ -149,7 +155,7 @@ Transponering, ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Ap
 - **Setlist:** id, namn, ordnade poster (låt + position).
 - **ColorTag:** id, namn, färg. Kopplas till låtar (många-till-många).
 - **Highlight:** låt, sida, position, bredd, färg.
-- **ChordStamp:** låt, sida, position, grundton, variant.
+- **ChordStamp:** låt, sida, position, grundton, förtecken, färgning, basnot.
 - **StickyNote:** låt, text, färg, rektangel, förankring (sida/skärm), sidnummer.
 
 ## Milstolpar
