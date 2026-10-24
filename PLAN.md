@@ -157,7 +157,7 @@ vilka låtar som passar efter, eller som medley.
   I mörkt läge: svart/mörkgrå bakgrund med rosa accent (påminner om scenljus).
 - **Logga:** svart duva i profil i en cirkel med texten
   "TRUBADUR | BAND | QUIZ | KONFERENCIER" (`design/duva-logo.png`).
-- **Ikon:** duvan från loggan, optiskt centrerad (`design/dove-centered.svg`), rosa `#FB91FF` på svart. Fyra förslag på ring runt duvan (enkel, notring, vinyl, stämpel med noter) – se `design/ikonforslag.png`. Val pågår.
+- **Ikon:** svart LP med spår, ljusreflex och tydlig kant mot mörk bakgrund; rosa etikett (`#FB91FF`) med duvan, texten POTPURRI och ett klassiskt mitthål (`design/potpurri-lp.svg`, animerad: `design/potpurri-lp.gif`).
 - Menyer/bibliotek: följer iPaden, eller väljs ljust/mörkt i appen. Låtar har eget mörkt läge.
 - **Vänsterspalt (liggande):** kan döljas med ett tryck och ändras i bredd.
   Innehåll uppifrån: flikar Bibliotek/Låtlistor → sökfält → låtlista → förslagsruta → "Ny spelning".
