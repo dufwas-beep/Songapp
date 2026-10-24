@@ -1,6 +1,6 @@
 # Potpurri – grundplan
 
-> Status: under diskussion. Ingen kod skrivs förrän planen är godkänd.
+> Status: **godkänd** 2026-10-24. Planen kan fortfarande justeras under arbetet.
 
 ## Vision
 
