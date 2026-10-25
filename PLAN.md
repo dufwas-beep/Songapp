@@ -327,6 +327,15 @@ vilka låtar som passar efter, eller som medley.
 ### 17. iCloud
 - Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
 
+### 18. Guide för nya användare
+- Visas automatiskt första gången appen startas (efter LP-animationen).
+- Steg för steg med en ljuskägla runt det som förklaras och ett kort bredvid: välkomst,
+  låtlistor/bibliotek, sök, låtlistan, färgkoder, "Passar efter", låtbladet, autoscroll,
+  fler funktioner (•••), ljudklipp, lådan, LP:n (slumpa/scenlås), Ny spelning, klart.
+- Prickar visar hur långt man kommit. Knappar: Nästa, Tillbaka och **Hoppa över guiden**.
+- Tryck utanför kortet hoppar också över. Guiden kan visas igen under ••• → **Visa guiden**.
+- Anpassar sig till skärmen (iPad 13" och 11").
+
 ## Utseende
 - **Namn:** Potpurri (gammalt ord för medley). Undertitel "av Duva Event" (duvaevent.com).
 - **Stil från hemsidan:** ren, luftig och minimalistisk. Vit bakgrund, svart text,
@@ -378,7 +387,7 @@ ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritn
 6. **Redigera & webben:** sök i låttext, lägg till låt från webben, namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
 7. **Soundboard, Lådan, Spotify & animationer:** ljudklipp, anteckningar i Lådan, Spotify-knapp, LP-animationer.
 8. **iCloud & säkerhet:** synk, säkerhetskopia till fil, ångra, kvällslogg.
-9. **Finputs:** prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
+9. **Finputs:** guide för nya användare, prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
 
 Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 
