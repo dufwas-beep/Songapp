@@ -92,7 +92,7 @@ enum OnSongImporter {
     private static func makeSong(_ candidate: OnSongCandidate, archive: ZipArchive) async -> Song? {
         switch candidate.content {
         case .text(let text):
-            return Song(title: candidate.title, kind: .text, text: text, key: candidate.key, importedNote: candidate.note)
+            return Song(title: candidate.title, kind: candidate.kind, text: text, key: candidate.key, importedNote: candidate.note)
         case .file(let entryName):
             let kind = candidate.kind
             let stored: (fileName: String, text: String?)? = await Task.detached(priority: .userInitiated) { () -> (fileName: String, text: String?)? in

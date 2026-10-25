@@ -63,6 +63,12 @@ enum ChordProText {
         return result
     }
 
+    /// Har texten några ackord alls (i hakparenteser eller på egna rader)?
+    static func hasChords(_ text: String) -> Bool {
+        if text.range(of: "\\[[A-H][^\\]]{0,8}\\]", options: .regularExpression) != nil { return true }
+        return text.components(separatedBy: .newlines).contains { isChordLine($0) }
+    }
+
     private static let chordPattern = "^[A-H][#b♯♭]?(m|maj|min|dim|aug|sus|add|M)?[0-9]*(sus[0-9]*|add[0-9]*|b[0-9]+|#[0-9]+)*(/[A-H][#b♯♭]?)?$"
 
     /// En rad som bara består av ackord, t.ex. "G      D    Em".
