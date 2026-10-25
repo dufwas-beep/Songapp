@@ -300,12 +300,14 @@ vilka låtar som passar efter, eller som medley.
 - **Skriva i lådan:** knappen "Skriv" i lådan.
   - En **anteckning** (t.ex. quizmanus) blir redigerbar direkt – fyll i poäng, svar eller
     egna rader var som helst i texten.
-  - En **låt** får ett eget gult fritextfält, "Mina anteckningar", ovanför låtbladet.
-  - **Gör redigerbar** finns även i lådan: en PDF med riktig text (t.ex. från Word) görs
-    om till en textlåt direkt i lådan och kan sedan skrivas i fritt med "Skriv". Det är
-    samma textlåt som i vanliga läget, så ändringen syns överallt. "Återställ PDF" går
-    tillbaka. Bilder/inskannade blad utan text kan inte göras om – det står då i lådan.
-  - "Klar" sparar. Texten följer med anteckningen/låten och finns kvar nästa gång.
+  - För en **låt** får man **välja** hur man vill skriva:
+    - **Redigera låttexten** – en PDF med riktig text (t.ex. från Word) görs om till en
+      textlåt som man skriver direkt i. Samma textlåt som i vanliga läget, så ändringen
+      syns överallt; "Återställ PDF" går tillbaka. Går inte för bilder/inskannade blad
+      utan text – det står då i valet.
+    - **Skriv i gult fält** – egna anteckningar ("Mina anteckningar") ovanför låten;
+      själva låten ändras inte.
+  - "Klar" sparar. Det skrivna följer med låten/anteckningen och finns kvar nästa gång.
 - När soundboarden är öppen lägger sig handtaget och lådan till vänster om den.
 
 ### 15. Spotify
