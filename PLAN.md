@@ -87,8 +87,9 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - Byta namn på, **duplicera** och ta bort listor. En kopia (t.ex. av "Bröllop") blir en
   ny lista med samma låtar i samma ordning, som man döper om och ändrar fritt.
 - Samma låt kan ligga i flera listor.
-- Egen ordning genom att dra låtar i handtaget (≡), som alltid syns till höger på raden.
-  Håll in en låt för att ta bort den ur listan.
+- Egen ordning: håll in en låt (eller setgräns) så lossnar den och följer fingret, och
+  släpp där den ska ligga. Raderna har ett ≡ som visar att de går att dra. Håll in och
+  välj "Ta bort ur listan" för att ta bort en låt.
 - **Dra och släpp mellan listorna:** håll in en låt (eller dra den åt höger) så lossnar
   den och följer fingret. Den kan släppas:
   - **i låtlistan** – en rosa linje visar var den hamnar, även i ett annat set. Kom den

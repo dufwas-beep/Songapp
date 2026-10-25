@@ -2,8 +2,8 @@ import SwiftData
 import SwiftUI
 
 /// En öppen låtlista: låtarna i ordning, indelade i set med setgränser.
-/// Låtar och setgränser dras upp och ner i handtaget (≡) som alltid syns till höger.
-/// Håll in en låt för att ta bort den ur listan.
+/// Håll in en låt eller setgräns så lossnar den och följer fingret; släpp där den ska
+/// ligga. Håll in och släpp utan att dra för att ta bort en låt ur listan.
 struct SetlistDetailView: View {
     @Environment(\.modelContext) private var context
     @Bindable var setlist: Setlist
@@ -15,8 +15,6 @@ struct SetlistDetailView: View {
     let onDelete: () -> Void
 
     @State private var showAddSongs = false
-    /// Listan är alltid i ordningsläge så att handtagen syns och går att dra direkt.
-    @State private var editMode: EditMode = .active
 
     /// En rad i listan med uppgift om vilket set den hör till.
     private struct Row: Identifiable {
@@ -70,11 +68,13 @@ struct SetlistDetailView: View {
                             remove(at: row.id)
                         }
                         .selectionDisabled()
+                        .draggable("row:\(row.id)") { DragPreview(title: "Set \(row.setNumber)") }
                         .listRowBackground(Self.tint(for: row.setNumber))
                     case .song(let id):
                         if let song = songsByID[id] {
                             SetSongRow(number: row.number, song: song)
                                 .tag(song)
+                                .draggable("row:\(row.id)") { DragPreview(title: song.title) }
                                 .contextMenu {
                                     Button(role: .destructive) {
                                         remove(at: row.id)
@@ -96,15 +96,11 @@ struct SetlistDetailView: View {
                         }
                     }
                 }
-                .onMove { from, to in
-                    var items = setlist.items
-                    items.move(fromOffsets: from, toOffset: to)
-                    setlist.items = items
-                    try? context.save()
+                .dropDestination(for: String.self) { payloads, offset in
+                    drop(payloads, at: offset)
                 }
             }
             .listStyle(.plain)
-            .environment(\.editMode, $editMode)
             .overlay {
                 if setlist.songIDs.isEmpty {
                     ContentUnavailableView(
@@ -162,6 +158,25 @@ struct SetlistDetailView: View {
         .padding(.vertical, 6)
     }
 
+    /// Släpp i listan: "row:3" flyttar en rad inom listan, "song:<id>" lägger in en låt.
+    private func drop(_ payloads: [String], at offset: Int) {
+        var items = setlist.items
+        var target = min(max(offset, 0), items.count)
+        for payload in payloads {
+            if payload.hasPrefix("row:"), let index = Int(payload.dropFirst(4)), items.indices.contains(index) {
+                items.move(fromOffsets: IndexSet(integer: index), toOffset: target)
+                target = index < target ? target : target + 1
+            } else if payload.hasPrefix("song:"), let id = UUID(uuidString: String(payload.dropFirst(5))) {
+                items.insert(.song(id), at: target)
+                target += 1
+            }
+        }
+        withAnimation {
+            setlist.items = items
+        }
+        try? context.save()
+    }
+
     private func remove(at index: Int) {
         var items = setlist.items
         guard items.indices.contains(index) else { return }
@@ -177,6 +192,21 @@ struct SetlistDetailView: View {
     }
 }
 
+/// Det som följer fingret när en rad dras.
+private struct DragPreview: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.body.weight(.medium))
+            .lineLimit(1)
+            .padding(.horizontal, 16)
+            .frame(height: 44)
+            .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 10))
+            .foregroundStyle(.black)
+    }
+}
+
 /// Rubrik för ett set: "SET 2 · 5 låtar", med × för att ta bort gränsen.
 private struct SetHeaderRow: View {
     let number: Int
@@ -185,6 +215,9 @@ private struct SetHeaderRow: View {
 
     var body: some View {
         HStack {
+            Image(systemName: "line.3.horizontal")
+                .foregroundStyle(.tertiary)
+                .opacity(onRemove == nil ? 0 : 1)
             Text("SET \(number)")
                 .font(.system(size: 14, weight: .bold))
                 .tracking(1)
@@ -213,6 +246,8 @@ private struct SetSongRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            Image(systemName: "line.3.horizontal")
+                .foregroundStyle(.tertiary)
             Text("\(number)")
                 .font(.callout)
                 .monospacedDigit()
