@@ -50,6 +50,14 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   ny lista med samma låtar i samma ordning, som man döper om och ändrar fritt.
 - Samma låt kan ligga i flera listor.
 - Egen ordning genom att dra låtar i handtaget (≡) till vänster på raden.
+- **Dra och släpp mellan listorna:** håll in en låt (eller dra den åt höger) så lossnar
+  den och följer fingret. Den kan släppas:
+  - **i låtlistan** – en rosa linje visar var den hamnar, även i ett annat set. Kom den
+    från samma lista flyttas den, annars läggs den in på platsen.
+  - **i förslagsrutan** – rutan får en rosa ram; låten fästs överst bland förslagen för
+    kvällen (med en nål som tar bort den igen). Fungerar från låtlistan och biblioteket.
+  - **i lådan** (se Lådan).
+  Från förslagsrutan kan låtar dras till låtlistan och lådan.
 - **Set:** en låtlista kan delas in i Set 1, 2, 3, 4 … med **setgränser** – en tydlig linje
   med rubrik ("Set 2 · 5 låtar · 18 min"). Knappen "+ Set" lägger till en gräns.
   Både låtar och setgränser dras upp och ner tills man är nöjd; × tar bort en gräns.
@@ -176,7 +184,7 @@ vilka låtar som passar efter, eller som medley.
   de i stället, men kan fortfarande väljas där.
 - En låt räknas som spelad – och gråmarkeras – först när den varit huvudlåt i 30 sekunder
   i sträck. Byter man innan dess blir den inte grå.
-- Knappen "Ny spelning" nollställer gråmarkeringarna.
+- Knappen "Ny spelning" nollställer gråmarkeringarna och de fästa förslagen.
 
 **Förhandsruta**
 - Tryck på ett förslag → låten öppnas i en förhandsruta under huvudlåten.
