@@ -280,7 +280,7 @@ vilka låtar som passar efter, eller som medley.
 - En gemensam soundboard. Ljudens ordning ändras genom att dra dem i redigeringsläget.
   Knappen visar en förloppsrand medan klippet spelas. "Stoppa alla" längst ner.
 - Ljuden importeras från **Filer** (mp3, m4a, wav, aiff m.fl.).
-- **Redigera** (pennan i kolumnens topp, tryck sedan på ett ljud):
+- **Redigera** (tydlig knapp "Redigera" överst i ljudkolumnen, tryck sedan på ett ljud):
   namn, färg (fast palett), **trimma** start/slut genom att dra i markörer på en
   vågform, **volym** −12 till +6 dB, förhandslyssna, byt ljudfil, ta bort.
 - Originalfilen ändras aldrig – trim och volym sparas som inställningar.
@@ -298,9 +298,9 @@ vilka låtar som passar efter, eller som medley.
   och **släpps på lådan** – vid handtaget när lådan är stängd, eller var som helst på den
   öppna lådan (lådan lyser upp). Det nya innehållet ersätter det gamla. Anteckningar kan även läggas i lådan med ett tryck.
 - **Skriva i lådan:** knappen "Skriv" i lådan.
-  - En **anteckning** (t.ex. quizmanus) blir redigerbar direkt – fyll i poäng, svar eller
-    egna rader var som helst i texten.
-  - För en **låt** får man **välja** hur man vill skriva:
+  - För både **anteckningar** (t.ex. quizmanus) och **låtar** får man **välja** hur man vill
+    skriva. För en anteckning: redigera texten direkt (poäng, svar …) eller gult fält.
+    För en låt:
     - **Redigera låttexten** – en PDF med riktig text (t.ex. från Word) görs om till en
       textlåt som man skriver direkt i. Samma textlåt som i vanliga läget, så ändringen
       syns överallt; "Återställ PDF" går tillbaka. Går inte för bilder/inskannade blad
