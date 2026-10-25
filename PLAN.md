@@ -301,6 +301,10 @@ vilka låtar som passar efter, eller som medley.
   - En **anteckning** (t.ex. quizmanus) blir redigerbar direkt – fyll i poäng, svar eller
     egna rader var som helst i texten.
   - En **låt** får ett eget gult fritextfält, "Mina anteckningar", ovanför låtbladet.
+  - **Gör redigerbar** finns även i lådan: en PDF med riktig text (t.ex. från Word) görs
+    om till en textlåt direkt i lådan och kan sedan skrivas i fritt med "Skriv". Det är
+    samma textlåt som i vanliga läget, så ändringen syns överallt. "Återställ PDF" går
+    tillbaka. Bilder/inskannade blad utan text kan inte göras om – det står då i lådan.
   - "Klar" sparar. Texten följer med anteckningen/låten och finns kvar nästa gång.
 - När soundboarden är öppen lägger sig handtaget och lådan till vänster om den.
 
