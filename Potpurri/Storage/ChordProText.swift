@@ -1,11 +1,17 @@
 import Foundation
 
-/// Tolkar låttext i OnSong-/ChordPro-format: ackord i hakparenteser ("Jag [G]går") blir
-/// en egen ackordrad ovanför texten, och rader som "Vers 1:" blir rubriker.
+/// Tolkar låttext i OnSong-/ChordPro-format: ackord i hakparenteser ("Jag [G]går") hamnar
+/// ovanför ordet de står vid, och rader som "Vers 1:" blir rubriker.
 enum ChordProText {
+    /// En bit av en textrad: ackordet (om något) och texten under det.
+    struct Segment: Hashable {
+        let chord: String?
+        let text: String
+    }
+
     enum Line: Hashable {
         case heading(String)
-        case lyric(chords: String?, text: String)
+        case lyric([Segment])
         case blank
     }
 
@@ -27,7 +33,7 @@ enum ChordProText {
     static func parse(_ text: String, title: String) -> [Line] {
         var result: [Line] = []
         var isFirst = true
-        for raw in text.components(separatedBy: .newlines) {
+        for raw in mergeChordLines(text.components(separatedBy: .newlines)) {
             let line = raw.trimmingCharacters(in: .whitespaces)
             defer { isFirst = false }
             if line.isEmpty {
@@ -57,30 +63,80 @@ enum ChordProText {
         return result
     }
 
-    /// Flyttar ackorden ur texten till en egen rad, på samma position som i texten.
+    private static let chordPattern = "^[A-H][#b♯♭]?(m|maj|min|dim|aug|sus|add|M)?[0-9]*(sus[0-9]*|add[0-9]*|b[0-9]+|#[0-9]+)*(/[A-H][#b♯♭]?)?$"
+
+    /// En rad som bara består av ackord, t.ex. "G      D    Em".
+    private static func isChordLine(_ line: String) -> Bool {
+        let tokens = line.split(separator: " ").map(String.init).filter { $0 != "|" && $0 != "-" }
+        return !tokens.isEmpty && tokens.allSatisfy { $0.range(of: chordPattern, options: .regularExpression) != nil }
+    }
+
+    /// Ackord skrivna på en egen rad ovanför texten görs om till ackord i texten
+    /// ("[G]Jag går [D]hem"), så att de hamnar rätt även med ett vanligt typsnitt.
+    private static func mergeChordLines(_ lines: [String]) -> [String] {
+        var result: [String] = []
+        var index = 0
+        while index < lines.count {
+            let line = lines[index].replacingOccurrences(of: "\t", with: "    ")
+            guard isChordLine(line) else {
+                result.append(lines[index])
+                index += 1
+                continue
+            }
+            // Ackordens kolumner i raden.
+            var chords: [(column: Int, name: String)] = []
+            var column = 0
+            for token in line.split(separator: " ", omittingEmptySubsequences: false) {
+                if !token.isEmpty { chords.append((column, String(token))) }
+                column += token.count + 1
+            }
+            let next = index + 1 < lines.count ? lines[index + 1] : ""
+            let nextTrimmed = next.trimmingCharacters(in: .whitespaces)
+            if !nextTrimmed.isEmpty, !isChordLine(next), !nextTrimmed.hasSuffix(":"), !next.contains("[") {
+                var text = Array(next.replacingOccurrences(of: "\t", with: "    "))
+                if let last = chords.last, text.count < last.column {
+                    text += Array(repeating: " ", count: last.column - text.count)
+                }
+                // Infoga bakifrån så att kolumnerna stämmer.
+                for chord in chords.reversed() {
+                    text.insert(contentsOf: Array("[\(chord.name)]"), at: min(chord.column, text.count))
+                }
+                result.append(String(text))
+                index += 2
+            } else {
+                result.append(chords.map { "[\($0.name)] " }.joined())
+                index += 1
+            }
+        }
+        return result
+    }
+
+    /// Delar raden vid varje ackord, så att ackordet kan ritas ovanför rätt ord
+    /// även med ett vanligt (inte jämnbrett) typsnitt.
     private static func lyricLine(_ raw: String) -> Line {
-        guard raw.contains("[") else { return .lyric(chords: nil, text: raw) }
-        var chords = ""
-        var text = ""
+        var segments: [Segment] = []
         var chord: String?
+        var text = ""
+        var readingChord: String?
         for character in raw {
             if character == "[" {
-                chord = ""
-            } else if character == "]", let current = chord {
-                // Ackordet hamnar ovanför nästa bokstav; krockar det med föregående ackord flyttas texten.
-                if chords.count > text.count {
-                    text += String(repeating: " ", count: chords.count - text.count)
+                readingChord = ""
+            } else if character == "]", let finished = readingChord {
+                if chord != nil || !text.isEmpty {
+                    segments.append(Segment(chord: chord, text: text))
                 }
-                chords += String(repeating: " ", count: text.count - chords.count) + current + " "
-                chord = nil
-            } else if chord != nil {
-                chord?.append(character)
+                chord = finished
+                text = ""
+                readingChord = nil
+            } else if readingChord != nil {
+                readingChord?.append(character)
             } else {
                 text.append(character)
             }
         }
-        let trimmedChords = chords.replacingOccurrences(of: "\\s+$", with: "", options: .regularExpression)
-        let trimmedText = text.replacingOccurrences(of: "\\s+$", with: "", options: .regularExpression)
-        return .lyric(chords: trimmedChords, text: trimmedText)
+        if chord != nil || !text.isEmpty {
+            segments.append(Segment(chord: chord, text: text))
+        }
+        return .lyric(segments)
     }
 }

@@ -12,32 +12,27 @@ struct TextSongView: View {
                         NoteLineView(line: line)
                     }
                 } else {
+                    // Samma upplägg som låtbladen: titel, tonart, rubriker i versaler och ackord i fetstil.
+                    Text(song.title)
+                        .font(.system(size: 34, weight: .semibold))
                     if let key = song.key {
                         Text("Tonart: \(key)")
-                            .font(.callout)
+                            .font(.system(size: 18))
                             .foregroundStyle(.secondary)
-                            .padding(.bottom, 16)
+                            .padding(.top, 4)
                     }
+                    Color.clear.frame(height: 20)
                     ForEach(Array(ChordProText.parse(song.text ?? "", title: song.title).enumerated()), id: \.offset) { _, line in
                         switch line {
                         case .heading(let heading):
                             Text(heading.uppercased())
-                                .font(.system(size: 15, weight: .semibold))
-                                .tracking(1)
+                                .font(.system(size: 16, weight: .semibold))
+                                .tracking(1.5)
                                 .foregroundStyle(.secondary)
-                                .padding(.top, 14)
-                                .padding(.bottom, 4)
-                        case .lyric(let chords, let text):
-                            VStack(alignment: .leading, spacing: 0) {
-                                if let chords, !chords.isEmpty {
-                                    Text(chords)
-                                        .fontWeight(.bold)
-                                }
-                                if !text.isEmpty {
-                                    Text(text)
-                                }
-                            }
-                            .font(.system(size: 22, design: .monospaced))
+                                .padding(.top, 16)
+                                .padding(.bottom, 6)
+                        case .lyric(let segments):
+                            LyricLineView(segments: segments)
                         case .blank:
                             Color.clear.frame(height: 14)
                         }
@@ -48,6 +43,38 @@ struct TextSongView: View {
             .padding(.vertical, 32)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+}
+
+/// En textrad med ackorden ovanför orden de hör till.
+private struct LyricLineView: View {
+    let segments: [ChordProText.Segment]
+
+    private var hasChords: Bool {
+        segments.contains { $0.chord != nil }
+    }
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 0) {
+            ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
+                VStack(alignment: .leading, spacing: 0) {
+                    if hasChords {
+                        // Ett mellanslag efter ackordet så att två ackord i rad inte krockar.
+                        Text(Self.keepSpaces(segment.chord.map { $0 + " " } ?? " "))
+                            .font(.system(size: 22, weight: .bold))
+                    }
+                    Text(Self.keepSpaces(segment.text.isEmpty ? " " : segment.text))
+                        .font(.system(size: 24))
+                }
+                .fixedSize()
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    /// Hårda mellanslag, så att mellanrummet i slutet av en bit inte försvinner.
+    private static func keepSpaces(_ text: String) -> String {
+        text.replacingOccurrences(of: " ", with: "\u{00A0}")
     }
 }
 
