@@ -52,9 +52,13 @@ struct AlphabetScrubber: View {
                         guard letter != current else { return }
                         current = letter
                         feedback.selectionChanged()
-                        pulse = true
-                        withAnimation(.spring(response: 0.25, dampingFraction: 0.5)) {
-                            pulse = false
+                        withAnimation(.easeOut(duration: 0.08)) {
+                            pulse = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.5)) {
+                                pulse = false
+                            }
                         }
                         // Saknas bokstaven hoppar listan till nästa bokstav som har låtar.
                         if let target = Self.letters[index...].first(where: available.contains) {
