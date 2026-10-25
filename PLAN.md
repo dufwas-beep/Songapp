@@ -20,6 +20,9 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 ## Plattform
 
 - Endast iPad (användarens: iPad 13"), senaste iPadOS.
+- Fungerar på både iPad 13" och vanlig iPad 11" (1180 × 820 punkter). Layouten anpassar sig:
+  på 11" blir förslagsrutan lägre, lapparna hålls inom låtbladet och dialoger krymper så de
+  får plats. Skissen har en växlare iPad 13″ / 11″ under förstoringsglaset.
 - Utvecklas i Xcode (senaste) på användarens MacBook Pro.
 - Swift + SwiftUI, PDFKit för visning, SwiftData för data, iCloud (CloudKit) för synk/backup.
 
