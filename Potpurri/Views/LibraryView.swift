@@ -9,6 +9,7 @@ struct LibraryView: View {
     @State private var query = ""
     @State private var showImporter = false
     @State private var importMessage: String?
+    @State private var progress = TaskProgress()
 
     private static let swedish = Locale(identifier: "sv_SE")
 
@@ -40,6 +41,11 @@ struct LibraryView: View {
                 ContentUnavailableView.search(text: query)
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            if progress.isRunning {
+                ProgressBanner(progress: progress)
+            }
+        }
         .navigationTitle("Potpurri")
         .searchable(text: $query, placement: .sidebar, prompt: "Sök titel")
         .toolbar {
@@ -49,6 +55,7 @@ struct LibraryView: View {
                 } label: {
                     Label("Importera", systemImage: "plus")
                 }
+                .disabled(progress.isRunning)
             }
         }
         .fileImporter(
@@ -58,7 +65,9 @@ struct LibraryView: View {
         ) { result in
             switch result {
             case .success(let urls):
-                importMessage = SongImporter.importFiles(urls, into: context).summary
+                Task {
+                    importMessage = await SongImporter.importFiles(urls, into: context, progress: progress).summary
+                }
             case .failure(let error):
                 importMessage = "Importen misslyckades: \(error.localizedDescription)"
             }

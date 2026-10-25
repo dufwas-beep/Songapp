@@ -43,6 +43,10 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   delas direkt från Apples Anteckningar till Potpurri. De ligger i biblioteket med en
   egen ikon och kan läggas i Lådan (se nedan).
 - Bilder behandlas som en sida i en låt.
+- **Statusfält vid import och indexering:** medan låtar importeras (eller låttext indexeras)
+  visas ett fält längst ner i listan med förloppsstapel, "12 av 80", namnet på filen som
+  hanteras just nu och ungefärlig tid kvar ("Ca 2 min kvar"). Tiden uppdateras varje
+  sekund så man ser att appen inte har hängt sig. Appen går att använda under tiden.
 
 ### 1b. Import från OnSong-backup
 - Potpurri kan öppna en OnSong-backupfil (.backup) från Filer/Dropbox. Filen är ett
