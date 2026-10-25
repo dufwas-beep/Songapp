@@ -44,6 +44,18 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   egen ikon och kan läggas i Lådan (se nedan).
 - Bilder behandlas som en sida i en låt.
 
+### 1b. Import från OnSong-backup
+- Potpurri kan öppna en OnSong-backupfil (.backup) från Filer/Dropbox. Filen är ett
+  zip-arkiv med OnSongs databas (OnSong.sqlite3) och de PDF:er/bilder som lagts in.
+- Efter inläsning visas en lista över alla låtar i backupen med kryssrutor. Låtar som redan
+  finns i Potpurri (samma namn) är urkryssade från början. "Markera alla / inga".
+- Låtar som är PDF/bild i OnSong blir vanliga låtar. Låtar skrivna direkt i OnSong
+  (text med ackord, ChordPro) blir **textlåtar** med ackorden ovanför texten, som i OnSong.
+- **Låtlistorna** från OnSong följer med (bara med de låtar som importeras).
+- **Tonart och anteckningar** följer med där det går (tonart → låtens tonart, anteckningar
+  → en gul lapp på låten).
+- Innan importen byggs undersöks en riktig backupfil för att se hur databasen ser ut.
+
 ### 2. Låtlistor
 - Fliken Låtlistor visar alla listor. **Plustecknet** skapar en ny lista som man döper själv.
 - **Lägga till låtar:** en vy med färgfilter (samma som i biblioteket) och kryssrutor.
@@ -382,7 +394,7 @@ ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritn
 
 ## Milstolpar
 1. **Grund:** Xcode-projekt, struktur, import, bibliotek, visa PDF/bild.
-2. **Layout & listor:** delad vy liggande/stående, låtlistor (+ ny lista, lägga till via färgfilter), dra-och-släpp, sök, sortering, alfabet.
+2. **Layout & listor:** import från OnSong-backup, delad vy liggande/stående, låtlistor (+ ny lista, lägga till via färgfilter), dra-och-släpp, sök, sortering, alfabet.
 3. **Spela:** autoscroll med låtlängd, pedal/tangentbord, nästa låt, förladdning, skärmen vaken, scenlås.
 4. **Färgkoder & förslag:** färgkolumner, flervalsfilter, förslag styrda av valda färger, förhandsruta.
 5. **Notes, pennor & ackord:** notes (skapa/flytta/storlek/redigera/färg/förankring, textanpassning, dölj),
