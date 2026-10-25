@@ -58,7 +58,16 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **Låtlistorna** från OnSong följer med (bara med de låtar som importeras).
 - **Tonart och anteckningar** följer med där det går (tonart → låtens tonart, anteckningar
   → en gul lapp på låten).
-- Innan importen byggs undersöks en riktig backupfil för att se hur databasen ser ut.
+- Så ser backupen ut (undersökt 2026-10-25, ~920 låtar varav ~320 borttagna):
+  - Tabellen `Song`: `title`, `key`, `content` (låttext med ackord), `filename` + `usefile`
+    (låten visar en fil: PDF, bild eller .txt), `notes` (JSON med OnSongs lappar och
+    markeringar), `deleted` (hoppas över), `duration`.
+  - Filerna ligger i arkivets rot med samma namn som `filename`. Varje PDF har också en
+    `….maintain.inverted.pdf` (OnSongs mörka kopia) som hoppas över.
+  - `.txt`-filerna är quizmanus i UTF-16 → blir **anteckningar** (till Lådan).
+  - Låtlistor: `SongSet` (titel) + `SongSetItem` (låt, ordning, `divider` = setgräns).
+  - Filnamn med å/ä/ö är UTF-8 i decomposed form och normaliseras vid import.
+- Statusfältet visas under hela inläsningen (packa upp, läsa databasen, kopiera filer).
 
 ### 2. Låtlistor
 - Fliken Låtlistor visar alla listor. **Plustecknet** skapar en ny lista som man döper själv.
