@@ -65,6 +65,9 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   - Filerna ligger i arkivets rot med samma namn som `filename`. Varje PDF har också en
     `….maintain.inverted.pdf` (OnSongs mörka kopia) som hoppas över.
   - `.txt`-filerna är quizmanus i UTF-16 → blir **anteckningar** (till Lådan).
+- **Quizmanus formateras automatiskt** (textfiler saknar formatering): rader med nummer
+  och versaler ("1 VÄLKOMMEN OMBORD") blir stora feta rubriker, frågor ("A)", "B)", "A:")
+  vanlig text, svar ("C  Mausoleum") rosa och feta med en bock, "LÅT Benjamin" nedtonat.
   - Låtlistor: `SongSet` (titel) + `SongSetItem` (låt, ordning, `divider` = setgräns).
   - Filnamn med å/ä/ö är UTF-8 i decomposed form och normaliseras vid import.
 - Statusfältet visas under hela inläsningen (packa upp, läsa databasen, kopiera filer).

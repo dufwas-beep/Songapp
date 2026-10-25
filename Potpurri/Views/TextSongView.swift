@@ -8,9 +8,9 @@ struct TextSongView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 if song.kind == .note {
-                    Text(song.text ?? "")
-                        .font(.system(size: 20))
-                        .textSelection(.enabled)
+                    ForEach(Array(NoteText.parse(song.text ?? "").enumerated()), id: \.offset) { _, line in
+                        NoteLineView(line: line)
+                    }
                 } else {
                     if let key = song.key {
                         Text("Tonart: \(key)")
@@ -47,6 +47,40 @@ struct TextSongView: View {
             .padding(.horizontal, 48)
             .padding(.vertical, 32)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+/// En rad i ett quizmanus: rubriker stora och feta, svar rosa och feta, låtrader nedtonade.
+private struct NoteLineView: View {
+    let line: NoteText.Line
+
+    var body: some View {
+        switch line.style {
+        case .heading:
+            Text(line.text)
+                .font(.system(size: 26, weight: .bold))
+                .padding(.top, 18)
+                .padding(.bottom, 4)
+        case .question, .normal:
+            Text(line.text)
+                .font(.system(size: 22))
+                .padding(.vertical, 2)
+        case .answer:
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Image(systemName: "checkmark.circle.fill")
+                Text(line.text)
+            }
+            .font(.system(size: 22, weight: .bold))
+            .foregroundStyle(Color.accentColor)
+            .padding(.leading, 24)
+            .padding(.vertical, 2)
+        case .muted:
+            Text(line.text)
+                .font(.system(size: 18))
+                .foregroundStyle(.secondary)
+        case .blank:
+            Color.clear.frame(height: 12)
         }
     }
 }
