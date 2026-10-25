@@ -12,11 +12,19 @@ struct ProgressBanner: View {
                     Text(progress.title)
                         .font(.headline)
                     Spacer()
-                    Text("\(progress.done) av \(progress.total)")
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
+                    if progress.total > 0 {
+                        Text("\(progress.done) av \(progress.total)")
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                ProgressView(value: progress.fraction)
+                // Utan känt antal (t.ex. när backupfilen hämtas) visas en snurra.
+                if progress.total > 0 {
+                    ProgressView(value: progress.fraction)
+                } else {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 HStack {
                     Text(progress.currentName)
                         .lineLimit(1)

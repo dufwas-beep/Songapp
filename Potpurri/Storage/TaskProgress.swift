@@ -32,6 +32,7 @@ final class TaskProgress {
 
     /// Ungefärlig tid kvar, räknad på hur lång tid de hittills klara filerna tagit.
     func remainingText(at now: Date) -> String {
+        guard total > 0 else { return "" }
         guard done > 0 else { return "Beräknar tid kvar …" }
         let elapsed = now.timeIntervalSince(startDate)
         let left = max(0, elapsed / Double(done) * Double(total - done))

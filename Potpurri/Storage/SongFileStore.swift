@@ -24,7 +24,15 @@ enum SongFileStore {
         return name
     }
 
+    /// Sparar data (t.ex. en fil ur en OnSong-backup) och returnerar det nya filnamnet.
+    static func store(_ data: Data, pathExtension ext: String) throws -> String {
+        let name = UUID().uuidString + (ext.isEmpty ? "" : "." + ext.lowercased())
+        try data.write(to: url(for: name), options: .atomic)
+        return name
+    }
+
     static func delete(_ fileName: String) {
+        guard !fileName.isEmpty else { return }
         try? FileManager.default.removeItem(at: url(for: fileName))
     }
 }

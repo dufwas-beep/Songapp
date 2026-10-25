@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct LibraryView: View {
     @Environment(\.modelContext) private var context
@@ -8,6 +9,8 @@ struct LibraryView: View {
 
     @State private var query = ""
     @State private var showImporter = false
+    @State private var importsOnSong = false
+    @State private var onSongBackup: OnSongBackup?
     @State private var importMessage: String?
     @State private var progress = TaskProgress()
 
@@ -35,7 +38,7 @@ struct LibraryView: View {
                 ContentUnavailableView(
                     "Inga låtar ännu",
                     systemImage: "music.note.list",
-                    description: Text("Tryck på + för att importera PDF:er och bilder från Filer.")
+                    description: Text("Tryck på + för att importera PDF:er och bilder från Filer, eller en OnSong-backup.")
                 )
             } else if visibleSongs.isEmpty {
                 ContentUnavailableView.search(text: query)
@@ -50,8 +53,19 @@ struct LibraryView: View {
         .searchable(text: $query, placement: .sidebar, prompt: "Sök titel")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showImporter = true
+                Menu {
+                    Button {
+                        importsOnSong = false
+                        showImporter = true
+                    } label: {
+                        Label("PDF:er, bilder och textfiler", systemImage: "doc.text")
+                    }
+                    Button {
+                        importsOnSong = true
+                        showImporter = true
+                    } label: {
+                        Label("OnSong-backup", systemImage: "archivebox")
+                    }
                 } label: {
                     Label("Importera", systemImage: "plus")
                 }
@@ -60,16 +74,31 @@ struct LibraryView: View {
         }
         .fileImporter(
             isPresented: $showImporter,
-            allowedContentTypes: SongImporter.allowedTypes,
-            allowsMultipleSelection: true
+            allowedContentTypes: importsOnSong ? [.data] : SongImporter.allowedTypes,
+            allowsMultipleSelection: !importsOnSong
         ) { result in
             switch result {
             case .success(let urls):
-                Task {
-                    importMessage = await SongImporter.importFiles(urls, into: context, progress: progress).summary
+                if importsOnSong, let url = urls.first {
+                    readOnSong(url)
+                } else {
+                    Task {
+                        importMessage = await SongImporter.importFiles(urls, into: context, progress: progress).summary
+                    }
                 }
             case .failure(let error):
                 importMessage = "Importen misslyckades: \(error.localizedDescription)"
+            }
+        }
+        .sheet(item: $onSongBackup) { backup in
+            OnSongImportSheet(backup: backup) { selectedIDs in
+                onSongBackup = nil
+                Task {
+                    importMessage = await OnSongImporter.importSongs(selectedIDs, from: backup, existing: songs, into: context, progress: progress)
+                }
+            } onCancel: {
+                onSongBackup = nil
+                backup.cleanUp()
             }
         }
         .alert(
@@ -82,6 +111,23 @@ struct LibraryView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(importMessage ?? "")
+        }
+    }
+
+    private func readOnSong(_ url: URL) {
+        let titles = Set(songs.map { $0.title.lowercased() })
+        Task {
+            do {
+                let backup = try await OnSongImporter.read(url, existingTitles: titles, progress: progress)
+                if backup.candidates.isEmpty {
+                    backup.cleanUp()
+                    importMessage = "Hittade inga låtar i backupen."
+                } else {
+                    onSongBackup = backup
+                }
+            } catch {
+                importMessage = "OnSong-backupen kunde inte läsas: \(error.localizedDescription)"
+            }
         }
     }
 
@@ -102,7 +148,7 @@ private struct SongRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: song.kind == .pdf ? "doc.text" : "photo")
+            Image(systemName: song.kind.symbolName)
                 .foregroundStyle(.secondary)
                 .frame(width: 20)
             Text(song.title)

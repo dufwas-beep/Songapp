@@ -24,6 +24,15 @@ Med ett gratis Apple-ID behöver appen köras om från Xcode var 7:e dag.
 - Svep åt vänster på en låt för att ta bort den.
 - Appikonen (LP:n) och rosa accentfärg.
 
+## Import från OnSong
+
+1. Gör en backup i OnSong (**Utilities → Backup**) och spara den i Dropbox eller Filer.
+2. Tryck **+ → OnSong-backup** i Potpurri och välj filen.
+3. Kryssa i vilka låtar som ska med (låtar som redan finns är urkryssade) och tryck **Importera**.
+
+PDF:er och bilder blir vanliga låtar, låtar skrivna i OnSong blir textlåtar med ackorden
+ovanför texten, textfiler (quizmanus) blir anteckningar och låtlistorna följer med.
+
 ## Automatisk kontroll
 
 Varje gång kod pushas bygger GitHub appen på en Mac i molnet

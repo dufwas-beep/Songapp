@@ -17,7 +17,7 @@ struct ImportResult {
 
 /// Importerar PDF:er och bilder som valts i Filer (där även Dropbox finns).
 enum SongImporter {
-    static let allowedTypes: [UTType] = [.pdf, .image]
+    static let allowedTypes: [UTType] = [.pdf, .image, .plainText]
 
     @MainActor
     static func importFiles(_ urls: [URL], into context: ModelContext, progress: TaskProgress) async -> ImportResult {
@@ -27,7 +27,10 @@ enum SongImporter {
             // Låtens namn är filnamnet utan ändelse.
             let title = url.deletingPathExtension().lastPathComponent
             progress.currentName = title
-            if let kind = kind(of: url), let fileName = await copyInBackground(url) {
+            if kind(of: url) == .note, let text = await readTextInBackground(url) {
+                context.insert(Song(title: title, kind: .note, text: text))
+                result.imported += 1
+            } else if let kind = kind(of: url), kind != .note, let fileName = await copyInBackground(url) {
                 context.insert(Song(title: title, kind: kind, fileName: fileName))
                 result.imported += 1
             } else {
@@ -43,7 +46,7 @@ enum SongImporter {
     /// Kopierar filen utan att låsa skärmen. Filer i Dropbox/iCloud som inte finns
     /// på iPaden laddas ner först (via filkoordinatorn), vilket kan ta en stund.
     private static func copyInBackground(_ url: URL) async -> String? {
-        await Task.detached(priority: .userInitiated) {
+        await Task.detached(priority: .userInitiated) { () -> String? in
             let accessing = url.startAccessingSecurityScopedResource()
             defer {
                 if accessing { url.stopAccessingSecurityScopedResource() }
@@ -57,10 +60,29 @@ enum SongImporter {
         }.value
     }
 
+    /// Läser en textfil (anteckning, t.ex. quizmanus) i bakgrunden.
+    private static func readTextInBackground(_ url: URL) async -> String? {
+        await Task.detached(priority: .userInitiated) { () -> String? in
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer {
+                if accessing { url.stopAccessingSecurityScopedResource() }
+            }
+            var text: String?
+            var coordinationError: NSError?
+            NSFileCoordinator().coordinate(readingItemAt: url, options: .withoutChanges, error: &coordinationError) { readURL in
+                if let data = try? Data(contentsOf: readURL) {
+                    text = OnSongBackup.decodeText(data)
+                }
+            }
+            return text
+        }.value
+    }
+
     static func kind(of url: URL) -> SongKind? {
         guard let type = UTType(filenameExtension: url.pathExtension) else { return nil }
         if type.conforms(to: .pdf) { return .pdf }
         if type.conforms(to: .image) { return .image }
+        if type.conforms(to: .plainText) { return .note }
         return nil
     }
 }

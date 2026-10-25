@@ -6,7 +6,9 @@ struct SongDetailView: View {
     var body: some View {
         if let song {
             Group {
-                if !FileManager.default.fileExists(atPath: song.fileURL.path) {
+                if song.kind == .text || song.kind == .note {
+                    TextSongView(song: song)
+                } else if !FileManager.default.fileExists(atPath: song.fileURL.path) {
                     ContentUnavailableView(
                         "Filen saknas",
                         systemImage: "exclamationmark.triangle",
@@ -18,6 +20,8 @@ struct SongDetailView: View {
                         PDFKitView(url: song.fileURL)
                     case .image:
                         ImageSongView(url: song.fileURL)
+                    case .text, .note:
+                        EmptyView()
                     }
                 }
             }
