@@ -4,6 +4,7 @@ import UIKit
 /// Visar ett låtblad som är en bild (JPG, PNG, HEIC …), anpassad till skärmens bredd.
 struct ImageSongView: View {
     let url: URL
+    var onScrollView: ((UIScrollView) -> Void)?
     @State private var image: UIImage?
     @State private var loaded = false
 
@@ -15,6 +16,9 @@ struct ImageSongView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(maxWidth: .infinity)
+                        .background {
+                            if let onScrollView { ScrollViewFinder(onFound: onScrollView) }
+                        }
                 }
             } else if loaded {
                 ContentUnavailableView("Bilden kunde inte öppnas", systemImage: "photo")

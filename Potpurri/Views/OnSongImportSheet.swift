@@ -91,12 +91,16 @@ private struct CandidateRow: View {
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.title2)
                 .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
-            Image(systemName: candidate.kind.symbolName)
-                .foregroundStyle(.secondary)
-                .frame(width: 22)
             VStack(alignment: .leading, spacing: 2) {
-                Text(candidate.title)
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(candidate.title)
+                        .lineLimit(1)
+                    if candidate.kind == .note {
+                        Image(systemName: "note.text")
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Anteckning")
+                    }
+                }
                 if candidate.alreadyExists {
                     Text("Finns redan i Potpurri")
                         .font(.caption)

@@ -21,6 +21,7 @@ enum LibrarySort: String, CaseIterable {
 
 struct LibraryView: View {
     @Environment(\.modelContext) private var context
+    @Environment(Player.self) private var player
     @Query private var songs: [Song]
     @Query private var setlists: [Setlist]
     @Binding var selection: Song?
@@ -71,13 +72,19 @@ struct LibraryView: View {
                             .tag(song)
                             .id(song.id)
                             .padding(.trailing, showsAlphabet ? 18 : 0)
-                            .contextMenu { rowMenu(for: song) }
+                            .contextMenu {
+                                if !player.isLocked { rowMenu(for: song) }
+                            }
                     }
-                    .onDelete { offsets in
-                        offsets.map { list[$0] }.forEach(delete)
-                    }
+                    .onDelete(perform: deleteAction(in: list))
                 }
                 .listStyle(.plain)
+                // Nästa/förra låt följer biblioteket när man valt en låt här.
+                .onChange(of: selection) { _, song in
+                    if let song, list.contains(song) {
+                        player.queue = list.map(\.id)
+                    }
+                }
                 .overlay(alignment: .trailing) {
                     if showsAlphabet {
                         AlphabetScrubber(available: Set(songs.map(\.indexLetter))) { letter in
@@ -181,7 +188,7 @@ struct LibraryView: View {
                 .font(.title3)
                 .frame(width: 40, height: 40)
         }
-        .disabled(progress.isRunning)
+        .disabled(progress.isRunning || player.isLocked)
         .accessibilityLabel("Importera")
     }
 
@@ -222,6 +229,14 @@ struct LibraryView: View {
         }
     }
 
+    /// Svep för att ta bort – av när scenlåset är på.
+    private func deleteAction(in list: [Song]) -> ((IndexSet) -> Void)? {
+        guard !player.isLocked else { return nil }
+        return { offsets in
+            offsets.map { list[$0] }.forEach(delete)
+        }
+    }
+
     /// Tar bort låten ur biblioteket och ur alla låtlistor.
     private func delete(_ song: Song) {
         if selection == song { selection = nil }
@@ -239,11 +254,14 @@ struct SongRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: song.kind.symbolName)
-                .foregroundStyle(.secondary)
-                .frame(width: 20)
             Text(song.title)
                 .lineLimit(1)
+            // Bara anteckningar (t.ex. quizmanus) märks – om en låt är PDF eller bild spelar ingen roll.
+            if song.kind == .note {
+                Image(systemName: "note.text")
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("Anteckning")
+            }
             Spacer(minLength: 0)
             if let key = song.key {
                 Text(key)

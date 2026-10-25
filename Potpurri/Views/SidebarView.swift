@@ -37,14 +37,34 @@ struct SidebarView: View {
     }
 }
 
-/// LP-loggan, namnet och en stor klocka (TT:MM).
+/// LP-loggan, namnet och en stor klocka (TT:MM). Håll in LP:n för scenlås.
 private struct SidebarHeader: View {
+    @Environment(Player.self) private var player
+
     var body: some View {
         HStack(spacing: 12) {
             Image("LPLogo")
                 .resizable()
                 .frame(width: 46, height: 46)
-                .accessibilityLabel("Potpurri")
+                .overlay {
+                    if player.isLocked {
+                        Circle().stroke(Color.accentColor, lineWidth: 3)
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .padding(4)
+                            .background(Color.accentColor, in: Circle())
+                            .foregroundStyle(.black)
+                            .offset(x: 16, y: 16)
+                    }
+                }
+                .onLongPressGesture(minimumDuration: 0.8) {
+                    withAnimation { player.isLocked.toggle() }
+                }
+                .accessibilityLabel(player.isLocked ? "Potpurri, scenlåset är på" : "Potpurri")
+                .accessibilityHint("Håll in för att slå på eller av scenlåset")
+                .accessibilityAction(named: player.isLocked ? "Lås upp" : "Scenlås") {
+                    player.isLocked.toggle()
+                }
             VStack(alignment: .leading, spacing: 0) {
                 Text("POTPURRI")
                     .font(.system(size: 20, weight: .medium))

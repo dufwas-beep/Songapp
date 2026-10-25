@@ -6,6 +6,7 @@ import SwiftUI
 /// ligga. Håll in och släpp utan att dra för att ta bort en låt ur listan.
 struct SetlistDetailView: View {
     @Environment(\.modelContext) private var context
+    @Environment(Player.self) private var player
     @Bindable var setlist: Setlist
     @Query private var songs: [Song]
     @Binding var selection: Song?
@@ -64,9 +65,7 @@ struct SetlistDetailView: View {
                 ForEach(allRows) { row in
                     switch row.item {
                     case .setBreak:
-                        SetHeaderRow(number: row.setNumber, count: counts[row.setNumber] ?? 0) {
-                            remove(at: row.id)
-                        }
+                        SetHeaderRow(number: row.setNumber, count: counts[row.setNumber] ?? 0, onRemove: removeAction(at: row.id))
                         .selectionDisabled()
                         .draggable("row:\(row.id)") { DragPreview(title: "Set \(row.setNumber)") }
                         .listRowBackground(Self.tint(for: row.setNumber))
@@ -76,10 +75,12 @@ struct SetlistDetailView: View {
                                 .tag(song)
                                 .draggable("row:\(row.id)") { DragPreview(title: song.title) }
                                 .contextMenu {
-                                    Button(role: .destructive) {
-                                        remove(at: row.id)
-                                    } label: {
-                                        Label("Ta bort ur listan", systemImage: "minus.circle")
+                                    if !player.isLocked {
+                                        Button(role: .destructive) {
+                                            remove(at: row.id)
+                                        } label: {
+                                            Label("Ta bort ur listan", systemImage: "minus.circle")
+                                        }
                                     }
                                 }
                                 .listRowBackground(selection == song ? Color.accentColor.opacity(0.35) : (hasSets ? Self.tint(for: row.setNumber) : nil))
@@ -87,16 +88,19 @@ struct SetlistDetailView: View {
                             Text("Låten finns inte längre i biblioteket")
                                 .foregroundStyle(.secondary)
                                 .contextMenu {
-                                    Button(role: .destructive) {
-                                        remove(at: row.id)
-                                    } label: {
-                                        Label("Ta bort ur listan", systemImage: "minus.circle")
+                                    if !player.isLocked {
+                                        Button(role: .destructive) {
+                                            remove(at: row.id)
+                                        } label: {
+                                            Label("Ta bort ur listan", systemImage: "minus.circle")
+                                        }
                                     }
                                 }
                         }
                     }
                 }
                 .dropDestination(for: String.self) { payloads, offset in
+                    guard !player.isLocked else { return }
                     drop(payloads, at: offset)
                 }
             }
@@ -114,6 +118,17 @@ struct SetlistDetailView: View {
         .sheet(isPresented: $showAddSongs) {
             AddSongsSheet(setlist: setlist)
         }
+        // Nästa/förra låt följer den här listan när man valt en låt ur den.
+        .onChange(of: selection) { _, song in
+            if let song, setlist.songIDs.contains(song.id) {
+                player.queue = setlist.songIDs
+            }
+        }
+        .onChange(of: setlist.songIDs) { _, ids in
+            if let song = selection, ids.contains(song.id) {
+                player.queue = ids
+            }
+        }
     }
 
     private var header: some View {
@@ -128,34 +143,41 @@ struct SetlistDetailView: View {
                 .font(.headline)
                 .lineLimit(1)
             Spacer(minLength: 4)
-            Button {
-                setlist.items.append(.setBreak)
-                try? context.save()
-            } label: {
-                Text("+ Set")
+            if !player.isLocked {
+                editButtons
             }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.capsule)
-            Button {
-                showAddSongs = true
-            } label: {
-                Text("+ Låtar")
-            }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.capsule)
-            Menu {
-                Button(action: onRename) { Label("Byt namn", systemImage: "pencil") }
-                Button(action: onDuplicate) { Label("Duplicera", systemImage: "plus.square.on.square") }
-                Button(role: .destructive, action: onDelete) { Label("Ta bort låtlistan", systemImage: "trash") }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-                    .font(.title3)
-                    .frame(width: 36, height: 40)
-            }
-            .accessibilityLabel("Fler val")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
+    }
+
+    @ViewBuilder
+    private var editButtons: some View {
+        Button {
+            setlist.items.append(.setBreak)
+            try? context.save()
+        } label: {
+            Text("+ Set")
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
+        Button {
+            showAddSongs = true
+        } label: {
+            Text("+ Låtar")
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
+        Menu {
+            Button(action: onRename) { Label("Byt namn", systemImage: "pencil") }
+            Button(action: onDuplicate) { Label("Duplicera", systemImage: "plus.square.on.square") }
+            Button(role: .destructive, action: onDelete) { Label("Ta bort låtlistan", systemImage: "trash") }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.title3)
+                .frame(width: 36, height: 40)
+        }
+        .accessibilityLabel("Fler val")
     }
 
     /// Släpp i listan: "row:3" flyttar en rad inom listan, "song:<id>" lägger in en låt.
@@ -175,6 +197,11 @@ struct SetlistDetailView: View {
             setlist.items = items
         }
         try? context.save()
+    }
+
+    /// × på setgränsen – av när scenlåset är på.
+    private func removeAction(at index: Int) -> (() -> Void)? {
+        player.isLocked ? nil : { remove(at: index) }
     }
 
     private func remove(at index: Int) {
@@ -255,6 +282,11 @@ private struct SetSongRow: View {
                 .frame(minWidth: 22, alignment: .trailing)
             Text(song.title)
                 .lineLimit(1)
+            if song.kind == .note {
+                Image(systemName: "note.text")
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("Anteckning")
+            }
             Spacer(minLength: 0)
             if let key = song.key {
                 Text(key)

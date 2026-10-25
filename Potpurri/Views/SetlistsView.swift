@@ -4,6 +4,7 @@ import SwiftUI
 /// Fliken Låtlistor: alla listor, eller den lista som är öppen.
 struct SetlistsView: View {
     @Environment(\.modelContext) private var context
+    @Environment(Player.self) private var player
     @Query private var setlists: [Setlist]
     @Binding var selection: Song?
 
@@ -76,6 +77,7 @@ struct SetlistsView: View {
                 }
                 .buttonStyle(.bordered)
                 .buttonBorderShape(.capsule)
+                .disabled(player.isLocked)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -101,22 +103,26 @@ struct SetlistsView: View {
                     }
                     .buttonStyle(.plain)
                     .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            deleting = list
-                        } label: {
-                            Label("Ta bort", systemImage: "trash")
+                        if !player.isLocked {
+                            Button(role: .destructive) {
+                                deleting = list
+                            } label: {
+                                Label("Ta bort", systemImage: "trash")
+                            }
+                            Button {
+                                duplicate(list)
+                            } label: {
+                                Label("Duplicera", systemImage: "plus.square.on.square")
+                            }
+                            .tint(.indigo)
                         }
-                        Button {
-                            duplicate(list)
-                        } label: {
-                            Label("Duplicera", systemImage: "plus.square.on.square")
-                        }
-                        .tint(.indigo)
                     }
                     .contextMenu {
-                        Button { startRename(list) } label: { Label("Byt namn", systemImage: "pencil") }
-                        Button { duplicate(list) } label: { Label("Duplicera", systemImage: "plus.square.on.square") }
-                        Button(role: .destructive) { deleting = list } label: { Label("Ta bort", systemImage: "trash") }
+                        if !player.isLocked {
+                            Button { startRename(list) } label: { Label("Byt namn", systemImage: "pencil") }
+                            Button { duplicate(list) } label: { Label("Duplicera", systemImage: "plus.square.on.square") }
+                            Button(role: .destructive) { deleting = list } label: { Label("Ta bort", systemImage: "trash") }
+                        }
                     }
                 }
             }

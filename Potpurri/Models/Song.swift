@@ -9,16 +9,6 @@ enum SongKind: String, Codable {
     case text
     /// Anteckning, t.ex. ett quizmanus – vanlig text utan ackord.
     case note
-
-    /// Symbol i listorna.
-    var symbolName: String {
-        switch self {
-        case .pdf: return "doc.text"
-        case .image: return "photo"
-        case .text: return "music.note"
-        case .note: return "note.text"
-        }
-    }
 }
 
 /// En låt i biblioteket. Själva filen ligger i `SongFileStore`; här sparas bara
@@ -40,6 +30,8 @@ final class Song {
     var key: String?
     /// Anteckning som följde med från OnSong. Blir en gul lapp när lapparna finns.
     var importedNote: String?
+    /// Låtens längd för autoscroll, i sekunder (0:30–10:00). Saknas den används 3:00.
+    var autoscrollSeconds: Int?
 
     init(title: String, kind: SongKind, fileName: String = "", text: String? = nil, key: String? = nil, importedNote: String? = nil) {
         self.id = UUID()

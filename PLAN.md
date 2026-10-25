@@ -44,6 +44,8 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   delas direkt från Apples Anteckningar till Potpurri. De ligger i biblioteket med en
   egen ikon och kan läggas i Lådan (se nedan).
 - Bilder behandlas som en sida i en låt.
+- **Inga typikoner på låtarna** – om en låt är PDF, bild eller textlåt spelar ingen roll.
+  Bara anteckningar (t.ex. quizmanus) har en liten ikon.
 - **Statusfält vid import och indexering:** medan låtar importeras (eller låttext indexeras)
   visas ett fält längst ner i listan med förloppsstapel, "12 av 80", namnet på filen som
   hanteras just nu och ungefärlig tid kvar ("Ca 2 min kvar"). Tiden uppdateras varje
@@ -420,7 +422,7 @@ ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritn
 ## Milstolpar
 1. **Grund:** Xcode-projekt, struktur, import, bibliotek, visa PDF/bild.
 2. **Layout & listor:** ✅ import från OnSong-backup, ✅ sidospalt med LP-logga, klocka och flikarna Låtlistor/Bibliotek, ✅ låtlistor (ny, byt namn, duplicera, ta bort, + Låtar, setgränser med färgton, dra för att ändra ordning), ✅ alfabet A–Ö, ✅ sortering, ✅ sök, ✅ liggande/stående (sidospalten dras fram i stående); kvar: dra låtar från biblioteket in i en lista (förslag och lådan kommer i milstolpe 4 och 7), lägga till via färgfilter (när färgkoderna finns i milstolpe 4).
-3. **Spela:** autoscroll med låtlängd, pedal/tangentbord, nästa låt, förladdning, skärmen vaken, scenlås.
+3. **Spela:** ✅ autoscroll med låtlängd (rund knapp i hörnet, håll in för längd, sparas per låt), ✅ pedal/tangentbord, ✅ nästa/förra låt (följer listan man valde låten ur), ✅ förladdning, ✅ skärmen vaken, ✅ scenlås (håll in LP-loggan), ✅ klocka i låtvyn när sidospalten är dold, ✅ låt räknas som spelad efter 30 s.
 4. **Färgkoder & förslag:** färgkolumner, flervalsfilter, förslag styrda av valda färger, förhandsruta.
 5. **Notes, pennor & ackord:** notes (skapa/flytta/storlek/redigera/färg/förankring, textanpassning, dölj),
    markeringspennor, ackordstämplar (radsnäpp, grupper, kopiera, transponera).

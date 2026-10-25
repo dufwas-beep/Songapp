@@ -5,6 +5,7 @@ import SwiftUI
 /// större när biblioteket är stängt, mindre när det är öppet.
 struct TextSongView: View {
     let song: Song
+    var onScrollView: ((UIScrollView) -> Void)?
 
     /// Textlåtar utan ackord (t.ex. quizmanus skrivna i OnSong) visas som anteckningar.
     private var showsAsNote: Bool {
@@ -26,7 +27,12 @@ struct TextSongView: View {
                 }
                 .padding(.horizontal, 48 * min(scale, 1))
                 .padding(.vertical, 32)
+                // Plats för autoscrollknappen så att sista raden inte hamnar under den.
+                .padding(.bottom, 80)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .background {
+                    if let onScrollView { ScrollViewFinder(onFound: onScrollView) }
+                }
             }
         }
     }
