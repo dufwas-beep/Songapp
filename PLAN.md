@@ -297,6 +297,11 @@ vilka låtar som passar efter, eller som medley.
   (ca 0,2 s). Lodrätt drag scrollar listan som vanligt. Den lossnade raden följer fingret
   och **släpps på lådan** – vid handtaget när lådan är stängd, eller var som helst på den
   öppna lådan (lådan lyser upp). Det nya innehållet ersätter det gamla. Anteckningar kan även läggas i lådan med ett tryck.
+- **Skriva i lådan:** knappen "Skriv" i lådan.
+  - En **anteckning** (t.ex. quizmanus) blir redigerbar direkt – fyll i poäng, svar eller
+    egna rader var som helst i texten.
+  - En **låt** får ett eget gult fritextfält, "Mina anteckningar", ovanför låtbladet.
+  - "Klar" sparar. Texten följer med anteckningen/låten och finns kvar nästa gång.
 - När soundboarden är öppen lägger sig handtaget och lådan till vänster om den.
 
 ### 15. Spotify
