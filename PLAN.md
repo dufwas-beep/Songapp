@@ -416,7 +416,7 @@ ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritn
 
 ## Milstolpar
 1. **Grund:** Xcode-projekt, struktur, import, bibliotek, visa PDF/bild.
-2. **Layout & listor:** import från OnSong-backup, delad vy liggande/stående, låtlistor (+ ny lista, lägga till via färgfilter), dra-och-släpp, sök, sortering, alfabet.
+2. **Layout & listor:** ✅ import från OnSong-backup, ✅ sidospalt med LP-logga, klocka och flikarna Låtlistor/Bibliotek, ✅ låtlistor (ny, byt namn, duplicera, ta bort, + Låtar, setgränser med färgton, dra för att ändra ordning), ✅ alfabet A–Ö, ✅ sortering; kvar: delad vy liggande/stående, låtlistor (+ ny lista, lägga till via färgfilter), dra-och-släpp, sök, sortering, alfabet.
 3. **Spela:** autoscroll med låtlängd, pedal/tangentbord, nästa låt, förladdning, skärmen vaken, scenlås.
 4. **Färgkoder & förslag:** färgkolumner, flervalsfilter, förslag styrda av valda färger, förhandsruta.
 5. **Notes, pennor & ackord:** notes (skapa/flytta/storlek/redigera/färg/förankring, textanpassning, dölj),

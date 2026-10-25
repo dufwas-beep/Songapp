@@ -20,3 +20,43 @@ final class Setlist {
         self.setBreaks = setBreaks
     }
 }
+
+/// En rad i en låtlista: en låt eller en setgräns.
+enum SetlistItem: Hashable {
+    case song(UUID)
+    case setBreak
+}
+
+extension Setlist {
+    /// Låtar och setgränser i ordning – så som listan visas och dras om.
+    var items: [SetlistItem] {
+        get {
+            var result: [SetlistItem] = []
+            for index in 0...songIDs.count {
+                let breaksHere = setBreaks.filter { $0 == index }.count
+                result.append(contentsOf: Array(repeating: SetlistItem.setBreak, count: breaksHere))
+                if index < songIDs.count {
+                    result.append(.song(songIDs[index]))
+                }
+            }
+            return result
+        }
+        set {
+            var ids: [UUID] = []
+            var breaks: [Int] = []
+            for item in newValue {
+                switch item {
+                case .song(let id): ids.append(id)
+                case .setBreak: breaks.append(ids.count)
+                }
+            }
+            songIDs = ids
+            setBreaks = breaks
+        }
+    }
+
+    /// Tar bort en låt överallt i listan (t.ex. när låten tas bort ur biblioteket).
+    func removeSong(_ id: UUID) {
+        items = items.filter { $0 != .song(id) }
+    }
+}

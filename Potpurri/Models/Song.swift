@@ -65,3 +65,25 @@ final class Song {
         SongFileStore.url(for: fileName)
     }
 }
+
+extension Song {
+    private static let swedish = Locale(identifier: "sv_SE")
+
+    /// Svensk bokstavsordning (Å, Ä, Ö sist) och siffror i nummerordning.
+    static func swedishOrder(_ a: Song, _ b: Song) -> Bool {
+        a.title.compare(b.title, options: [.caseInsensitive, .numeric], range: nil, locale: swedish) == .orderedAscending
+    }
+
+    /// Bokstaven låten sorteras under i alfabetet vid sidan av biblioteket.
+    var indexLetter: String {
+        guard let first = title.trimmingCharacters(in: .whitespaces).first else { return "#" }
+        let upper = String(first).uppercased()
+        if ["Å", "Ä", "Ö"].contains(upper) { return upper }
+        // É, Ü och liknande hamnar under sin grundbokstav.
+        let plain = upper.folding(options: .diacriticInsensitive, locale: Self.swedish)
+        if plain.count == 1, let letter = plain.first, letter >= "A", letter <= "Z" {
+            return plain
+        }
+        return "#"
+    }
+}

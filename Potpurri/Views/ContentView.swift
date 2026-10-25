@@ -1,14 +1,15 @@
 import SwiftUI
 
-/// Liggande: biblioteket till vänster och låten till höger.
-/// Stående: låten i helskärm och biblioteket som en meny man drar fram.
+/// Liggande: låtlistor/bibliotek till vänster och låten till höger.
+/// Stående: låten i helskärm och sidospalten som en meny man drar fram.
 struct ContentView: View {
     @State private var selection: Song?
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
-            LibraryView(selection: $selection)
+            SidebarView(selection: $selection)
+                .navigationSplitViewColumnWidth(min: 320, ideal: 380, max: 460)
         } detail: {
             SongDetailView(song: selection)
         }
