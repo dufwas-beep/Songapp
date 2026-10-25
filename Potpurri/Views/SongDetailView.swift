@@ -18,8 +18,11 @@ struct SongDetailView: View {
             ZStack(alignment: .bottomTrailing) {
                 songSheet(for: song)
                     .id(song.id)
-                AutoscrollButton(autoscroller: autoscroller, seconds: secondsBinding(for: song))
-                    .padding(24)
+                HStack(alignment: .center, spacing: 12) {
+                    SongStepButtons(previous: previous, next: next, onSelect: onSelect)
+                    AutoscrollButton(autoscroller: autoscroller, seconds: secondsBinding(for: song))
+                }
+                .padding(24)
             }
             .overlay(alignment: .top) {
                 if player.isLocked {
@@ -35,30 +38,6 @@ struct SongDetailView: View {
             }
             .navigationTitle(song.title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button {
-                        if let previous { onSelect(previous) }
-                    } label: {
-                        Label("Förra låten", systemImage: "chevron.left")
-                    }
-                    .disabled(previous == nil)
-                    Button {
-                        if let next { onSelect(next) }
-                    } label: {
-                        HStack(spacing: 4) {
-                            if let next {
-                                Text(next.title)
-                                    .lineLimit(1)
-                                    .frame(maxWidth: 220)
-                            }
-                            Image(systemName: "chevron.right")
-                        }
-                    }
-                    .disabled(next == nil)
-                    .accessibilityLabel(next.map { "Nästa låt: \($0.title)" } ?? "Ingen nästa låt")
-                }
-            }
             .focusable()
             .focusEffectDisabled()
             .focused($focused)
@@ -128,5 +107,56 @@ struct SongDetailView: View {
         if !autoscroller.page(forward: false), let previous {
             onSelect(previous)
         }
+    }
+}
+
+/// Förra och nästa låt, nere till höger bredvid autoscrollknappen. Nästa visar låtens namn.
+private struct SongStepButtons: View {
+    let previous: Song?
+    let next: Song?
+    let onSelect: (Song) -> Void
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Button {
+                if let previous { onSelect(previous) }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .semibold))
+                    .frame(width: 52, height: 56)
+            }
+            .disabled(previous == nil)
+            .accessibilityLabel(previous.map { "Förra låten: \($0.title)" } ?? "Ingen förra låt")
+
+            Divider()
+                .frame(height: 30)
+
+            Button {
+                if let next { onSelect(next) }
+            } label: {
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("NÄSTA")
+                            .font(.system(size: 11, weight: .semibold))
+                            .tracking(1)
+                            .foregroundStyle(.secondary)
+                        Text(next?.title ?? "Slut på listan")
+                            .font(.system(size: 16, weight: .medium))
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: 240, alignment: .leading)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 18, weight: .semibold))
+                }
+                .padding(.leading, 14)
+                .padding(.trailing, 16)
+                .frame(height: 56)
+            }
+            .disabled(next == nil)
+            .accessibilityLabel(next.map { "Nästa låt: \($0.title)" } ?? "Ingen nästa låt")
+        }
+        .foregroundStyle(.primary)
+        .background(.regularMaterial, in: Capsule())
+        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
     }
 }

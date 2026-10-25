@@ -16,6 +16,8 @@ struct SetlistDetailView: View {
     let onDelete: () -> Void
 
     @State private var showAddSongs = false
+    /// Raden som en dragen låt just nu hänger över (där den rosa linjen visas).
+    @State private var dropTarget: Int?
 
     /// En rad i listan med uppgift om vilket set den hör till.
     private struct Row: Identifiable {
@@ -63,46 +65,44 @@ struct SetlistDetailView: View {
                         .moveDisabled(true)
                 }
                 ForEach(allRows) { row in
-                    switch row.item {
-                    case .setBreak:
-                        SetHeaderRow(number: row.setNumber, count: counts[row.setNumber] ?? 0, onRemove: removeAction(at: row.id))
-                        .selectionDisabled()
-                        .draggable("row:\(row.id)") { DragPreview(title: "Set \(row.setNumber)") }
-                        .listRowBackground(Self.tint(for: row.setNumber))
-                    case .song(let id):
-                        if let song = songsByID[id] {
-                            SetSongRow(number: row.number, song: song)
-                                .tag(song)
-                                .draggable("row:\(row.id)") { DragPreview(title: song.title) }
-                                .contextMenu {
-                                    if !player.isLocked {
-                                        Button(role: .destructive) {
-                                            remove(at: row.id)
-                                        } label: {
-                                            Label("Ta bort ur listan", systemImage: "minus.circle")
-                                        }
-                                    }
-                                }
-                                .listRowBackground(selection == song ? Color.accentColor.opacity(0.35) : (hasSets ? Self.tint(for: row.setNumber) : nil))
-                        } else {
-                            Text("Låten finns inte längre i biblioteket")
-                                .foregroundStyle(.secondary)
-                                .contextMenu {
-                                    if !player.isLocked {
-                                        Button(role: .destructive) {
-                                            remove(at: row.id)
-                                        } label: {
-                                            Label("Ta bort ur listan", systemImage: "minus.circle")
-                                        }
-                                    }
-                                }
+                    rowView(row, songsByID: songsByID, counts: counts)
+                        // Släpp på en rad = lägg den dragna raden före den. En rosa linje visar var.
+                        .dropDestination(for: String.self) { payloads, _ in
+                            guard !player.isLocked else { return false }
+                            drop(payloads, at: row.id)
+                            return true
+                        } isTargeted: { targeted in
+                            if targeted {
+                                dropTarget = row.id
+                            } else if dropTarget == row.id {
+                                dropTarget = nil
+                            }
+                        }
+                        .overlay(alignment: .top) {
+                            if dropTarget == row.id {
+                                DropLine()
+                            }
+                        }
+                }
+                // Tom rad sist så att man kan släppa längst ner i listan.
+                Color.clear
+                    .frame(height: 56)
+                    .listRowSeparator(.hidden)
+                    .selectionDisabled()
+                    .moveDisabled(true)
+                    .contentShape(Rectangle())
+                    .dropDestination(for: String.self) { payloads, _ in
+                        guard !player.isLocked else { return false }
+                        drop(payloads, at: allRows.count)
+                        return true
+                    } isTargeted: { targeted in
+                        dropTarget = targeted ? allRows.count : (dropTarget == allRows.count ? nil : dropTarget)
+                    }
+                    .overlay(alignment: .top) {
+                        if dropTarget == allRows.count {
+                            DropLine()
                         }
                     }
-                }
-                .dropDestination(for: String.self) { payloads, offset in
-                    guard !player.isLocked else { return }
-                    drop(payloads, at: offset)
-                }
             }
             .listStyle(.plain)
             .overlay {
@@ -185,6 +185,40 @@ struct SetlistDetailView: View {
         .accessibilityLabel("Fler val")
     }
 
+    @ViewBuilder
+    private func rowView(_ row: Row, songsByID: [UUID: Song], counts: [Int: Int]) -> some View {
+        switch row.item {
+        case .setBreak:
+            SetHeaderRow(number: row.setNumber, count: counts[row.setNumber] ?? 0, onRemove: removeAction(at: row.id))
+                .selectionDisabled()
+                .draggable("row:\(row.id)") { DragPreview(title: "Set \(row.setNumber)") }
+                .listRowBackground(Self.tint(for: row.setNumber))
+        case .song(let id):
+            if let song = songsByID[id] {
+                SetSongRow(number: row.number, song: song)
+                    .tag(song)
+                    .draggable("row:\(row.id)") { DragPreview(title: song.title) }
+                    .contextMenu { removeMenu(at: row.id) }
+                    .listRowBackground(selection == song ? Color.accentColor.opacity(0.35) : (hasSets ? Self.tint(for: row.setNumber) : nil))
+            } else {
+                Text("Låten finns inte längre i biblioteket")
+                    .foregroundStyle(.secondary)
+                    .contextMenu { removeMenu(at: row.id) }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func removeMenu(at index: Int) -> some View {
+        if !player.isLocked {
+            Button(role: .destructive) {
+                remove(at: index)
+            } label: {
+                Label("Ta bort ur listan", systemImage: "minus.circle")
+            }
+        }
+    }
+
     /// Släpp i listan: "row:3" flyttar en rad inom listan, "song:<id>" lägger in en låt.
     private func drop(_ payloads: [String], at offset: Int) {
         var items = setlist.items
@@ -198,6 +232,7 @@ struct SetlistDetailView: View {
                 target += 1
             }
         }
+        dropTarget = nil
         withAnimation {
             setlist.items = items
         }
@@ -221,6 +256,18 @@ struct SetlistDetailView: View {
     static func tint(for setNumber: Int) -> Color {
         let colors: [Color] = [Color.accentColor, .purple, .teal, .orange, .blue]
         return colors[(setNumber - 1) % colors.count].opacity(0.08)
+    }
+}
+
+/// Den rosa linjen som visar var en dragen låt hamnar.
+private struct DropLine: View {
+    var body: some View {
+        Capsule()
+            .fill(Color.accentColor)
+            .frame(height: 4)
+            .padding(.horizontal, 4)
+            .offset(y: -2)
+            .allowsHitTesting(false)
     }
 }
 
