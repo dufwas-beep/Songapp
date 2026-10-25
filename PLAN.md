@@ -34,8 +34,9 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - Sök på namn.
 - Listan scrollas med fingret. Vid sidan av biblioteket finns ett **alfabet (A–Ö)** att dra
   fingret längs: bokstäverna närmast fingret förstoras som Dock på en Mac, en stor bokstav
-  visas bredvid, listan hoppar direkt till bokstaven och varje bokstavsbyte ger en kort
-  haptisk "tick" i fingret. Bokstäver utan låtar är nedtonade.
+  visas bredvid och listan hoppar direkt till bokstaven. (iPad har ingen vibrationsmotor,
+  så en "tick" i fingret går inte – den stora bokstaven ger i stället en liten studs vid
+  varje byte.) Bokstäver utan låtar är nedtonade.
 - Sortering: namn, tillagd datum, senast spelad, mest spelad.
 - **Färgfilter:** tryck på en eller flera färger. Låtar med någon av de valda färgerna
   visas, och de som har flest av färgerna hamnar först.
@@ -86,7 +87,8 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - Byta namn på, **duplicera** och ta bort listor. En kopia (t.ex. av "Bröllop") blir en
   ny lista med samma låtar i samma ordning, som man döper om och ändrar fritt.
 - Samma låt kan ligga i flera listor.
-- Egen ordning genom att dra låtar i handtaget (≡) till vänster på raden.
+- Egen ordning genom att dra låtar i handtaget (≡), som alltid syns till höger på raden.
+  Håll in en låt för att ta bort den ur listan.
 - **Dra och släpp mellan listorna:** håll in en låt (eller dra den åt höger) så lossnar
   den och följer fingret. Den kan släppas:
   - **i låtlistan** – en rosa linje visar var den hamnar, även i ett annat set. Kom den

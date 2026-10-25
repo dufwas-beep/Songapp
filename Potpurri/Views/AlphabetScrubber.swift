@@ -2,8 +2,9 @@ import SwiftUI
 import UIKit
 
 /// Alfabetet vid sidan av biblioteket. Dra fingret längs bokstäverna: de närmast fingret
-/// förstoras (som Dock på en Mac), en stor bokstav visas bredvid, listan hoppar dit och
-/// varje bokstavsbyte ger ett kort "tick". Bokstäver utan låtar är nedtonade.
+/// förstoras (som Dock på en Mac), en stor bokstav visas bredvid och studsar till vid varje
+/// byte, och listan hoppar dit. Bokstäver utan låtar är nedtonade. (iPad saknar
+/// vibrationsmotor; på enheter som har en ger bytet också ett kort "tick".)
 struct AlphabetScrubber: View {
     static let letters = (65...90).map { String(UnicodeScalar($0)!) } + ["Å", "Ä", "Ö", "#"]
 
@@ -12,6 +13,7 @@ struct AlphabetScrubber: View {
 
     @State private var touchY: CGFloat?
     @State private var current: String?
+    @State private var pulse = false
     private let feedback = UISelectionFeedbackGenerator()
 
     var body: some View {
@@ -35,6 +37,7 @@ struct AlphabetScrubber: View {
                         .frame(width: 84, height: 84)
                         .background(.regularMaterial, in: Circle())
                         .overlay(Circle().stroke(Color.accentColor, lineWidth: 3))
+                        .scaleEffect(pulse ? 1.15 : 1)
                         .offset(x: -70, y: min(max(touchY - 42, 0), geometry.size.height - 84))
                         .allowsHitTesting(false)
                 }
@@ -49,6 +52,10 @@ struct AlphabetScrubber: View {
                         guard letter != current else { return }
                         current = letter
                         feedback.selectionChanged()
+                        pulse = true
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.5)) {
+                            pulse = false
+                        }
                         // Saknas bokstaven hoppar listan till nästa bokstav som har låtar.
                         if let target = Self.letters[index...].first(where: available.contains) {
                             onSelect(target)

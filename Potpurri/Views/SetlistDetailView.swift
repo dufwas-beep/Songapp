@@ -2,7 +2,8 @@ import SwiftData
 import SwiftUI
 
 /// En öppen låtlista: låtarna i ordning, indelade i set med setgränser.
-/// Låtar och setgränser dras upp och ner i handtaget; svep åt vänster tar bort.
+/// Låtar och setgränser dras upp och ner i handtaget (≡) som alltid syns till höger.
+/// Håll in en låt för att ta bort den ur listan.
 struct SetlistDetailView: View {
     @Environment(\.modelContext) private var context
     @Bindable var setlist: Setlist
@@ -14,7 +15,8 @@ struct SetlistDetailView: View {
     let onDelete: () -> Void
 
     @State private var showAddSongs = false
-    @State private var editMode: EditMode = .inactive
+    /// Listan är alltid i ordningsläge så att handtagen syns och går att dra direkt.
+    @State private var editMode: EditMode = .active
 
     /// En rad i listan med uppgift om vilket set den hör till.
     private struct Row: Identifiable {
@@ -57,9 +59,9 @@ struct SetlistDetailView: View {
             List(selection: $selection) {
                 if hasSets, allRows.first.map({ $0.item != .setBreak }) ?? false {
                     SetHeaderRow(number: 1, count: counts[1] ?? 0, onRemove: nil)
+                        .selectionDisabled()
                         .listRowBackground(Self.tint(for: 1))
                         .moveDisabled(true)
-                        .deleteDisabled(true)
                 }
                 ForEach(allRows) { row in
                     switch row.item {
@@ -67,27 +69,36 @@ struct SetlistDetailView: View {
                         SetHeaderRow(number: row.setNumber, count: counts[row.setNumber] ?? 0) {
                             remove(at: row.id)
                         }
+                        .selectionDisabled()
                         .listRowBackground(Self.tint(for: row.setNumber))
                     case .song(let id):
                         if let song = songsByID[id] {
                             SetSongRow(number: row.number, song: song)
                                 .tag(song)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        remove(at: row.id)
+                                    } label: {
+                                        Label("Ta bort ur listan", systemImage: "minus.circle")
+                                    }
+                                }
                                 .listRowBackground(selection == song ? Color.accentColor.opacity(0.35) : (hasSets ? Self.tint(for: row.setNumber) : nil))
                         } else {
                             Text("Låten finns inte längre i biblioteket")
                                 .foregroundStyle(.secondary)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        remove(at: row.id)
+                                    } label: {
+                                        Label("Ta bort ur listan", systemImage: "minus.circle")
+                                    }
+                                }
                         }
                     }
                 }
                 .onMove { from, to in
                     var items = setlist.items
                     items.move(fromOffsets: from, toOffset: to)
-                    setlist.items = items
-                    try? context.save()
-                }
-                .onDelete { offsets in
-                    var items = setlist.items
-                    items.remove(atOffsets: offsets)
                     setlist.items = items
                     try? context.save()
                 }
@@ -137,11 +148,6 @@ struct SetlistDetailView: View {
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
             Menu {
-                Button {
-                    withAnimation { editMode = editMode.isEditing ? .inactive : .active }
-                } label: {
-                    Label(editMode.isEditing ? "Klar med ordningen" : "Ändra ordning", systemImage: "line.3.horizontal")
-                }
                 Button(action: onRename) { Label("Byt namn", systemImage: "pencil") }
                 Button(action: onDuplicate) { Label("Duplicera", systemImage: "plus.square.on.square") }
                 Button(role: .destructive, action: onDelete) { Label("Ta bort låtlistan", systemImage: "trash") }
