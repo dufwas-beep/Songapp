@@ -7,9 +7,9 @@ struct TextSongView: View {
     let song: Song
     var onScrollView: ((UIScrollView) -> Void)?
 
-    /// Textlåtar utan ackord (t.ex. quizmanus skrivna i OnSong) visas som anteckningar.
+    /// Anteckningar (quizmanus) visas med quizformateringen; allt annat som en låt.
     private var showsAsNote: Bool {
-        song.kind == .note || !ChordProText.hasChords(song.text ?? "")
+        song.kind == .note
     }
 
     var body: some View {

@@ -86,8 +86,8 @@ struct OnSongBackup: Identifiable {
                 content = .file(entryName: entry.name)
             }
             if kind == nil, let text = row["content"], Self.hasLyrics(text, title: title) {
-                // Text utan ackord är oftast ett quizmanus eller en anteckning.
-                kind = ChordProText.hasChords(text) ? .text : .note
+                // Ett quizmanus skrivet i OnSong blir en anteckning; låttext (med eller utan ackord) en låt.
+                kind = !ChordProText.hasChords(text) && NoteText.looksLikeQuiz(text) ? .note : .text
                 content = .text(text)
             }
             guard let kind, let content else { continue }

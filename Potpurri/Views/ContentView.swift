@@ -8,10 +8,19 @@ struct ContentView: View {
     @State private var selection: Song?
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var player = Player()
+    @AppStorage("migratedSongNotes") private var migratedSongNotes = false
 
     private func song(_ id: UUID?) -> Song? {
         guard let id else { return nil }
         return songs.first { $0.id == id }
+    }
+
+    /// Nästa (+1) eller förra (−1) låt: i listan låten valdes ur, annars i biblioteket.
+    private func neighbor(_ step: Int) -> Song? {
+        guard let id = selection?.id else { return nil }
+        let order = player.queue.contains(id) ? player.queue : songs.sorted(by: Song.swedishOrder).map(\.id)
+        guard let index = order.firstIndex(of: id), order.indices.contains(index + step) else { return nil }
+        return song(order[index + step])
     }
 
     var body: some View {
@@ -21,8 +30,8 @@ struct ContentView: View {
         } detail: {
             SongDetailView(
                 song: selection,
-                previous: song(player.previous(before: selection?.id)),
-                next: song(player.next(after: selection?.id)),
+                previous: neighbor(-1),
+                next: neighbor(1),
                 onSelect: { selection = $0 }
             )
             .overlay(alignment: .topLeading) {
@@ -38,7 +47,18 @@ struct ContentView: View {
         .onAppear {
             // Skärmen släcks aldrig medan Potpurri är öppen.
             UIApplication.shared.isIdleTimerDisabled = true
+            fixSongsImportedAsNotes()
         }
+    }
+
+    /// Tidigare blev OnSong-låtar utan ackord felaktigt anteckningar. Bara quizmanus
+    /// ska vara anteckningar; övriga görs om till låtar (en gång).
+    private func fixSongsImportedAsNotes() {
+        guard !migratedSongNotes else { return }
+        for song in songs where song.kind == .note && !NoteText.looksLikeQuiz(song.text ?? "") {
+            song.kindRaw = SongKind.text.rawValue
+        }
+        migratedSongNotes = true
     }
 }
 

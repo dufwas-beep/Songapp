@@ -119,6 +119,11 @@ struct SetlistDetailView: View {
             AddSongsSheet(setlist: setlist)
         }
         // Nästa/förra låt följer den här listan när man valt en låt ur den.
+        .onAppear {
+            if let song = selection, setlist.songIDs.contains(song.id) {
+                player.queue = setlist.songIDs
+            }
+        }
         .onChange(of: selection) { _, song in
             if let song, setlist.songIDs.contains(song.id) {
                 player.queue = setlist.songIDs

@@ -17,6 +17,18 @@ enum NoteText {
         let text: String
     }
 
+    /// Ser texten ut som ett quizmanus (frågor "A)" och svar "C  …")? Annars är det en låt.
+    static func looksLikeQuiz(_ text: String) -> Bool {
+        var questions = 0
+        var answers = 0
+        for raw in text.components(separatedBy: .newlines) {
+            let line = raw.replacingOccurrences(of: "\t", with: "  ").trimmingCharacters(in: .whitespaces)
+            if line.range(of: "^C\\s+\\S", options: .regularExpression) != nil { answers += 1 }
+            if line.range(of: "^[A-Z][):]\\s", options: .regularExpression) != nil { questions += 1 }
+        }
+        return answers >= 1 && questions >= 1
+    }
+
     static func parse(_ text: String) -> [Line] {
         var result: [Line] = []
         for raw in text.components(separatedBy: .newlines) {

@@ -10,14 +10,4 @@ final class Player {
     var queue: [UUID] = []
     /// Scenlås: bara scrolla, byta låt och autoscroll – inget kan ändras av misstag.
     var isLocked = false
-
-    func next(after id: UUID?) -> UUID? {
-        guard let id, let index = queue.firstIndex(of: id), index + 1 < queue.count else { return nil }
-        return queue[index + 1]
-    }
-
-    func previous(before id: UUID?) -> UUID? {
-        guard let id, let index = queue.firstIndex(of: id), index > 0 else { return nil }
-        return queue[index - 1]
-    }
 }
