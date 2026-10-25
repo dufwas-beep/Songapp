@@ -332,6 +332,9 @@ vilka låtar som passar efter, eller som medley.
 - Steg för steg med en ljuskägla runt det som förklaras och ett kort bredvid: välkomst,
   låtlistor/bibliotek, sök, låtlistan, färgkoder, "Passar efter", låtbladet, autoscroll,
   fler funktioner (•••), ljudklipp, lådan, LP:n (slumpa/scenlås), Ny spelning, klart.
+- Sök-steget berättar att låtar som inte finns i biblioteket hittas på nätet.
+- "Passar efter"-steget berättar att ett valt förslag lägger sig i rutan under låtbladet
+  och att man trycker på rutan när det är dags att byta låt.
 - Prickar visar hur långt man kommit. Knappar: Nästa, Tillbaka och **Hoppa över guiden**.
 - Tryck utanför kortet hoppar också över. Guiden kan visas igen under ••• → **Visa guiden**.
 - Anpassar sig till skärmen (iPad 13" och 11").
