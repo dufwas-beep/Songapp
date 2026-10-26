@@ -39,6 +39,7 @@ struct LibraryView: View {
     /// Den sorterade listan sparas tills något som påverkar den ändras – svensk sortering
     /// av hundratals låtar är för långsam att göra om vid varje tryck (t.ex. i färgläget).
     @State private var cache = ListCache()
+    @State private var webQuery: String?
 
     final class ListCache {
         var key: Int?
@@ -57,6 +58,7 @@ struct LibraryView: View {
             if sort == .lastPlayed { hasher.combine(song.lastPlayed) }
             if sort == .mostPlayed { hasher.combine(song.playCount) }
             if !colorFilter.isEmpty { hasher.combine(song.colorTags) }
+            if !query.isEmpty { hasher.combine(song.searchText?.count) }
         }
         return hasher.finalize()
     }
@@ -74,7 +76,8 @@ struct LibraryView: View {
     /// Sökning på titel, färgfilter och vald sortering.
     private var visibleSongs: [Song] {
         let q = query.trimmingCharacters(in: .whitespaces)
-        var filtered = q.isEmpty ? songs : songs.filter { $0.title.localizedCaseInsensitiveContains(q) }
+        // Sökningen träffar både titel och låttext (även utläst ur PDF:er och bilder).
+        var filtered = q.isEmpty ? songs : songs.filter { $0.matches(q) }
         if !colorFilter.isEmpty {
             filtered = filtered.filter { !colorFilter.isDisjoint(with: $0.colorTags) }
         }
@@ -104,7 +107,7 @@ struct LibraryView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                SearchField(text: $query, prompt: "Sök titel")
+                SearchField(text: $query, prompt: "Sök titel eller låttext")
                 sortMenu
                 importMenu
             }
@@ -147,6 +150,16 @@ struct LibraryView: View {
                             }
                     }
                     .onDelete(perform: deleteAction(in: list))
+                    // Hittar man inte låten: sök på webben.
+                    if !query.trimmingCharacters(in: .whitespaces).isEmpty && !player.isLocked {
+                        Button {
+                            webQuery = query
+                        } label: {
+                            Label("Hittar du inte låten? Sök \"\(query)\" på webben", systemImage: "globe")
+                                .font(.subheadline)
+                        }
+                        .listRowSeparator(.hidden)
+                    }
                 }
                 .listStyle(.plain)
                 // Nästa/förra låt följer biblioteket när man valt en låt här.
@@ -174,13 +187,28 @@ struct LibraryView: View {
                         description: Text("Tryck på + för att importera PDF:er och bilder från Filer, eller en OnSong-backup.")
                     )
                 } else if list.isEmpty {
-                    ContentUnavailableView.search(text: query)
+                    ContentUnavailableView {
+                        Label("Ingen träff på \"\(query)\"", systemImage: "magnifyingglass")
+                    } actions: {
+                        Button("Sök på webben") { webQuery = query }
+                            .buttonStyle(.borderedProminent)
+                            .foregroundStyle(.black)
+                            .disabled(player.isLocked)
+                    }
                 }
             }
         }
         .safeAreaInset(edge: .bottom) {
             if progress.isRunning {
                 ProgressBanner(progress: progress)
+            } else if player.indexing.isRunning {
+                ProgressBanner(progress: player.indexing)
+            }
+        }
+        .sheet(isPresented: Binding(get: { webQuery != nil }, set: { if !$0 { webQuery = nil } })) {
+            WebSearchSheet(initialQuery: webQuery ?? "") { song in
+                query = ""
+                selection = song
             }
         }
         .fileImporter(
@@ -264,6 +292,11 @@ struct LibraryView: View {
 
     @ViewBuilder
     private func rowMenu(for song: Song) -> some View {
+        Button {
+            player.renamingSongID = song.id
+        } label: {
+            Label("Byt namn", systemImage: "pencil")
+        }
         Menu {
             ForEach(setlists.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }) { list in
                 Button(list.name) {

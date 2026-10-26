@@ -1,3 +1,4 @@
+import PDFKit
 import SwiftData
 import SwiftUI
 import UIKit
@@ -169,6 +170,33 @@ struct SongDetailView: View {
             } label: {
                 Label("Färgkoder", systemImage: "paintpalette")
             }
+            Divider()
+            Button {
+                player.renamingSongID = song.id
+            } label: {
+                Label("Byt namn", systemImage: "pencil")
+            }
+            if song.kind == .pdf {
+                Button {
+                    makeEditable(song)
+                } label: {
+                    Label("Gör redigerbar (text)", systemImage: "text.cursor")
+                }
+            }
+            if song.kind == .text || song.kind == .note {
+                Button {
+                    player.editingTextSongID = song.id
+                } label: {
+                    Label("Redigera texten", systemImage: "square.and.pencil")
+                }
+            }
+            if song.canRestorePDF {
+                Button {
+                    song.kindRaw = SongKind.pdf.rawValue
+                } label: {
+                    Label("Återställ PDF", systemImage: "arrow.uturn.backward")
+                }
+            }
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: 22, weight: .semibold))
@@ -180,6 +208,15 @@ struct SongDetailView: View {
         .popover(isPresented: $showsColors) {
             SongColorsPanel(song: song)
         }
+    }
+
+    /// "Gör redigerbar": texten plockas ur PDF:en och låten blir en textlåt. Originalfilen
+    /// sparas, så låten kan återställas till PDF-visning.
+    private func makeEditable(_ song: Song) {
+        let text = PDFCache.shared.document(for: song.fileURL)?.string ?? song.searchText ?? ""
+        song.text = text.isEmpty ? song.title : text
+        song.kindRaw = SongKind.text.rawValue
+        player.editingTextSongID = song.id
     }
 
     private func secondsBinding(for song: Song) -> Binding<Int> {

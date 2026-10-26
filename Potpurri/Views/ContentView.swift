@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var player = Player()
     @State private var colorCodes = ColorCodes()
+    @State private var renameDraft = ""
     @AppStorage("migratedSongNotes") private var migratedSongNotes = false
     @Environment(\.scenePhase) private var scenePhase
 
@@ -54,6 +55,27 @@ struct ContentView: View {
                         .padding(.leading, 70)
                         .padding(.top, 6)
                 }
+            }
+        }
+        // Låttexten i PDF:er och bilder läses ut i bakgrunden så att sökningen hittar den.
+        .task(id: songs.count) {
+            await SearchIndexer.run(songs: songs, progress: player.indexing)
+        }
+        .alert("Byt namn på låten", isPresented: Binding(get: { player.renamingSongID != nil }, set: { if !$0 { player.renamingSongID = nil } })) {
+            TextField("Namn", text: $renameDraft)
+            Button("Avbryt", role: .cancel) {}
+            Button("Spara") {
+                let name = renameDraft.trimmingCharacters(in: .whitespaces)
+                if !name.isEmpty, let found = song(player.renamingSongID) { found.title = name }
+                player.renamingSongID = nil
+            }
+        }
+        .onChange(of: player.renamingSongID) { _, id in
+            renameDraft = song(id)?.title ?? ""
+        }
+        .sheet(isPresented: Binding(get: { player.editingTextSongID != nil }, set: { if !$0 { player.editingTextSongID = nil } })) {
+            if let found = song(player.editingTextSongID) {
+                SongTextEditor(song: found)
             }
         }
         .environment(player)

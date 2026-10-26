@@ -35,6 +35,9 @@ final class Song {
     /// Låtens zoom (nyp) i förhållande till "hela bredden" (1 = anpassad efter bredden).
     /// Gäller PDF:er, bilder och textlåtar.
     var pdfZoom: Double?
+    /// Låttexten för sökning: utläst ur PDF:en eller textigenkänd ur bilden.
+    /// nil = inte indexerad än.
+    var searchText: String?
     /// Tonarten låten börjar i (från första ackordet på låten). Visas i listorna.
     var startKey: String?
     /// Ackordstämplarnas storlek i förhållande till bladets bredd (nil = standard).
@@ -68,6 +71,18 @@ final class Song {
         } else {
             colorTags = (colorTags + [index]).sorted()
         }
+    }
+
+    /// Textlåt som gjorts redigerbar från en PDF – kan återställas till PDF:en.
+    var canRestorePDF: Bool {
+        kind == .text && hasFile && (fileName as NSString).pathExtension.lowercased() == "pdf"
+    }
+
+    /// Matchar sökningen titeln eller låttexten?
+    func matches(_ query: String) -> Bool {
+        if title.localizedCaseInsensitiveContains(query) { return true }
+        let text = (kind == .text || kind == .note) ? (self.text ?? "") : (searchText ?? "")
+        return text.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) != nil
     }
 
     /// Har låten en egen fil (PDF eller bild)?

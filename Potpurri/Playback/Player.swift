@@ -48,6 +48,11 @@ final class Player {
         let dy: Double
     }
 
+    /// Låten som byter namn / vars text redigeras just nu.
+    var renamingSongID: UUID?
+    var editingTextSongID: UUID?
+    /// Indexering av låttext (för sökning) i bakgrunden.
+    let indexing = TaskProgress()
     /// Noten som redigeras just nu.
     var editingNoteID: UUID?
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.

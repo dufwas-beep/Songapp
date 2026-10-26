@@ -297,7 +297,16 @@ struct SetlistDetailView: View {
                 Divider().padding(.leading, 52)
             }
             .contextMenu {
-                if let song = songsByID[id] { PinButton(songID: song.id) }
+                if let song = songsByID[id] {
+                    PinButton(songID: song.id)
+                    if !player.isLocked {
+                        Button {
+                            player.renamingSongID = song.id
+                        } label: {
+                            Label("Byt namn", systemImage: "pencil")
+                        }
+                    }
+                }
                 removeMenu(at: row.id)
             }
         }
