@@ -34,29 +34,12 @@ struct SongDetailView: View {
                         .id(song.id)
                     HStack(alignment: .center, spacing: 12) {
                         SongStepButtons(previous: previous, next: next, onSelect: onSelect)
+                        if !player.isLocked {
+                            moreMenu(for: song)
+                        }
                         AutoscrollButton(autoscroller: autoscroller, seconds: secondsBinding(for: song))
                     }
                     .padding(24)
-                }
-                .overlay(alignment: .topTrailing) {
-                    if !player.isLocked {
-                        HStack(spacing: 10) {
-                            toolsMenu(for: song)
-                            Button {
-                                showsColors = true
-                            } label: {
-                                Image(systemName: "paintpalette")
-                                    .font(.system(size: 18, weight: .medium))
-                                    .frame(width: 48, height: 48)
-                                    .background(.regularMaterial, in: Circle())
-                            }
-                            .accessibilityLabel("Låtens färgkoder")
-                            .popover(isPresented: $showsColors) {
-                                SongColorsPanel(song: song)
-                            }
-                        }
-                        .padding(16)
-                    }
                 }
                 .overlay(alignment: .top) {
                     if player.pen != .off && !player.isLocked {
@@ -122,8 +105,8 @@ struct SongDetailView: View {
         }
     }
 
-    /// Verktyg för låten: ny lapp, markeringspenna och visa/dölj lappar.
-    private func toolsMenu(for song: Song) -> some View {
+    /// Menyn ⋯ nere till höger (som i skissen): lappar, penna och färgkoder.
+    private func moreMenu(for song: Song) -> some View {
         Menu {
             Button {
                 let note = SongNote(songID: song.id, text: "Ny lapp", x: 0.55, y: overlay.visibleTop + 0.06, width: 0.3, height: 0.1)
@@ -134,22 +117,32 @@ struct SongDetailView: View {
                 Label("Ny lapp", systemImage: "note.text.badge.plus")
             }
             Button {
-                player.pen = .color(NoteColors.pens[0])
-            } label: {
-                Label("Markeringspenna", systemImage: "highlighter")
-            }
-            Button {
                 player.notesHidden.toggle()
             } label: {
                 Label(player.notesHidden ? "Visa lappar" : "Dölj lappar", systemImage: player.notesHidden ? "eye" : "eye.slash")
             }
+            Button {
+                player.pen = .color(NoteColors.pens[0])
+            } label: {
+                Label("Markeringspenna", systemImage: "highlighter")
+            }
+            Divider()
+            Button {
+                showsColors = true
+            } label: {
+                Label("Färgkoder", systemImage: "paintpalette")
+            }
         } label: {
-            Image(systemName: "pencil.tip.crop.circle")
-                .font(.system(size: 20, weight: .medium))
-                .frame(width: 48, height: 48)
+            Image(systemName: "ellipsis")
+                .font(.system(size: 22, weight: .semibold))
+                .frame(width: 60, height: 60)
                 .background(.regularMaterial, in: Circle())
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
         }
-        .accessibilityLabel("Lappar och penna")
+        .accessibilityLabel("Fler funktioner")
+        .popover(isPresented: $showsColors) {
+            SongColorsPanel(song: song)
+        }
     }
 
     private func secondsBinding(for song: Song) -> Binding<Int> {

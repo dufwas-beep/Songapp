@@ -16,6 +16,9 @@ final class SongNote {
     var height: Double = 0.12
     /// Fast på skärmen (ligger still när låten scrollar) i stället för att följa sidan.
     var pinned: Bool = false
+    /// Låst textstorlek. Saknas den anpassas texten efter lappens storlek.
+    /// För lappar som följer sidan i förhållande till bladets bredd, annars i punkter.
+    var fixedFontSize: Double?
     var created: Date = Date()
 
     init(songID: UUID, text: String, x: Double, y: Double, width: Double, height: Double, pinned: Bool = false, colorHex: String = NoteColors.yellow) {

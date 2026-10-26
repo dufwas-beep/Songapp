@@ -175,6 +175,8 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **Textanpassning:** användarens radbrytningar behålls, och teckenstorleken
   räknas om automatiskt så att all text alltid får plats i noten
   (mindre note → mindre text, mer text → mindre text).
+- **Textstorlek:** i redigeringsrutan väljer man "Anpassa texten efter lappen" (standard)
+  eller en låst storlek med ett reglage (10–72 pt).
 - Typiskt innehåll är korta rader, t.ex. "REF: E G A B". Vanligt typsnitt räcker.
 - Färgval (t.ex. gul, rosa, blå, grön, orange, vit).
 - Per note väljs förankring:

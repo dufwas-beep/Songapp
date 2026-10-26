@@ -36,6 +36,40 @@ struct LibraryView: View {
     @State private var colorMode = false
     @State private var checked: Set<UUID> = []
     @State private var colorFilter: Set<Int> = []
+    /// Den sorterade listan sparas tills något som påverkar den ändras – svensk sortering
+    /// av hundratals låtar är för långsam att göra om vid varje tryck (t.ex. i färgläget).
+    @State private var cache = ListCache()
+
+    final class ListCache {
+        var key: Int?
+        var list: [Song] = []
+        var letters: Set<String> = []
+    }
+
+    private var cacheKey: Int {
+        var hasher = Hasher()
+        hasher.combine(query)
+        hasher.combine(sort)
+        hasher.combine(colorFilter.sorted())
+        for song in songs {
+            hasher.combine(song.id)
+            hasher.combine(song.title)
+            if sort == .lastPlayed { hasher.combine(song.lastPlayed) }
+            if sort == .mostPlayed { hasher.combine(song.playCount) }
+            if !colorFilter.isEmpty { hasher.combine(song.colorTags) }
+        }
+        return hasher.finalize()
+    }
+
+    private var cachedSongs: [Song] {
+        let key = cacheKey
+        if cache.key != key {
+            cache.list = visibleSongs
+            cache.letters = Set(songs.map(\.indexLetter))
+            cache.key = key
+        }
+        return cache.list
+    }
 
     /// Sökning på titel, färgfilter och vald sortering.
     private var visibleSongs: [Song] {
@@ -84,7 +118,7 @@ struct LibraryView: View {
                     .padding(.top, 8)
             }
 
-            let list = visibleSongs
+            let list = cachedSongs
             ColorColumnsHeader(colorMode: $colorMode, columns: columns) { index in
                 applyColor(index, to: list.filter { checked.contains($0.id) })
             }
@@ -123,7 +157,7 @@ struct LibraryView: View {
                 }
                 .overlay(alignment: .trailing) {
                     if showsAlphabet {
-                        AlphabetScrubber(available: Set(songs.map(\.indexLetter))) { letter in
+                        AlphabetScrubber(available: cache.letters) { letter in
                             if let first = list.first(where: { $0.indexLetter == letter }) {
                                 proxy.scrollTo(first.id, anchor: .top)
                             }

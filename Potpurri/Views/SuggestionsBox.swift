@@ -21,7 +21,8 @@ struct SuggestionsBox: View {
                 let b = colors.intersection($1.colorTags).count
                 return a != b ? a > b : Song.swedishOrder($0, $1)
             }
-        return pinned + matching
+        // De 40 bästa räcker – färre rader gör rutan snabbare.
+        return pinned + matching.prefix(40)
     }
 
     var body: some View {

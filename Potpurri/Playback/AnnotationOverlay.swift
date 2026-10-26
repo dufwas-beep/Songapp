@@ -9,6 +9,8 @@ final class AnnotationOverlay: UIView {
         let text: String
         let colorHex: String
         let x, y, width, height: Double
+        /// Låst textstorlek i förhållande till bredden, eller nil = anpassas efter lappen.
+        let fontSize: Double?
     }
 
     struct HighlightItem: Equatable {
@@ -113,7 +115,7 @@ final class AnnotationOverlay: UIView {
         for item in notes {
             let view = noteViews[item.id] ?? makeNoteView(item.id)
             view.isEditable = !locked
-            view.configure(text: item.text, color: UIColor(hex: item.colorHex))
+            view.configure(text: item.text, color: UIColor(hex: item.colorHex), fixedFontSize: item.fontSize.map { CGFloat($0) * unit })
             view.isHidden = notesHidden
         }
         layoutItems()
@@ -144,6 +146,7 @@ final class AnnotationOverlay: UIView {
         for item in notes {
             guard let view = noteViews[item.id], !view.isInteracting else { continue }
             view.frame = CGRect(x: item.x * unit, y: item.y * unit, width: item.width * unit, height: item.height * unit)
+            view.fixedFontSize = item.fontSize.map { CGFloat($0) * unit }
         }
         bringSubviewToFront(drawingView)
     }
@@ -234,6 +237,10 @@ final class NoteView: UIView {
     private let handle = UIView()
     private var text = ""
     private var startFrame = CGRect.zero
+    /// Låst textstorlek i punkter, eller nil = texten anpassas efter lappen.
+    var fixedFontSize: CGFloat? {
+        didSet { if fixedFontSize != oldValue { setNeedsLayout() } }
+    }
 
     init() {
         super.init(frame: .zero)
@@ -267,7 +274,8 @@ final class NoteView: UIView {
 
     required init?(coder: NSCoder) { nil }
 
-    func configure(text: String, color: UIColor) {
+    func configure(text: String, color: UIColor, fixedFontSize: CGFloat?) {
+        self.fixedFontSize = fixedFontSize
         backgroundColor = color
         if text != self.text {
             self.text = text
@@ -282,7 +290,8 @@ final class NoteView: UIView {
         handle.frame = CGRect(x: bounds.width - 32, y: bounds.height - 32, width: 32, height: 32)
         let area = bounds.insetBy(dx: 8, dy: 6)
         label.frame = area
-        label.font = .systemFont(ofSize: Self.fittingSize(for: text, in: area.size), weight: .semibold)
+        label.font = .systemFont(ofSize: fixedFontSize ?? Self.fittingSize(for: text, in: area.size), weight: .semibold)
+        label.lineBreakMode = .byTruncatingTail
         label.text = text
     }
 

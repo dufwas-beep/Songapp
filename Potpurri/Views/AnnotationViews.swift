@@ -21,7 +21,7 @@ struct AnnotationSync: View {
     }
 
     private var noteItems: [AnnotationOverlay.NoteItem] {
-        notes.map { .init(id: $0.id, text: $0.text, colorHex: $0.colorHex, x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
+        notes.map { .init(id: $0.id, text: $0.text, colorHex: $0.colorHex, x: $0.x, y: $0.y, width: $0.width, height: $0.height, fontSize: $0.fixedFontSize) }
     }
 
     private var highlightItems: [AnnotationOverlay.HighlightItem] {
@@ -115,8 +115,8 @@ private struct PinnedNoteView: View {
 
     var body: some View {
         Text(note.text)
-            .font(.system(size: 80, weight: .semibold))
-            .minimumScaleFactor(0.05)
+            .font(.system(size: note.fixedFontSize ?? 80, weight: .semibold))
+            .minimumScaleFactor(note.fixedFontSize == nil ? 0.05 : 1)
             .multilineTextAlignment(.center)
             .foregroundStyle(.black)
             .padding(.horizontal, 8)
@@ -205,6 +205,24 @@ struct NoteEditor: View {
                     }
                     .padding(.vertical, 4)
                 }
+                Section("Textstorlek") {
+                    Toggle("Anpassa texten efter lappen", isOn: Binding(
+                        get: { note.fixedFontSize == nil },
+                        set: { auto in note.fixedFontSize = auto ? nil : toStored(24) }
+                    ))
+                    if let stored = note.fixedFontSize {
+                        HStack(spacing: 14) {
+                            Image(systemName: "textformat.size.smaller")
+                            Slider(value: Binding(get: { fromStored(stored) }, set: { note.fixedFontSize = toStored($0) }), in: 10...72, step: 1)
+                            Image(systemName: "textformat.size.larger")
+                            Text("\(Int(fromStored(stored).rounded())) pt")
+                                .monospacedDigit()
+                                .frame(width: 52, alignment: .trailing)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Textstorlek")
+                    }
+                }
                 Section("Förankring") {
                     Picker("Förankring", selection: Binding(get: { note.pinned }, set: setPinned)) {
                         Text("Följer sidan").tag(false)
@@ -230,9 +248,19 @@ struct NoteEditor: View {
         }
     }
 
+    /// Textstorlek i punkter ↔ det som sparas (andel av bladets bredd för lappar som följer sidan).
+    private func toStored(_ points: Double) -> Double {
+        note.pinned || unit <= 0 ? points : points / Double(unit)
+    }
+
+    private func fromStored(_ stored: Double) -> Double {
+        note.pinned || unit <= 0 ? stored : stored * Double(unit)
+    }
+
     /// Byte mellan "följer sidan" (andel av bladets bredd) och "fast på skärmen" (punkter).
     private func setPinned(_ pinned: Bool) {
         guard pinned != note.pinned, unit > 0 else { return }
+        let points = note.fixedFontSize.map(fromStored)
         if pinned {
             note.x = 40; note.y = 80
             note.width *= unit; note.height *= unit
@@ -241,6 +269,7 @@ struct NoteEditor: View {
             note.x = 0.1; note.y = 0.05
         }
         note.pinned = pinned
+        note.fixedFontSize = points.map(toStored)
     }
 }
 
