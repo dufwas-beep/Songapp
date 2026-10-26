@@ -52,7 +52,8 @@ struct AutoscrollButton: View {
     }
 }
 
-/// Reglaget för låtens längd, 0:30–10:00. Dra åt höger för längre.
+/// Reglaget för låtens längd, 0:30–5:00. Dra åt höger för längre. Steg om en sekund
+/// så att det går mjukt att dra.
 private struct LengthPanel: View {
     @Binding var seconds: Int
 
@@ -64,14 +65,15 @@ private struct LengthPanel: View {
                 .font(.system(size: 44, weight: .semibold))
                 .monospacedDigit()
             Slider(
-                value: Binding(get: { Double(seconds) }, set: { seconds = Int(($0 / 5).rounded() * 5) }),
-                in: 30...600
+                value: Binding(get: { Double(min(seconds, 300)) }, set: { seconds = Int($0.rounded()) }),
+                in: 30...300,
+                step: 1
             ) {
                 Text("Låtens längd")
             } minimumValueLabel: {
                 Text("0:30").font(.caption)
             } maximumValueLabel: {
-                Text("10:00").font(.caption)
+                Text("5:00").font(.caption)
             }
             Text("Dra åt höger för längre, åt vänster för kortare. Sparas för låten.")
                 .font(.footnote)

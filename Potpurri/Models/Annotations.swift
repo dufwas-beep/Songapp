@@ -64,3 +64,22 @@ enum NoteColors {
     /// Pennornas färger: gul, grön, rosa, blå, orange.
     static let pens = ["FFE45C", "6EE7A0", "FF8FE8", "7CC4FF", "FFB25C"]
 }
+
+/// En hopplinje i en låt (högst 10). Ett tryck på skärmen, pedalen eller AirTurn
+/// scrollar så att nästa linje (i nummerordning, 1, 2, 3 …) hamnar högst upp.
+/// Numren bestämmer ordningen, så man kan hoppa tillbaka till t.ex. en refräng.
+@Model
+final class JumpMarker {
+    var id: UUID = UUID()
+    var songID: UUID = UUID()
+    /// Position i bladet, i förhållande till bladets bredd.
+    var y: Double = 0
+    var number: Int = 1
+
+    init(songID: UUID, y: Double, number: Int) {
+        self.id = UUID()
+        self.songID = songID
+        self.y = y
+        self.number = number
+    }
+}

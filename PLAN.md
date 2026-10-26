@@ -89,9 +89,9 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - Byta namn på, **duplicera** och ta bort listor. En kopia (t.ex. av "Bröllop") blir en
   ny lista med samma låtar i samma ordning, som man döper om och ändrar fritt.
 - Samma låt kan ligga i flera listor.
-- Egen ordning: håll in en låt (eller setgräns) så lossnar den och följer fingret, och
-  släpp där den ska ligga. Raderna har ett ≡ som visar att de går att dra. Håll in och
-  välj "Ta bort ur listan" för att ta bort en låt.
+- Egen ordning: dra i handtaget ≡ längst till vänster på raden (låt eller setgräns) –
+  raden följer fingret och en rosa linje visar var den hamnar. Håll in en låt och välj
+  "Ta bort ur listan" för att ta bort den.
 - **Dra och släpp mellan listorna:** håll in en låt (eller dra den åt höger) så lossnar
   den och följer fingret. Den kan släppas:
   - **i låtlistan** – en rosa linje visar var den hamnar, även i ett annat set. Kom den
@@ -147,7 +147,7 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **Håll inne** = ett reglage för **låtens längd** visas (0:30–10:00). **Dra åt höger för
   längre**, åt vänster för kortare. Scrollen går sedan så att hela låten passerar på
   exakt den tiden.
-- Längden **sparas per låt**.
+- Längden **sparas per låt**. Reglaget går 0:30–5:00 i steg om en sekund (mjukt att dra).
 
 ### 4b. Scen-trygghet
 - **Scenlås:** håll inne LP-loggan → appen låses så att fingrarna bara kan scrolla, byta
@@ -163,6 +163,16 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - **Säkerhetskopia till fil:** en knapp sparar hela biblioteket (låtar, listor, notes,
   ackord, ljud, inställningar) som en fil i Filer – och kan läsa in den igen, t.ex. på en
   ny iPad. Utöver iCloud.
+
+### 4c. Hopplinjer (långa texter och medleyn)
+- Upp till **10 hopplinjer** per låt, numrerade 1–10. Läggs till under ⋯ → Hopplinjer →
+  "+ Linje" (hamnar längst ner på skärmen, dvs. där stycket man ser slutar) och dras sedan
+  i sitt nummer till rätt plats. Tryck på numret för att byta nummer eller ta bort linjen.
+- **Ett tryck på skärmen**, pedalen eller **AirTurn** (piltangenter/Page Down) hoppar så att
+  nästa linje hamnar högst upp. Ordningen följer numren (1, 2, 3 …), inte var linjerna
+  ligger – så man kan hoppa tillbaka till t.ex. en refräng eller mellan text och ackord.
+- Efter sista linjen går pedalen vidare till nästa låt. Bakåt hoppar till förra linjen.
+- Fungerar ihop med zoom: zooma så att ett stycke fyller skärmen, sätt en linje längst ner.
 
 ### 5. Bläddringspedal (kompatibilitet)
 - Stöd för vanliga Bluetooth-pedaler (som skickar piltangenter/Page Down).
@@ -233,7 +243,10 @@ vilka låtar som passar efter, eller som medley.
   de i stället, men kan fortfarande väljas där.
 - En låt räknas som spelad – och gråmarkeras – först när den varit huvudlåt i 30 sekunder
   i sträck. Byter man innan dess blir den inte grå.
-- Knappen "Ny spelning" nollställer gråmarkeringarna och de fästa förslagen.
+- Knappen "Ny spelning" nollställer gråmarkeringarna och de fästa förslagen. **Efter 12
+  timmar** börjar en ny spelning automatiskt.
+- Förslagsrutan har **samma färgrubriker som låtlistan**; man trycker på en rubrik för att
+  välja vilka färger som styr förslagen (valda är markerade).
 
 **Förhandsruta**
 - Tryck på ett förslag → låten öppnas i en förhandsruta under huvudlåten.

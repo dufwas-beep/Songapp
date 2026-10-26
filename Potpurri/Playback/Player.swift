@@ -25,9 +25,14 @@ final class Player {
     var notesHidden = false
     /// När nedräkningstimern (vid klockan) når noll, t.ex. slutet av ett set.
     var timerEnd: Date?
-    /// Lappen som redigeras just nu.
+    /// Redigera hopplinjer (lägg till, flytta, numrera).
+    var editingMarkers = false
+    /// Visa hopplinjerna även när man inte redigerar dem.
+    var showsMarkers = true
+    /// Noten som redigeras just nu.
     var editingNoteID: UUID?
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.
+    /// Efter 12 timmar börjar automatiskt en ny spelning.
     private(set) var gigStart: Date {
         didSet { UserDefaults.standard.set(gigStart, forKey: "gigStart") }
     }
@@ -39,6 +44,11 @@ final class Player {
     func isPlayedTonight(_ song: Song) -> Bool {
         guard let played = song.lastPlayed else { return false }
         return played >= gigStart
+    }
+
+    /// Har det gått mer än 12 timmar sedan spelningen började blir det automatiskt en ny.
+    func startNewGigIfStale() {
+        if Date().timeIntervalSince(gigStart) > 12 * 3600 { newGig() }
     }
 
     /// Ny spelning: nollställer gråmarkeringarna och de fästa förslagen.

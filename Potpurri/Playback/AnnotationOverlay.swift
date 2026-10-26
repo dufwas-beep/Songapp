@@ -1,18 +1,9 @@
 import UIKit
 
-/// Lager som ligger inne i låtbladets UIScrollView, så att lappar och markeringar
-/// scrollar och zoomar med låten. Positioner sparas i förhållande till bladets bredd.
+/// Lager som ligger inne i låtbladets UIScrollView, så att markeringarna scrollar och
+/// zoomar med låten. Positioner sparas i förhållande till bladets bredd.
 @MainActor
 final class AnnotationOverlay: UIView {
-    struct NoteItem: Equatable {
-        let id: UUID
-        let text: String
-        let colorHex: String
-        let x, y, width, height: Double
-        /// Låst textstorlek i förhållande till bredden, eller nil = anpassas efter lappen.
-        let fontSize: Double?
-    }
-
     struct HighlightItem: Equatable {
         let id: UUID
         let colorHex: String
@@ -25,21 +16,14 @@ final class AnnotationOverlay: UIView {
         case eraser
     }
 
-    var onMoveNote: ((UUID, Double, Double) -> Void)?
-    var onResizeNote: ((UUID, Double, Double) -> Void)?
-    var onTapNote: ((UUID) -> Void)?
     var onAddHighlight: ((String, Double, Double, Double, Double) -> Void)?
     var onEraseHighlight: ((UUID) -> Void)?
 
     private weak var scrollView: UIScrollView?
     private var sizeObservation: NSKeyValueObservation?
     private var offsetObservation: NSKeyValueObservation?
-    private var notes: [NoteItem] = []
     private var highlights: [HighlightItem] = []
-    private var noteViews: [UUID: NoteView] = [:]
     private var highlightViews: [UUID: UIView] = [:]
-    private var notesHidden = false
-    private var locked = false
     private var pen: Pen = .off
     private let drawingView = UIView()
     private var drawStart: CGPoint?
@@ -72,8 +56,7 @@ final class AnnotationOverlay: UIView {
         sizeObservation = scrollView.observe(\.contentSize, options: [.new]) { [weak self] _, _ in
             MainActor.assumeIsolated { self?.updateFrame() }
         }
-        // SwiftUI kan lägga sitt innehåll överst igen (t.ex. efter att en ruta stängts);
-        // då skulle lappen inte gå att ta tag i. Lagret läggs därför alltid överst.
+        // SwiftUI kan lägga sitt innehåll överst igen; markeringarna ska alltid synas.
         offsetObservation = scrollView.observe(\.contentOffset, options: []) { [weak self] _, _ in
             MainActor.assumeIsolated { self?.keepOnTop() }
         }
@@ -94,25 +77,14 @@ final class AnnotationOverlay: UIView {
         layoutItems()
     }
 
-    func update(notes: [NoteItem], highlights: [HighlightItem], notesHidden: Bool, locked: Bool, pen: Pen) {
+    func update(highlights: [HighlightItem], pen: Pen) {
         keepOnTop()
-        let changed = notes != self.notes || highlights != self.highlights || notesHidden != self.notesHidden || locked != self.locked
-        self.notes = notes
-        self.highlights = highlights
-        self.notesHidden = notesHidden
-        self.locked = locked
         if pen != self.pen {
             self.pen = pen
             applyPen()
         }
-        if changed { syncViews() }
-    }
-
-    private func syncViews() {
-        for (id, view) in noteViews where !notes.contains(where: { $0.id == id }) {
-            view.removeFromSuperview()
-            noteViews[id] = nil
-        }
+        guard highlights != self.highlights else { return }
+        self.highlights = highlights
         for (id, view) in highlightViews where !highlights.contains(where: { $0.id == id }) {
             view.removeFromSuperview()
             highlightViews[id] = nil
@@ -124,29 +96,7 @@ final class AnnotationOverlay: UIView {
             insertSubview(view, at: 0)
             highlightViews[item.id] = view
         }
-        for item in notes {
-            let view = noteViews[item.id] ?? makeNoteView(item.id)
-            view.isEditable = !locked
-            view.configure(text: item.text, color: UIColor(hex: item.colorHex), fixedFontSize: item.fontSize.map { CGFloat($0) * unit })
-            view.isHidden = notesHidden
-        }
         layoutItems()
-    }
-
-    private func makeNoteView(_ id: UUID) -> NoteView {
-        let view = NoteView()
-        view.onMoved = { [weak self] frame in
-            guard let self else { return }
-            self.onMoveNote?(id, Double(frame.minX / self.unit), Double(frame.minY / self.unit))
-        }
-        view.onResized = { [weak self] frame in
-            guard let self else { return }
-            self.onResizeNote?(id, Double(frame.width / self.unit), Double(frame.height / self.unit))
-        }
-        view.onTap = { [weak self] in self?.onTapNote?(id) }
-        addSubview(view)
-        noteViews[id] = view
-        return view
     }
 
     private func layoutItems() {
@@ -155,23 +105,7 @@ final class AnnotationOverlay: UIView {
             view.frame = CGRect(x: item.x * unit, y: item.y * unit, width: item.width * unit, height: item.height * unit)
             view.backgroundColor = UIColor(hex: item.colorHex).withAlphaComponent(0.45)
         }
-        for item in notes {
-            guard let view = noteViews[item.id], !view.isInteracting else { continue }
-            view.frame = CGRect(x: item.x * unit, y: item.y * unit, width: item.width * unit, height: item.height * unit)
-            view.fixedFontSize = item.fontSize.map { CGFloat($0) * unit }
-        }
         bringSubviewToFront(drawingView)
-    }
-
-    /// Översta synliga punkten i bladet, i förhållande till bredden (för nya lappar).
-    var visibleTop: Double {
-        guard let scrollView else { return 0 }
-        return Double(max(0, scrollView.contentOffset.y + scrollView.adjustedContentInset.top) / unit)
-    }
-
-    /// Bladets bredd i punkter (för att räkna om lappar mellan "följer sidan" och "fast").
-    var contentWidth: CGFloat {
-        unit
     }
 
     // MARK: Pennan
@@ -184,11 +118,9 @@ final class AnnotationOverlay: UIView {
         scrollView?.panGestureRecognizer.minimumNumberOfTouches = drawing ? 2 : 1
     }
 
-    /// Med pennan på tar lagret emot alla tryck; annars bara lapparna.
+    /// Med pennan på tar lagret emot alla tryck; annars går de igenom till låten.
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        if pen != .off { return bounds.contains(point) ? self : nil }
-        let hit = super.hitTest(point, with: event)
-        return hit === self ? nil : hit
+        pen != .off && bounds.contains(point) ? self : nil
     }
 
     @objc private func handlePen(_ gesture: UIPanGestureRecognizer) {
@@ -231,151 +163,6 @@ final class AnnotationOverlay: UIView {
     private func erase(at point: CGPoint) {
         for (id, view) in highlightViews where view.frame.insetBy(dx: -6, dy: -10).contains(point) {
             onEraseHighlight?(id)
-        }
-    }
-}
-
-/// En lapp: dra för att flytta, dra i hörnet för att ändra storlek, tryck för att redigera.
-/// Texten krymper eller växer så att allt alltid får plats.
-@MainActor
-final class NoteView: UIView, UIGestureRecognizerDelegate {
-    var onMoved: ((CGRect) -> Void)?
-    var onResized: ((CGRect) -> Void)?
-    var onTap: (() -> Void)?
-    var isEditable = true
-    private(set) var isInteracting = false
-
-    private let label = UILabel()
-    private let handle = UIView()
-    private var text = ""
-    private var startFrame = CGRect.zero
-    /// Låst textstorlek i punkter, eller nil = texten anpassas efter lappen.
-    var fixedFontSize: CGFloat? {
-        didSet { if fixedFontSize != oldValue { setNeedsLayout() } }
-    }
-
-    init() {
-        super.init(frame: .zero)
-        layer.cornerRadius = 6
-        layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = 0.25
-        layer.shadowRadius = 6
-        layer.shadowOffset = CGSize(width: 0, height: 3)
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        label.textColor = .black
-        addSubview(label)
-        handle.backgroundColor = .clear
-        addSubview(handle)
-        let corner = CAShapeLayer()
-        let path = UIBezierPath()
-        path.move(to: CGPoint(x: 26, y: 12))
-        path.addLine(to: CGPoint(x: 26, y: 26))
-        path.addLine(to: CGPoint(x: 12, y: 26))
-        corner.path = path.cgPath
-        corner.strokeColor = UIColor.black.withAlphaComponent(0.45).cgColor
-        corner.fillColor = UIColor.clear.cgColor
-        corner.lineWidth = 2
-        handle.layer.addSublayer(corner)
-        let movePan = UIPanGestureRecognizer(target: self, action: #selector(handleMove(_:)))
-        movePan.delegate = self
-        addGestureRecognizer(movePan)
-        let resizePan = UIPanGestureRecognizer(target: self, action: #selector(handleResize(_:)))
-        resizePan.delegate = self
-        handle.addGestureRecognizer(resizePan)
-        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap)))
-        isAccessibilityElement = true
-        accessibilityHint = "Tryck för att redigera"
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    func configure(text: String, color: UIColor, fixedFontSize: CGFloat?) {
-        self.fixedFontSize = fixedFontSize
-        backgroundColor = color
-        if text != self.text {
-            self.text = text
-            accessibilityLabel = "Lapp: \(text)"
-            setNeedsLayout()
-        }
-        handle.isHidden = !isEditable
-    }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        handle.frame = CGRect(x: bounds.width - 32, y: bounds.height - 32, width: 32, height: 32)
-        let area = bounds.insetBy(dx: 8, dy: 6)
-        label.frame = area
-        label.font = .systemFont(ofSize: fixedFontSize ?? Self.fittingSize(for: text, in: area.size), weight: .semibold)
-        label.lineBreakMode = .byTruncatingTail
-        label.text = text
-    }
-
-    /// Största textstorlek där all text (med användarens radbrytningar) får plats.
-    static func fittingSize(for text: String, in size: CGSize) -> CGFloat {
-        guard !text.isEmpty, size.width > 0, size.height > 0 else { return 16 }
-        var low: CGFloat = 6
-        var high: CGFloat = 120
-        while high - low > 0.5 {
-            let mid = (low + high) / 2
-            let rect = (text as NSString).boundingRect(
-                with: CGSize(width: size.width, height: .greatestFiniteMagnitude),
-                options: [.usesLineFragmentOrigin],
-                attributes: [.font: UIFont.systemFont(ofSize: mid, weight: .semibold)],
-                context: nil
-            )
-            if rect.height <= size.height && rect.width <= size.width { low = mid } else { high = mid }
-        }
-        return low
-    }
-
-    /// Låtens scrollning får vänta tills lappens drag har avgjorts, så att man flyttar
-    /// lappen (i alla riktningar) i stället för att scrolla låten.
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy other: UIGestureRecognizer) -> Bool {
-        isEditable && other.view is UIScrollView
-    }
-
-    @objc private func handleTap() {
-        if isEditable { onTap?() }
-    }
-
-    @objc private func handleMove(_ gesture: UIPanGestureRecognizer) {
-        guard isEditable, let parent = superview else { return }
-        switch gesture.state {
-        case .began:
-            isInteracting = true
-            startFrame = frame
-        case .changed:
-            let t = gesture.translation(in: parent)
-            // Lappen får gå ända ut till kanten (och en bit utanför); minst 60 punkter syns alltid.
-            let visibleWidth = max(parent.bounds.width, parent.superview?.bounds.width ?? 0)
-            frame.origin = CGPoint(
-                x: min(max(startFrame.minX + t.x, 60 - frame.width), visibleWidth - 60),
-                y: max(0, startFrame.minY + t.y)
-            )
-        case .ended, .cancelled:
-            isInteracting = false
-            onMoved?(frame)
-        default:
-            break
-        }
-    }
-
-    @objc private func handleResize(_ gesture: UIPanGestureRecognizer) {
-        guard isEditable, let parent = superview else { return }
-        switch gesture.state {
-        case .began:
-            isInteracting = true
-            startFrame = frame
-        case .changed:
-            let t = gesture.translation(in: parent)
-            frame.size = CGSize(width: max(70, startFrame.width + t.x), height: max(44, startFrame.height + t.y))
-            setNeedsLayout()
-        case .ended, .cancelled:
-            isInteracting = false
-            onResized?(frame)
-        default:
-            break
         }
     }
 }

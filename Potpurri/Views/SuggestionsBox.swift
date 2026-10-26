@@ -27,41 +27,51 @@ struct SuggestionsBox: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("PASSAR EFTER – VÄLJ FÄRGER")
-                    .font(.system(size: 11, weight: .semibold))
-                    .tracking(0.8)
-                    .foregroundStyle(.secondary)
-                if let current, !current.colorTags.isEmpty {
-                    HStack(spacing: 6) {
-                        ForEach(current.colorTags, id: \.self) { index in
-                            let isOn = player.activeColors.contains(index)
-                            Button {
-                                if isOn { player.activeColors.remove(index) } else { player.activeColors.insert(index) }
-                            } label: {
-                                HStack(spacing: 5) {
-                                    Circle().fill(ColorCodes.colors[index]).frame(width: 9, height: 9)
-                                    Text(codes.names[index]).font(.caption.weight(.medium))
-                                }
-                                .padding(.horizontal, 9)
-                                .frame(height: 26)
-                                .background(isOn ? ColorCodes.colors[index].opacity(0.25) : .clear, in: Capsule())
-                                .overlay(Capsule().stroke(isOn ? ColorCodes.colors[index] : Color.secondary.opacity(0.4), lineWidth: 1.5))
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityAddTraits(isOn ? .isSelected : [])
-                        }
-                    }
-                } else {
-                    Text(current == nil ? "Välj en låt för att få förslag." : "Låten har inga färgkoder än.")
-                        .font(.caption)
+            // Samma färgrubriker som i låtlistan. Tryck på en rubrik för att välja om
+            // färgen ska styra förslagen – valda färger är markerade.
+            HStack(alignment: .bottom, spacing: 0) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("PASSAR EFTER")
+                        .font(.system(size: 11, weight: .semibold))
+                        .tracking(0.8)
                         .foregroundStyle(.secondary)
+                    Text(current == nil ? "Välj en låt" : (current?.colorTags.isEmpty == true ? "Låten har inga färger" : "Tryck på färgerna"))
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.bottom, 4)
+                Spacer()
+                ForEach(current?.colorTags ?? [], id: \.self) { index in
+                    let isOn = player.activeColors.contains(index)
+                    VStack(spacing: 4) {
+                        Text(codes.names[index])
+                            .font(.system(size: 10, weight: isOn ? .bold : .medium))
+                            .lineLimit(1)
+                            .fixedSize()
+                            .rotationEffect(.degrees(-90))
+                            .frame(width: ColorDots.columnWidth, height: 58)
+                        Capsule()
+                            .fill(ColorCodes.colors[index])
+                            .frame(width: 16, height: 3)
+                    }
+                    .background(isOn ? ColorCodes.colors[index].opacity(0.3) : .clear, in: RoundedRectangle(cornerRadius: 6))
+                    .opacity(isOn ? 1 : 0.4)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if isOn { player.activeColors.remove(index) } else { player.activeColors.insert(index) }
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(codes.names[index])
+                    .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
                 }
             }
-            .padding(12)
+            .padding(.leading, 12)
+            .padding(.trailing, 20)
+            .padding(.vertical, 8)
             Divider()
             let list = suggestions
-            let columns = visibleColorColumns(list, colorMode: false)
+            // Samma kolumner som rubrikerna ovanför.
+            let columns = current?.colorTags ?? []
             List {
                 ForEach(list) { song in
                     Button {

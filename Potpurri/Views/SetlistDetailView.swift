@@ -16,8 +16,10 @@ struct SetlistDetailView: View {
     let onDelete: () -> Void
 
     @State private var showAddSongs = false
-    /// Raden som en dragen låt just nu hänger över (där den rosa linjen visas).
-    @State private var dropTarget: Int?
+    /// Raden som dras just nu, var fingret är och var raden skulle hamna.
+    @State private var dragging: Int?
+    @State private var dragY: CGFloat = 0
+    @State private var dropIndex: Int?
     @State private var colorMode = false
     @State private var checked: Set<UUID> = []
 
@@ -72,54 +74,37 @@ struct SetlistDetailView: View {
                 if !on { checked = [] }
             }
             Divider()
-            List(selection: $selection) {
-                if hasSets, allRows.first.map({ $0.item != .setBreak }) ?? false {
-                    SetHeaderRow(number: 1, count: counts[1] ?? 0, onRemove: nil)
-                        .selectionDisabled()
-                        .listRowBackground(Self.tint(for: 1))
-                        .moveDisabled(true)
-                }
-                ForEach(allRows) { row in
-                    rowView(row, songsByID: songsByID, counts: counts)
-                        // Släpp på en rad = lägg den dragna raden före den. En rosa linje visar var.
-                        .dropDestination(for: String.self) { payloads, _ in
-                            guard !player.isLocked else { return false }
-                            drop(payloads, at: row.id)
-                            return true
-                        } isTargeted: { targeted in
-                            if targeted {
-                                dropTarget = row.id
-                            } else if dropTarget == row.id {
-                                dropTarget = nil
-                            }
+            // Egen lista (i stället för iPadens) så att flytten fungerar pålitligt:
+            // dra i handtaget ≡ – en rosa linje visar var raden hamnar.
+            ScrollView {
+                let leading = showsFirstHeader(allRows) ? Self.headerHeight : 0
+                let tops = rowTops(allRows, start: leading)
+                ZStack(alignment: .topLeading) {
+                    VStack(spacing: 0) {
+                        if showsFirstHeader(allRows) {
+                            SetHeaderRow(number: 1, count: counts[1] ?? 0, onRemove: nil, showsHandle: false)
+                                .frame(height: Self.headerHeight)
+                                .padding(.horizontal, 16)
+                                .background(Self.tint(for: 1))
                         }
-                        .overlay(alignment: .top) {
-                            if dropTarget == row.id {
-                                DropLine()
-                            }
+                        ForEach(allRows) { row in
+                            rowView(row, songsByID: songsByID, counts: counts, tops: tops)
+                                .opacity(dragging == row.id ? 0.35 : 1)
                         }
-                }
-                // Tom rad sist så att man kan släppa längst ner i listan.
-                Color.clear
-                    .frame(height: 56)
-                    .listRowSeparator(.hidden)
-                    .selectionDisabled()
-                    .moveDisabled(true)
-                    .contentShape(Rectangle())
-                    .dropDestination(for: String.self) { payloads, _ in
-                        guard !player.isLocked else { return false }
-                        drop(payloads, at: allRows.count)
-                        return true
-                    } isTargeted: { targeted in
-                        dropTarget = targeted ? allRows.count : (dropTarget == allRows.count ? nil : dropTarget)
+                        Color.clear.frame(height: 80)
                     }
-                    .overlay(alignment: .top) {
-                        if dropTarget == allRows.count {
-                            DropLine()
-                        }
+                    if dragging != nil, let index = dropIndex {
+                        DropLine()
+                            .offset(y: index < tops.count ? tops[index] : (tops.last.map { $0 + Self.height(of: allRows[allRows.count - 1]) } ?? leading))
                     }
+                    if let dragged = dragging, allRows.indices.contains(dragged) {
+                        DragPreview(title: title(of: allRows[dragged], songsByID: songsByID))
+                            .offset(x: 40, y: dragY - 22)
+                            .allowsHitTesting(false)
+                    }
+                }
+                .coordinateSpace(name: Self.space)
             }
-            .listStyle(.plain)
             .overlay {
                 if setlist.songIDs.isEmpty {
                     ContentUnavailableView(
@@ -200,38 +185,127 @@ struct SetlistDetailView: View {
         .accessibilityLabel("Fler val")
     }
 
+    private static let space = "setlistRows"
+    static let songHeight: CGFloat = 50
+    static let headerHeight: CGFloat = 44
+
+    static func height(of row: Row) -> CGFloat {
+        if case .setBreak = row.item { return headerHeight }
+        return songHeight
+    }
+
+    private func showsFirstHeader(_ rows: [Row]) -> Bool {
+        hasSets && (rows.first.map { $0.item != .setBreak } ?? false)
+    }
+
+    /// Överkanten för varje rad i listans koordinater.
+    private func rowTops(_ rows: [Row], start: CGFloat) -> [CGFloat] {
+        var y = start
+        return rows.map { row in
+            defer { y += Self.height(of: row) }
+            return y
+        }
+    }
+
+    private func title(of row: Row, songsByID: [UUID: Song]) -> String {
+        switch row.item {
+        case .setBreak: return "Set \(row.setNumber)"
+        case .song(let id): return songsByID[id]?.title ?? "Låt"
+        }
+    }
+
+    /// Dra i handtaget ≡: raden följer fingret och släpps där den rosa linjen är.
+    private func handleDrag(for row: Row, tops: [CGFloat]) -> some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.space))
+            .onChanged { value in
+                guard !player.isLocked else { return }
+                dragging = row.id
+                dragY = value.location.y
+                // Insättningsplatsen: före första raden vars mitt ligger under fingret.
+                let rows = self.rows
+                var index = rows.count
+                for (i, top) in tops.enumerated() where i < rows.count {
+                    if value.location.y < top + Self.height(of: rows[i]) / 2 {
+                        index = i
+                        break
+                    }
+                }
+                dropIndex = index
+            }
+            .onEnded { _ in
+                if let from = dragging, let to = dropIndex, to != from, to != from + 1 {
+                    var items = setlist.items
+                    items.move(fromOffsets: IndexSet(integer: from), toOffset: to)
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        setlist.items = items
+                    }
+                    try? context.save()
+                }
+                dragging = nil
+                dropIndex = nil
+            }
+    }
+
     @ViewBuilder
-    private func rowView(_ row: Row, songsByID: [UUID: Song], counts: [Int: Int]) -> some View {
+    private func rowView(_ row: Row, songsByID: [UUID: Song], counts: [Int: Int], tops: [CGFloat]) -> some View {
         switch row.item {
         case .setBreak:
-            SetHeaderRow(number: row.setNumber, count: counts[row.setNumber] ?? 0, onRemove: removeAction(at: row.id))
-                .selectionDisabled()
-                .draggable("row:\(row.id)") { DragPreview(title: "Set \(row.setNumber)") }
-                .listRowBackground(Self.tint(for: row.setNumber))
+            SetHeaderRow(number: row.setNumber, count: counts[row.setNumber] ?? 0, onRemove: removeAction(at: row.id), showsHandle: !player.isLocked)
+                .frame(height: Self.headerHeight)
+                .padding(.horizontal, 16)
+                .background(Self.tint(for: row.setNumber))
+                .overlay(alignment: .leading) {
+                    // Handtagets yta (≡ längst till vänster).
+                    Color.clear
+                        .frame(width: 44)
+                        .contentShape(Rectangle())
+                        .highPriorityGesture(handleDrag(for: row, tops: tops))
+                }
         case .song(let id):
-            if let song = songsByID[id] {
-                HStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "line.3.horizontal")
+                    .foregroundStyle(.tertiary)
+                    .frame(width: 44, height: Self.songHeight)
+                    .contentShape(Rectangle())
+                    .highPriorityGesture(handleDrag(for: row, tops: tops))
+                    .opacity(player.isLocked ? 0 : 1)
+                    .accessibilityLabel("Flytta")
+                if let song = songsByID[id] {
                     if colorMode {
                         ColorModeCheckbox(isChecked: checked.contains(song.id)) {
                             if checked.contains(song.id) { checked.remove(song.id) } else { checked.insert(song.id) }
                         }
                     }
-                    SetSongRow(number: row.number, song: song, isPlayed: player.isPlayedTonight(song))
-                    ColorDots(song: song, editable: colorMode, columns: columns)
-                }
-                    .tag(song)
-                    .draggable("row:\(row.id)") { DragPreview(title: song.title) }
-                    .contextMenu {
-                        PinButton(songID: song.id)
-                        removeMenu(at: row.id)
+                    Button {
+                        selection = song
+                    } label: {
+                        SetSongRow(number: row.number, song: song, isPlayed: player.isPlayedTonight(song))
+                            .contentShape(Rectangle())
                     }
-                    .listRowBackground(selection == song ? Color.accentColor.opacity(0.35) : (hasSets ? Self.tint(for: row.setNumber) : nil))
-            } else {
-                Text("Låten finns inte längre i biblioteket")
-                    .foregroundStyle(.secondary)
-                    .contextMenu { removeMenu(at: row.id) }
+                    .buttonStyle(.plain)
+                    ColorDots(song: song, editable: colorMode, columns: columns)
+                } else {
+                    Text("Låten finns inte längre i biblioteket")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+            }
+            .padding(.trailing, 16)
+            .frame(height: Self.songHeight)
+            .background(rowBackground(row, songsByID[id]))
+            .overlay(alignment: .bottom) {
+                Divider().padding(.leading, 52)
+            }
+            .contextMenu {
+                if let song = songsByID[id] { PinButton(songID: song.id) }
+                removeMenu(at: row.id)
             }
         }
+    }
+
+    private func rowBackground(_ row: Row, _ song: Song?) -> Color {
+        if let song, selection == song { return Color.accentColor.opacity(0.35) }
+        return hasSets ? Self.tint(for: row.setNumber) : .clear
     }
 
     @ViewBuilder
@@ -243,26 +317,6 @@ struct SetlistDetailView: View {
                 Label("Ta bort ur listan", systemImage: "minus.circle")
             }
         }
-    }
-
-    /// Släpp i listan: "row:3" flyttar en rad inom listan, "song:<id>" lägger in en låt.
-    private func drop(_ payloads: [String], at offset: Int) {
-        var items = setlist.items
-        var target = min(max(offset, 0), items.count)
-        for payload in payloads {
-            if payload.hasPrefix("row:"), let index = Int(payload.dropFirst(4)), items.indices.contains(index) {
-                items.move(fromOffsets: IndexSet(integer: index), toOffset: target)
-                target = index < target ? target : target + 1
-            } else if payload.hasPrefix("song:"), let id = UUID(uuidString: String(payload.dropFirst(5))) {
-                items.insert(.song(id), at: target)
-                target += 1
-            }
-        }
-        dropTarget = nil
-        withAnimation {
-            setlist.items = items
-        }
-        try? context.save()
     }
 
     /// × på setgränsen – av när scenlåset är på.
@@ -319,12 +373,14 @@ private struct SetHeaderRow: View {
     let number: Int
     let count: Int
     let onRemove: (() -> Void)?
+    var showsHandle = true
 
     var body: some View {
         HStack {
             Image(systemName: "line.3.horizontal")
                 .foregroundStyle(.tertiary)
-                .opacity(onRemove == nil ? 0 : 1)
+                .frame(width: 28)
+                .opacity(showsHandle ? 1 : 0)
             Text("SET \(number)")
                 .font(.system(size: 14, weight: .bold))
                 .tracking(1)
@@ -354,8 +410,6 @@ private struct SetSongRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "line.3.horizontal")
-                .foregroundStyle(.tertiary)
             Text("\(number)")
                 .font(.callout)
                 .monospacedDigit()

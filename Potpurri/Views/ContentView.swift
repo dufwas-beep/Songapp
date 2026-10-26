@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var player = Player()
     @State private var colorCodes = ColorCodes()
     @AppStorage("migratedSongNotes") private var migratedSongNotes = false
+    @Environment(\.scenePhase) private var scenePhase
 
     private func song(_ id: UUID?) -> Song? {
         guard let id else { return nil }
@@ -57,6 +58,10 @@ struct ContentView: View {
         }
         .environment(player)
         .environment(colorCodes)
+        // Efter 12 timmar börjar en ny spelning av sig själv (t.ex. nästa dag).
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { player.startNewGigIfStale() }
+        }
         .onChange(of: selection) { _, song in
             player.updateColors(for: song)
             if player.previewID == song?.id { player.previewID = nil }
@@ -65,6 +70,7 @@ struct ContentView: View {
             // Skärmen släcks aldrig medan Potpurri är öppen.
             UIApplication.shared.isIdleTimerDisabled = true
             fixSongsImportedAsNotes()
+            player.startNewGigIfStale()
         }
     }
 

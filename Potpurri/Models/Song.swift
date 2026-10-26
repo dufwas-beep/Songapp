@@ -32,6 +32,8 @@ final class Song {
     var importedNote: String?
     /// Låtens längd för autoscroll, i sekunder (0:30–10:00). Saknas den används 3:00.
     var autoscrollSeconds: Int?
+    /// Zoom för PDF:en i förhållande till "hela bredden" (1 = anpassad efter bredden).
+    var pdfZoom: Double?
     /// Låtens färgkoder (0–4, se `ColorCodes`).
     var colorTags: [Int] = []
 

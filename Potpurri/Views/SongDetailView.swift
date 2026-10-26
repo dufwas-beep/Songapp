@@ -1,9 +1,11 @@
 import SwiftData
 import SwiftUI
+import UIKit
 
 /// Låten som spelas: låtbladet, autoscrollknappen i hörnet och nästa/förra låt.
-/// Pedal och tangentbord: pil ner/höger, Page Down och mellanslag bläddrar framåt –
-/// i slutet av låten kommer nästa låt. Pil upp/vänster och Page Up bläddrar bakåt.
+/// Pedal, AirTurn och tangentbord: pil ner/höger, Page Down och mellanslag går framåt –
+/// till nästa hopplinje om låten har sådana, annars en skärmsida; i slutet kommer nästa
+/// låt. Pil upp/vänster och Page Up går bakåt. Ett tryck i låten hoppar till nästa linje.
 struct SongDetailView: View {
     let song: Song?
     let previous: Song?
@@ -17,6 +19,9 @@ struct SongDetailView: View {
     @State private var showsColors = false
     @State private var autoscroller = Autoscroller()
     @State private var overlay = AnnotationOverlay()
+    @State private var geometry = SheetGeometry()
+    /// Senaste hopplinjen man hoppat till (index i nummerordning).
+    @State private var markerIndex: Int?
     @Environment(\.modelContext) private var context
     @FocusState private var focused: Bool
 
@@ -27,13 +32,16 @@ struct SongDetailView: View {
                     SongSheetView(song: song) { scrollView in
                         autoscroller.attach(scrollView)
                         overlay.attach(to: scrollView)
+                        geometry.attach(scrollView)
+                        ClosureTap.attach(to: scrollView, name: "potpurri.jump") { jumpOnTap() }
                     }
                     .id(song.id)
                     .background { AnnotationSync(song: song, overlay: overlay).id(song.id) }
-                    PinnedNotesLayer(song: song)
+                    MarkersLayer(song: song, geometry: geometry)
+                        .id(song.id)
+                    NotesLayer(song: song, geometry: geometry)
                         .id(song.id)
                     HStack(alignment: .center, spacing: 12) {
-                        SongStepButtons(previous: previous, next: next, onSelect: onSelect)
                         if !player.isLocked {
                             moreMenu(for: song)
                         }
@@ -41,10 +49,17 @@ struct SongDetailView: View {
                     }
                     .padding(24)
                 }
+                .overlay(alignment: .topTrailing) {
+                    SongStepButtons(previous: previous, next: next, onSelect: onSelect)
+                        .padding(16)
+                }
                 .overlay(alignment: .top) {
                     if player.pen != .off && !player.isLocked {
                         PenBar()
-                            .padding(.top, 76)
+                            .padding(.top, 90)
+                    } else if player.editingMarkers && !player.isLocked {
+                        MarkerBar(song: song, geometry: geometry)
+                            .padding(.top, 90)
                     }
                 }
                 if let preview {
@@ -69,7 +84,7 @@ struct SongDetailView: View {
             }
             .sheet(isPresented: Binding(get: { player.editingNoteID != nil }, set: { if !$0 { player.editingNoteID = nil } })) {
                 if let id = player.editingNoteID {
-                    NoteEditorLoader(id: id, unit: overlay.contentWidth)
+                    NoteEditorLoader(id: id, unit: geometry.unit)
                 }
             }
             .navigationTitle(song.title)
@@ -87,6 +102,8 @@ struct SongDetailView: View {
             }
             .task(id: song.id) {
                 autoscroller.stop()
+                markerIndex = nil
+                player.editingMarkers = false
                 autoscroller.duration = TimeInterval(song.autoscrollSeconds ?? 180)
                 focused = true
                 if let next, next.kind == .pdf { PDFCache.shared.preload(next.fileURL) }
@@ -105,21 +122,28 @@ struct SongDetailView: View {
         }
     }
 
-    /// Menyn ⋯ nere till höger (som i skissen): lappar, penna och färgkoder.
+    /// Menyn ⋯ nere till höger (som i skissen): notes, hopplinjer, penna och färgkoder.
     private func moreMenu(for song: Song) -> some View {
         Menu {
             Button {
-                let note = SongNote(songID: song.id, text: "Ny lapp", x: 0.55, y: overlay.visibleTop + 0.06, width: 0.3, height: 0.1)
+                let note = SongNote(songID: song.id, text: "Ny note", x: 0.55, y: geometry.visibleTop + 0.06, width: 0.3, height: 0.1)
                 context.insert(note)
                 player.notesHidden = false
                 player.editingNoteID = note.id
             } label: {
-                Label("Ny lapp", systemImage: "note.text.badge.plus")
+                Label("Ny note", systemImage: "note.text.badge.plus")
             }
             Button {
                 player.notesHidden.toggle()
             } label: {
-                Label(player.notesHidden ? "Visa lappar" : "Dölj lappar", systemImage: player.notesHidden ? "eye" : "eye.slash")
+                Label(player.notesHidden ? "Visa notes" : "Dölj notes", systemImage: player.notesHidden ? "eye" : "eye.slash")
+            }
+            Button {
+                player.showsMarkers = true
+                player.editingMarkers = true
+                player.pen = .off
+            } label: {
+                Label("Hopplinjer", systemImage: "arrow.down.to.line")
             }
             Button {
                 player.pen = .color(NoteColors.pens[0])
@@ -155,13 +179,53 @@ struct SongDetailView: View {
         )
     }
 
+    /// Låtens hopplinjer i nummerordning.
+    private func markers() -> [JumpMarker] {
+        guard let id = song?.id else { return [] }
+        let descriptor = FetchDescriptor<JumpMarker>(predicate: #Predicate { $0.songID == id }, sortBy: [SortDescriptor(\.number)])
+        return (try? context.fetch(descriptor)) ?? []
+    }
+
+    /// Hoppa till nästa/förra hopplinje (den hamnar högst upp). False om det inte finns någon.
+    private func jump(forward: Bool) -> Bool {
+        let list = markers()
+        guard !list.isEmpty else { return false }
+        let target: Int
+        if forward {
+            target = (markerIndex ?? -1) + 1
+        } else {
+            guard let current = markerIndex else { return false }
+            target = current - 1
+        }
+        guard list.indices.contains(target) else {
+            if !forward { markerIndex = nil; geometry.scroll(toTop: 0) ; return true }
+            return false
+        }
+        markerIndex = target
+        geometry.scroll(toTop: list[target].y)
+        return true
+    }
+
+    /// Ett tryck i låten hoppar till nästa hopplinje (när låten har sådana).
+    private func jumpOnTap() {
+        guard !player.editingMarkers, player.pen == .off else { return }
+        _ = jump(forward: true)
+    }
+
     private func forward() {
+        if jump(forward: true) { return }
+        if !markers().isEmpty, let next {
+            // Sista linjen är nådd – nästa tryck på pedalen går till nästa låt.
+            onSelect(next)
+            return
+        }
         if !autoscroller.page(forward: true), let next {
             onSelect(next)
         }
     }
 
     private func backward() {
+        if jump(forward: false) { return }
         if !autoscroller.page(forward: false), let previous {
             onSelect(previous)
         }
@@ -234,7 +298,8 @@ struct SongSheetView: View {
                 description: Text("Låtens fil hittades inte. Importera den igen.")
             )
         } else if song.kind == .pdf {
-            PDFKitView(url: song.fileURL, onScrollView: onScrollView)
+            // Zoomen sparas per låt och återställs när låten öppnas igen.
+            PDFKitView(url: song.fileURL, zoom: song.pdfZoom, onZoom: { song.pdfZoom = $0 }, onScrollView: onScrollView)
         } else {
             ImageSongView(url: song.fileURL, onScrollView: onScrollView)
         }
@@ -298,7 +363,7 @@ private struct PreviewPane: View {
             )
             // Ett tryck i låten byter till den (scrollning och zoom fungerar som vanligt).
             SongSheetView(song: song) { scrollView in
-                TapToPlay.attach(to: scrollView, action: onPlay)
+                ClosureTap.attach(to: scrollView, name: "potpurri.tapToPlay", action: onPlay)
             }
             .id(song.id)
         }
@@ -375,28 +440,24 @@ private struct NoteEditorLoader: View {
     }
 }
 
-/// Ett tryck i förhandsrutans låt byter till den. Läggs direkt på låtens scrollvy så att
-/// det fungerar även för PDF:er.
-@MainActor
-private final class TapToPlay: NSObject {
-    private static var key = 0
+/// Ett tryck på en scrollvy som kör en åtgärd (byt till förhandslåten, hoppa till nästa
+/// hopplinje). Läggs direkt på scrollvyn så att det fungerar även för PDF:er.
+final class ClosureTap: UITapGestureRecognizer {
     private let action: () -> Void
 
-    private init(action: @escaping () -> Void) {
+    private init(name: String, action: @escaping () -> Void) {
         self.action = action
+        super.init(target: nil, action: nil)
+        self.name = name
+        addTarget(self, action: #selector(fire))
     }
 
-    static func attach(to scrollView: UIScrollView, action: @escaping () -> Void) {
-        let target = TapToPlay(action: action)
-        // Målet hålls vid liv av scrollvyn.
-        objc_setAssociatedObject(scrollView, &key, target, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-        scrollView.gestureRecognizers?.filter { $0.name == "potpurri.tapToPlay" }.forEach(scrollView.removeGestureRecognizer)
-        let tap = UITapGestureRecognizer(target: target, action: #selector(tapped))
-        tap.name = "potpurri.tapToPlay"
-        scrollView.addGestureRecognizer(tap)
-    }
-
-    @objc private func tapped() {
+    @objc private func fire() {
         action()
+    }
+
+    static func attach(to view: UIView, name: String, action: @escaping () -> Void) {
+        view.gestureRecognizers?.filter { $0.name == name }.forEach(view.removeGestureRecognizer)
+        view.addGestureRecognizer(ClosureTap(name: name, action: action))
     }
 }
