@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// Låten som spelas: låtbladet, autoscrollknappen i hörnet och nästa/förra låt.
@@ -15,13 +16,21 @@ struct SongDetailView: View {
     @State private var previewHeight: CGFloat = 320
     @State private var showsColors = false
     @State private var autoscroller = Autoscroller()
+    @State private var overlay = AnnotationOverlay()
+    @Environment(\.modelContext) private var context
     @FocusState private var focused: Bool
 
     var body: some View {
         if let song {
             VStack(spacing: 0) {
                 ZStack(alignment: .bottomTrailing) {
-                    SongSheetView(song: song) { autoscroller.attach($0) }
+                    SongSheetView(song: song) { scrollView in
+                        autoscroller.attach(scrollView)
+                        overlay.attach(to: scrollView)
+                    }
+                    .id(song.id)
+                    .background { AnnotationSync(song: song, overlay: overlay).id(song.id) }
+                    PinnedNotesLayer(song: song)
                         .id(song.id)
                     HStack(alignment: .center, spacing: 12) {
                         SongStepButtons(previous: previous, next: next, onSelect: onSelect)
@@ -31,19 +40,28 @@ struct SongDetailView: View {
                 }
                 .overlay(alignment: .topTrailing) {
                     if !player.isLocked {
-                        Button {
-                            showsColors = true
-                        } label: {
-                            Image(systemName: "paintpalette")
-                                .font(.system(size: 18, weight: .medium))
-                                .frame(width: 48, height: 48)
-                                .background(.regularMaterial, in: Circle())
+                        HStack(spacing: 10) {
+                            toolsMenu(for: song)
+                            Button {
+                                showsColors = true
+                            } label: {
+                                Image(systemName: "paintpalette")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .frame(width: 48, height: 48)
+                                    .background(.regularMaterial, in: Circle())
+                            }
+                            .accessibilityLabel("Låtens färgkoder")
+                            .popover(isPresented: $showsColors) {
+                                SongColorsPanel(song: song)
+                            }
                         }
                         .padding(16)
-                        .accessibilityLabel("Låtens färgkoder")
-                        .popover(isPresented: $showsColors) {
-                            SongColorsPanel(song: song)
-                        }
+                    }
+                }
+                .overlay(alignment: .top) {
+                    if player.pen != .off && !player.isLocked {
+                        PenBar()
+                            .padding(.top, 76)
                     }
                 }
                 if let preview {
@@ -64,6 +82,11 @@ struct SongDetailView: View {
                         .foregroundStyle(.black)
                         .padding(.top, 8)
                         .accessibilityLabel("Scenlåset är på")
+                }
+            }
+            .sheet(isPresented: Binding(get: { player.editingNoteID != nil }, set: { if !$0 { player.editingNoteID = nil } })) {
+                if let id = player.editingNoteID {
+                    NoteEditorLoader(id: id, unit: overlay.contentWidth)
                 }
             }
             .navigationTitle(song.title)
@@ -97,6 +120,36 @@ struct SongDetailView: View {
                 description: Text("Välj en låt i listan till vänster.")
             )
         }
+    }
+
+    /// Verktyg för låten: ny lapp, markeringspenna och visa/dölj lappar.
+    private func toolsMenu(for song: Song) -> some View {
+        Menu {
+            Button {
+                let note = SongNote(songID: song.id, text: "Ny lapp", x: 0.55, y: overlay.visibleTop + 0.06, width: 0.3, height: 0.1)
+                context.insert(note)
+                player.notesHidden = false
+                player.editingNoteID = note.id
+            } label: {
+                Label("Ny lapp", systemImage: "note.text.badge.plus")
+            }
+            Button {
+                player.pen = .color(NoteColors.pens[0])
+            } label: {
+                Label("Markeringspenna", systemImage: "highlighter")
+            }
+            Button {
+                player.notesHidden.toggle()
+            } label: {
+                Label(player.notesHidden ? "Visa lappar" : "Dölj lappar", systemImage: player.notesHidden ? "eye" : "eye.slash")
+            }
+        } label: {
+            Image(systemName: "pencil.tip.crop.circle")
+                .font(.system(size: 20, weight: .medium))
+                .frame(width: 48, height: 48)
+                .background(.regularMaterial, in: Circle())
+        }
+        .accessibilityLabel("Lappar och penna")
     }
 
     private func secondsBinding(for song: Song) -> Binding<Int> {
@@ -311,6 +364,23 @@ private struct SongColorsPanel: View {
         }
         .sheet(isPresented: $showsNames) {
             ColorNamesSheet()
+        }
+    }
+}
+
+/// Hämtar lappen som ska redigeras.
+private struct NoteEditorLoader: View {
+    let unit: CGFloat
+    @Query private var notes: [SongNote]
+
+    init(id: UUID, unit: CGFloat) {
+        self.unit = unit
+        _notes = Query(filter: #Predicate<SongNote> { $0.id == id })
+    }
+
+    var body: some View {
+        if let note = notes.first {
+            NoteEditor(note: note, unit: unit)
         }
     }
 }

@@ -19,6 +19,12 @@ final class Player {
     /// Förslaget som spelas just nu (valt i förhandsrutan). Då bläddrar pedalen bara
     /// inom låten och listornas kö ändras inte.
     var playingSuggestionID: UUID?
+    /// Markeringspennan: av, en färg eller sudd.
+    var pen: AnnotationOverlay.Pen = .off
+    /// Visa/dölj alla lappar.
+    var notesHidden = false
+    /// Lappen som redigeras just nu.
+    var editingNoteID: UUID?
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.
     private(set) var gigStart: Date {
         didSet { UserDefaults.standard.set(gigStart, forKey: "gigStart") }

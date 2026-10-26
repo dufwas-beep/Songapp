@@ -7,6 +7,6 @@ struct PotpurriApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [Song.self, Setlist.self])
+        .modelContainer(for: [Song.self, Setlist.self, SongNote.self, Highlight.self])
     }
 }
