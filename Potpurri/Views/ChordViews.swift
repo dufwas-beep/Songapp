@@ -111,6 +111,19 @@ struct ChordsLayer: View {
         }
         .coordinateSpace(name: Self.space)
         .clipped()
+        .onAppear { updateStartKey() }
+        .onChange(of: chords.map { "\($0.root)\($0.quality)\($0.x)\($0.y)" }) { updateStartKey() }
+    }
+
+    /// Tonarten låten börjar i = första ackordet (överst, längst till vänster), t.ex. "G" eller "Em".
+    private func updateStartKey() {
+        guard let first = chords.min(by: { ($0.y, $0.x) < ($1.y, $1.x) }) else {
+            if song.startKey != nil { song.startKey = nil }
+            return
+        }
+        let minor = first.quality.hasPrefix("m") && !first.quality.hasPrefix("maj")
+        let name = ChordTheory.name(first.root, flats: first.flats ?? key.usesFlats) + (minor ? "m" : "")
+        if song.startKey != name { song.startKey = name }
     }
 
     // MARK: Ackorden på låten
@@ -414,14 +427,14 @@ struct ChordsLayer: View {
                 }
                 .buttonStyle(.bordered)
                 Spacer()
-                // ♭/♯ byter bara palettens tonart (t.ex. för refrängen) – ackord som redan
-                // ligger på låten ändras inte.
-                Button { stepPaletteKey(-1) } label: { Text("♭").font(.title3.weight(.bold)).frame(width: 30) }
+                // ♭/♯ transponerar hela låten. Palettens tonart (t.ex. för refrängen) väljs
+                // i menyn till vänster och ändrar inte ackord som redan ligger på låten.
+                Button { transpose(-1) } label: { Text("♭").font(.title3.weight(.bold)).frame(width: 30) }
                     .buttonStyle(.bordered)
-                    .accessibilityLabel("Palettens tonart ett halvt tonsteg ner")
-                Button { stepPaletteKey(1) } label: { Text("♯").font(.title3.weight(.bold)).frame(width: 30) }
+                    .accessibilityLabel("Transponera hela låten ett halvt tonsteg ner")
+                Button { transpose(1) } label: { Text("♯").font(.title3.weight(.bold)).frame(width: 30) }
                     .buttonStyle(.bordered)
-                    .accessibilityLabel("Palettens tonart ett halvt tonsteg upp")
+                    .accessibilityLabel("Transponera hela låten ett halvt tonsteg upp")
             }
             HStack(spacing: 8) {
                 Image(systemName: "textformat.size")
@@ -432,13 +445,7 @@ struct ChordsLayer: View {
                     .font(.footnote)
                     .buttonStyle(.bordered)
             }
-            Menu {
-                Button("Upp ett halvt tonsteg") { transpose(1) }
-                Button("Ner ett halvt tonsteg") { transpose(-1) }
-            } label: {
-                Label("Transponera hela låten", systemImage: "arrow.up.arrow.down")
-                    .font(.footnote.weight(.semibold))
-            }
+
             Text("Dra ut ett ackord till låten")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -552,11 +559,6 @@ struct ChordsLayer: View {
                     }
             )
             .accessibilityLabel("Ackord \(ChordTheory.label(root: root, quality: quality, bass: nil, in: key))")
-    }
-
-    /// Palettens tonart ett halvt tonsteg upp/ner (ackorden på låten ändras inte).
-    private func stepPaletteKey(_ step: Int) {
-        song.key = ChordTheory.Key(root: (key.root + step + 12) % 12, minor: key.minor).name
     }
 
     /// Transponera alla ackord på låten (och tonarten) ett halvt tonsteg. Ackorden stavas

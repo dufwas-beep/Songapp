@@ -341,7 +341,7 @@ struct SongRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            if let key = song.key {
+            if let key = song.displayKey {
                 Text(key)
                     .font(.callout)
                     .foregroundStyle(.secondary)

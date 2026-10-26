@@ -63,7 +63,7 @@ struct TextSongView: View {
     private func songBody(scale: CGFloat) -> some View {
         Text(song.title)
             .font(.system(size: 34 * scale, weight: .semibold))
-        if let key = song.key {
+        if let key = song.displayKey {
             Text("Tonart: \(key)")
                 .font(.system(size: 18 * scale))
                 .foregroundStyle(.secondary)

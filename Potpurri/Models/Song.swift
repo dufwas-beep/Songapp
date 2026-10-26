@@ -35,6 +35,8 @@ final class Song {
     /// Låtens zoom (nyp) i förhållande till "hela bredden" (1 = anpassad efter bredden).
     /// Gäller PDF:er, bilder och textlåtar.
     var pdfZoom: Double?
+    /// Tonarten låten börjar i (från första ackordet på låten). Visas i listorna.
+    var startKey: String?
     /// Ackordstämplarnas storlek i förhållande till bladets bredd (nil = standard).
     var chordSize: Double?
     /// Låtens färgkoder (0–4, se `ColorCodes`).
@@ -53,6 +55,11 @@ final class Song {
 
     var kind: SongKind {
         SongKind(rawValue: kindRaw) ?? .pdf
+    }
+
+    /// Tonarten som visas i listorna: den låten börjar i, annars den sparade tonarten.
+    var displayKey: String? {
+        startKey ?? key
     }
 
     func toggleColor(_ index: Int) {
