@@ -4,8 +4,6 @@ import Foundation
 enum ChordTheory {
     static let sharpNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     static let flatNames = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
-    /// Tonerna i C-skalan (för allt som inte finns bland tonartens ackord).
-    static let naturals: [(name: String, pitch: Int)] = [("C", 0), ("D", 2), ("E", 4), ("F", 5), ("G", 7), ("A", 9), ("B", 11)]
 
     /// Vanligaste färgningarna först; resten under "Fler".
     static let commonQualities = ["", "m", "7", "m7", "maj7", "sus4", "sus2", "add9"]

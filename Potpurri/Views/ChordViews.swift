@@ -83,19 +83,25 @@ struct ChordsLayer: View {
         let label = ChordTheory.label(root: chord.root, quality: chord.quality, bass: chord.bass, in: key)
         let point = screenPoint(chord)
         let selected = player.selectedChords.contains(chord.id)
-        return chordPill(label, selected: selected)
+        // Ackordet (och hela gruppen) som dras lyfts: rosa, lite större och med skugga.
+        let lifted = draggingGroup.contains(chord.id)
+        return chordPill(label, selected: selected || lifted)
+            .scaleEffect(lifted ? 1.18 : 1)
+            .shadow(color: .black.opacity(lifted ? 0.35 : 0), radius: 8, y: 4)
+            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: lifted)
             // Minst 44 punkter hög tryckyta, så att ackordet är lätt att träffa.
             .frame(minHeight: 44)
             .contentShape(Rectangle())
             .fixedSize()
-            .position(x: point.x + estimatedWidth(label) / 2, y: point.y)
             .gesture(moveGesture(chord), including: editable && !player.choosingChords ? .all : .none)
+            // Tryck (eller håll in) öppnar menyn; i "Välj ackord" markerar ett tryck i stället.
             .onTapGesture {
-                guard editable, player.choosingChords else { return }
-                if selected { player.selectedChords.remove(chord.id) } else { player.selectedChords.insert(chord.id) }
-            }
-            .onLongPressGesture(minimumDuration: 0.4, maximumDistance: 8) {
-                if editable && !player.choosingChords { menuChord = chord }
+                guard editable else { return }
+                if player.choosingChords {
+                    if selected { player.selectedChords.remove(chord.id) } else { player.selectedChords.insert(chord.id) }
+                } else {
+                    menuChord = chord
+                }
             }
             .popover(isPresented: Binding(get: { menuChord?.id == chord.id }, set: { if !$0 { menuChord = nil } })) {
                 ChordMenu(chord: chord, key: key) { action in
@@ -104,7 +110,9 @@ struct ChordsLayer: View {
             }
             // Ackorden går bara att ta i när paletten är öppen – annars scrollar man som vanligt.
             .allowsHitTesting(editable)
+            .position(x: point.x + estimatedWidth(label) / 2, y: point.y)
             .accessibilityLabel("Ackord \(label)")
+            .accessibilityHint(editable ? "Tryck för att ändra, dra för att flytta" : "")
     }
 
     private func chordPill(_ label: String, selected: Bool) -> some View {
@@ -126,6 +134,7 @@ struct ChordsLayer: View {
         DragGesture(minimumDistance: 6, coordinateSpace: .named(Self.space))
             .onChanged { value in
                 let members = group(of: chord)
+                if draggingGroup.isEmpty { draggingGroup = Set(members.map(\.id)) }
                 let dx = Double(value.translation.width - lastTranslation.width) / Double(geometry.unit)
                 let dy = Double(value.translation.height - lastTranslation.height) / Double(geometry.unit)
                 lastTranslation = value.translation
@@ -136,11 +145,16 @@ struct ChordsLayer: View {
             }
             .onEnded { _ in
                 lastTranslation = .zero
-                snapToRow(group(of: chord))
+                draggingGroup = []
+                withAnimation(.easeOut(duration: 0.15)) {
+                    snapToRow(group(of: chord))
+                }
             }
     }
 
     @State private var lastTranslation: CGSize = .zero
+    /// Ackorden som dras just nu (ett ackord eller hela dess grupp).
+    @State private var draggingGroup: Set<UUID> = []
 
     private func group(of chord: ChordStamp) -> [ChordStamp] {
         guard let groupID = chord.groupID else { return [chord] }
@@ -177,13 +191,33 @@ struct ChordsLayer: View {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color.accentColor.opacity(0.08))
                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6, 5])))
-                    Text("Grupp")
-                        .font(.caption.weight(.bold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Color.accentColor, in: Capsule())
-                        .foregroundStyle(.black)
-                        .offset(x: 6, y: -22)
+                    // Tryck på fliken: dela upp, kopiera eller ta bort hela gruppen.
+                    Menu {
+                        Button {
+                            members.forEach { $0.groupID = nil }
+                        } label: {
+                            Label("Dela upp gruppen", systemImage: "rectangle.split.3x1")
+                        }
+                        Button {
+                            copy(members)
+                        } label: {
+                            Label("Kopiera gruppen", systemImage: "doc.on.doc")
+                        }
+                        Button(role: .destructive) {
+                            members.forEach { context.delete($0) }
+                        } label: {
+                            Label("Ta bort gruppen", systemImage: "trash")
+                        }
+                    } label: {
+                        Label("Grupp", systemImage: "chevron.down")
+                            .labelStyle(.titleAndIcon)
+                            .font(.caption.weight(.bold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.accentColor, in: Capsule())
+                            .foregroundStyle(.black)
+                    }
+                    .offset(x: 6, y: -26)
                 }
                 .frame(width: rect.width, height: rect.height)
                 .contentShape(Rectangle())
@@ -301,11 +335,6 @@ struct ChordsLayer: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4), spacing: 6) {
                 ForEach(Array(ChordTheory.diatonicChords(in: key).enumerated()), id: \.offset) { _, chord in
                     paletteChip(root: chord.root, quality: chord.quality)
-                }
-            }
-            HStack(spacing: 4) {
-                ForEach(ChordTheory.naturals, id: \.pitch) { note in
-                    paletteChip(root: note.pitch, quality: "")
                 }
             }
             Divider()
