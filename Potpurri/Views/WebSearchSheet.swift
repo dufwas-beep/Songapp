@@ -52,7 +52,8 @@ struct WebSearchSheet: View {
                 case .database:
                     databaseView
                 case .web:
-                    WebView(controller: web)
+                    WebView(view: web.view(for: site))
+                        .id(site)
                         .safeAreaInset(edge: .top) {
                             // Välj var på webben det söks: Google, AZLyrics eller Genius.
                             Picker("Sök på", selection: $site) {
@@ -64,7 +65,6 @@ struct WebSearchSheet: View {
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(.bar)
-                            .onChange(of: site) { web.load(query, on: site) }
                         }
                         .safeAreaInset(edge: .bottom) {
                             Button {
@@ -181,7 +181,7 @@ struct WebSearchSheet: View {
     private func search() {
         let q = query.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return }
-        web.load(q, on: site)
+        web.loadAll(q)
         searching = true
         Task {
             do {
@@ -222,14 +222,26 @@ struct WebSearchSheet: View {
     }
 }
 
-/// Styr den inbyggda webbläsaren.
+/// Styr den inbyggda webbläsaren. Varje sajt har en egen flik som laddas direkt vid
+/// sökningen, så att det går snabbt att växla mellan Google, AZLyrics och Genius.
 @MainActor
 final class WebController {
-    let view: WKWebView = {
+    private var views: [Site: WKWebView] = [:]
+    private var current: Site = .google
+
+    func view(for site: Site) -> WKWebView {
+        current = site
+        if let view = views[site] { return view }
         let view = WKWebView()
         view.allowsBackForwardNavigationGestures = true
+        views[site] = view
         return view
-    }()
+    }
+
+    /// Fliken som visas just nu.
+    private var currentView: WKWebView {
+        view(for: current)
+    }
 
     /// Sajter man kan söka på i webbläsaren.
     enum Site: String, CaseIterable {
@@ -262,12 +274,17 @@ final class WebController {
         }
     }
 
-    func load(_ query: String, on site: Site) {
-        if let url = site.url(for: query) { view.load(URLRequest(url: url)) }
+    /// Sökningen laddas på alla sajter samtidigt (i bakgrunden).
+    func loadAll(_ query: String) {
+        let showing = current
+        for site in Site.allCases {
+            if let url = site.url(for: query) { view(for: site).load(URLRequest(url: url)) }
+        }
+        current = showing
     }
 
     func selectedText() async -> String {
-        (try? await view.evaluateJavaScript("window.getSelection().toString()") as? String) ?? ""
+        (try? await currentView.evaluateJavaScript("window.getSelection().toString()") as? String) ?? ""
     }
 
     /// Letar upp det textblock på sidan som mest liknar en låttext: många korta rader och
@@ -293,15 +310,15 @@ final class WebController {
           return best ? best.innerText.trim() : '';
         })();
         """
-        return (try? await view.evaluateJavaScript(script) as? String) ?? ""
+        return (try? await currentView.evaluateJavaScript(script) as? String) ?? ""
     }
 }
 
 private struct WebView: UIViewRepresentable {
-    let controller: WebController
+    let view: WKWebView
 
     func makeUIView(context: Context) -> WKWebView {
-        controller.view
+        view
     }
 
     func updateUIView(_ view: WKWebView, context: Context) {}
