@@ -189,7 +189,7 @@ struct SetlistDetailView: View {
     static let songHeight: CGFloat = 50
     static let headerHeight: CGFloat = 44
 
-    static func height(of row: Row) -> CGFloat {
+    private static func height(of row: Row) -> CGFloat {
         if case .setBreak = row.item { return headerHeight }
         return songHeight
     }
