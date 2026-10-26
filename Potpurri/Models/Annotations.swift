@@ -83,3 +83,30 @@ final class JumpMarker {
         self.number = number
     }
 }
+
+/// En ackordstämpel på en låt. Grundton och bas sparas som tonhöjd (0 = C … 11 = B)
+/// och stavas efter låtens tonart (F# i G-dur, Gb i Db-dur). Position i förhållande
+/// till bladets bredd (vänsterkant och mitt på höjden).
+@Model
+final class ChordStamp {
+    var id: UUID = UUID()
+    var songID: UUID = UUID()
+    var root: Int = 0
+    var quality: String = ""
+    var bass: Int?
+    var x: Double = 0
+    var y: Double = 0
+    /// Ackord i samma grupp sitter ihop och flyttas tillsammans.
+    var groupID: UUID?
+
+    init(songID: UUID, root: Int, quality: String, bass: Int? = nil, x: Double, y: Double, groupID: UUID? = nil) {
+        self.id = UUID()
+        self.songID = songID
+        self.root = root
+        self.quality = quality
+        self.bass = bass
+        self.x = x
+        self.y = y
+        self.groupID = groupID
+    }
+}

@@ -39,6 +39,8 @@ struct SongDetailView: View {
                     .background { AnnotationSync(song: song, overlay: overlay).id(song.id) }
                     MarkersLayer(song: song, geometry: geometry)
                         .id(song.id)
+                    ChordsLayer(song: song, geometry: geometry)
+                        .id(song.id)
                     NotesLayer(song: song, geometry: geometry)
                         .id(song.id)
                     HStack(alignment: .center, spacing: 12) {
@@ -104,6 +106,9 @@ struct SongDetailView: View {
                 autoscroller.stop()
                 markerIndex = nil
                 player.editingMarkers = false
+                player.choosingChords = false
+                player.selectedChords = []
+                player.pastingChords = false
                 autoscroller.duration = TimeInterval(song.autoscrollSeconds ?? 180)
                 focused = true
                 if let next, next.kind == .pdf { PDFCache.shared.preload(next.fileURL) }
@@ -147,8 +152,16 @@ struct SongDetailView: View {
             }
             Button {
                 player.pen = .color(NoteColors.pens[0])
+                player.chordsOn = false
             } label: {
                 Label("Markeringspenna", systemImage: "highlighter")
+            }
+            Button {
+                player.chordsOn = true
+                player.pen = .off
+                player.editingMarkers = false
+            } label: {
+                Label("Ackord", systemImage: "music.note")
             }
             Divider()
             Button {
@@ -208,7 +221,7 @@ struct SongDetailView: View {
 
     /// Ett tryck i låten hoppar till nästa hopplinje (när låten har sådana).
     private func jumpOnTap() {
-        guard !player.editingMarkers, player.pen == .off else { return }
+        guard !player.editingMarkers, !player.chordsOn, player.pen == .off else { return }
         _ = jump(forward: true)
     }
 

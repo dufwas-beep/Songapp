@@ -1,0 +1,500 @@
+import SwiftData
+import SwiftUI
+
+/// Ackordstämplarna ovanpå låtbladet, plus paletten när den är öppen.
+/// Ackorden ritas utifrån bladets scrollposition och bredd, så de följer låten.
+struct ChordsLayer: View {
+    @Bindable var song: Song
+    let geometry: SheetGeometry
+
+    @Environment(Player.self) private var player
+    @Environment(\.modelContext) private var context
+    @Query private var chords: [ChordStamp]
+
+    @State private var paletteOffset: CGSize = .zero
+    @State private var paletteDragStart: CGSize?
+    @State private var paletteFrame: CGRect = .zero
+    /// Ackordet som dras ut från paletten och var fingret är.
+    @State private var dragged: (root: Int, quality: String)?
+    @State private var dragLocation: CGPoint = .zero
+    @State private var menuChord: ChordStamp?
+
+    static let space = "chords"
+
+    init(song: Song, geometry: SheetGeometry) {
+        self.song = song
+        self.geometry = geometry
+        let id = song.id
+        _chords = Query(filter: #Predicate<ChordStamp> { $0.songID == id })
+    }
+
+    private var key: ChordTheory.Key {
+        ChordTheory.key(from: song.key)
+    }
+
+    private var editable: Bool {
+        player.chordsOn && !player.isLocked
+    }
+
+    /// Textstorleken följer bladets bredd, så ackorden zoomar med låten.
+    private var fontSize: CGFloat {
+        max(14, geometry.unit * 0.026)
+    }
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            // Klistra in: ett tryck på låten lägger sekvensen där.
+            if player.pastingChords && editable {
+                Color.white.opacity(0.001)
+                    .contentShape(Rectangle())
+                    .onTapGesture(coordinateSpace: .named(Self.space)) { location in
+                        paste(at: location)
+                    }
+            } else {
+                Color.clear.allowsHitTesting(false)
+            }
+            if editable { groupFrames }
+            ForEach(chords) { chord in
+                stamp(chord)
+            }
+            if let dragged {
+                chordPill(ChordTheory.label(root: dragged.root, quality: dragged.quality, bass: nil, in: key), selected: true)
+                    .position(dragLocation)
+                    .allowsHitTesting(false)
+            }
+            if player.chordsOn && !player.isLocked {
+                palette
+                    .offset(paletteOffset)
+                    .padding(16)
+                    .padding(.top, 70)
+            }
+        }
+        .coordinateSpace(name: Self.space)
+        .clipped()
+    }
+
+    // MARK: Ackorden på låten
+
+    private func screenPoint(_ chord: ChordStamp) -> CGPoint {
+        CGPoint(x: CGFloat(chord.x) * geometry.unit - geometry.offset.x, y: CGFloat(chord.y) * geometry.unit - geometry.offset.y)
+    }
+
+    private func stamp(_ chord: ChordStamp) -> some View {
+        let label = ChordTheory.label(root: chord.root, quality: chord.quality, bass: chord.bass, in: key)
+        let point = screenPoint(chord)
+        let selected = player.selectedChords.contains(chord.id)
+        return chordPill(label, selected: selected)
+            // Minst 44 punkter hög tryckyta, så att ackordet är lätt att träffa.
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+            .fixedSize()
+            .position(x: point.x + estimatedWidth(label) / 2, y: point.y)
+            .gesture(moveGesture(chord), including: editable && !player.choosingChords ? .all : .none)
+            .onTapGesture {
+                guard editable, player.choosingChords else { return }
+                if selected { player.selectedChords.remove(chord.id) } else { player.selectedChords.insert(chord.id) }
+            }
+            .onLongPressGesture(minimumDuration: 0.4, maximumDistance: 8) {
+                if editable && !player.choosingChords { menuChord = chord }
+            }
+            .popover(isPresented: Binding(get: { menuChord?.id == chord.id }, set: { if !$0 { menuChord = nil } })) {
+                ChordMenu(chord: chord, key: key) { action in
+                    handle(action, for: chord)
+                }
+            }
+            // Ackorden går bara att ta i när paletten är öppen – annars scrollar man som vanligt.
+            .allowsHitTesting(editable)
+            .accessibilityLabel("Ackord \(label)")
+    }
+
+    private func chordPill(_ label: String, selected: Bool) -> some View {
+        Text(label)
+            .font(.system(size: fontSize, weight: .bold))
+            .foregroundStyle(.black)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .background(selected ? Color.accentColor : Color(white: 0.93), in: RoundedRectangle(cornerRadius: 6))
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.black.opacity(0.08)))
+    }
+
+    private func estimatedWidth(_ label: String) -> CGFloat {
+        CGFloat(label.count) * fontSize * 0.62 + 14
+    }
+
+    /// Kort drag flyttar ackordet – eller hela gruppen om det sitter i en.
+    private func moveGesture(_ chord: ChordStamp) -> some Gesture {
+        DragGesture(minimumDistance: 6, coordinateSpace: .named(Self.space))
+            .onChanged { value in
+                let members = group(of: chord)
+                let dx = Double(value.translation.width - lastTranslation.width) / Double(geometry.unit)
+                let dy = Double(value.translation.height - lastTranslation.height) / Double(geometry.unit)
+                lastTranslation = value.translation
+                for member in members {
+                    member.x += dx
+                    member.y += dy
+                }
+            }
+            .onEnded { _ in
+                lastTranslation = .zero
+                snapToRow(group(of: chord))
+            }
+    }
+
+    @State private var lastTranslation: CGSize = .zero
+
+    private func group(of chord: ChordStamp) -> [ChordStamp] {
+        guard let groupID = chord.groupID else { return [chord] }
+        return chords.filter { $0.groupID == groupID }
+    }
+
+    /// Hamnar ackordet nära höjden för andra ackord snäpper det till samma rad.
+    private func snapToRow(_ members: [ChordStamp]) {
+        guard let first = members.first else { return }
+        let ids = Set(members.map(\.id))
+        let others = chords.filter { !ids.contains($0.id) }
+        guard let nearest = others.min(by: { abs($0.y - first.y) < abs($1.y - first.y) }),
+              abs(nearest.y - first.y) < 0.018 else { return }
+        let shift = nearest.y - first.y
+        for member in members { member.y += shift }
+    }
+
+    // MARK: Grupper
+
+    /// Varje grupp visas som en streckad ram med en rosa flik "Grupp". Dra i fliken eller
+    /// var som helst i ramen för att flytta hela gruppen.
+    private var groupFrames: some View {
+        let groups = Dictionary(grouping: chords.filter { $0.groupID != nil }, by: { $0.groupID! })
+        return ForEach(Array(groups.keys), id: \.self) { id in
+            let members = groups[id] ?? []
+            if members.count > 1 {
+                let points = members.map(screenPoint)
+                let minX = (points.map(\.x).min() ?? 0) - 8
+                let maxX = zip(points, members).map { $0.0.x + estimatedWidth(ChordTheory.label(root: $0.1.root, quality: $0.1.quality, bass: $0.1.bass, in: key)) }.max() ?? 0
+                let minY = (points.map(\.y).min() ?? 0) - 26
+                let maxY = (points.map(\.y).max() ?? 0) + 26
+                let rect = CGRect(x: minX, y: minY, width: maxX - minX + 8, height: maxY - minY)
+                ZStack(alignment: .topLeading) {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.accentColor.opacity(0.08))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6, 5])))
+                    Text("Grupp")
+                        .font(.caption.weight(.bold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.accentColor, in: Capsule())
+                        .foregroundStyle(.black)
+                        .offset(x: 6, y: -22)
+                }
+                .frame(width: rect.width, height: rect.height)
+                .contentShape(Rectangle())
+                .position(x: rect.midX, y: rect.midY)
+                .gesture(moveGesture(members[0]), including: player.choosingChords ? .none : .all)
+            }
+        }
+    }
+
+    // MARK: Menyn för ett ackord
+
+    enum MenuAction {
+        case accidental(Int)
+        case quality(String)
+        case bass(Int?)
+        case copy
+        case delete
+    }
+
+    private func handle(_ action: MenuAction, for chord: ChordStamp) {
+        switch action {
+        case .accidental(let step):
+            // ♯ höjer, ♭ sänker, ♮ tar bort förtecknet (tillbaka till stamtonen).
+            if step == 0 {
+                let name = ChordTheory.name(chord.root, in: key)
+                chord.root = ChordTheory.pitch(of: String(name.prefix(1))) ?? chord.root
+            } else {
+                chord.root = (chord.root + step + 12) % 12
+            }
+        case .quality(let quality):
+            chord.quality = quality
+        case .bass(let bass):
+            chord.bass = bass
+        case .copy:
+            copy(group(of: chord))
+            menuChord = nil
+        case .delete:
+            context.delete(chord)
+            menuChord = nil
+        }
+    }
+
+    private func copy(_ members: [ChordStamp]) {
+        let sorted = members.sorted { ($0.y, $0.x) < ($1.y, $1.x) }
+        guard let first = sorted.first else { return }
+        player.chordClipboard = sorted.map { .init(root: $0.root, quality: $0.quality, bass: $0.bass, dx: $0.x - first.x, dy: $0.y - first.y) }
+        player.pastingChords = true
+        player.choosingChords = false
+        player.selectedChords = []
+    }
+
+    /// Klistra in: avstånden mellan ackorden behålls och sekvensen blir en grupp.
+    private func paste(at location: CGPoint) {
+        let x = Double((location.x + geometry.offset.x) / geometry.unit)
+        let y = Double((location.y + geometry.offset.y) / geometry.unit)
+        let groupID = player.chordClipboard.count > 1 ? UUID() : nil
+        for item in player.chordClipboard {
+            context.insert(ChordStamp(songID: song.id, root: item.root, quality: item.quality, bass: item.bass, x: x + item.dx, y: y + item.dy, groupID: groupID))
+        }
+        player.pastingChords = false
+    }
+
+    // MARK: Paletten
+
+    private var palette: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: "line.3.horizontal")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 36, height: 32)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(coordinateSpace: .global)
+                            .onChanged { value in
+                                let start = paletteDragStart ?? paletteOffset
+                                paletteDragStart = start
+                                paletteOffset = CGSize(width: start.width + value.translation.width, height: start.height + value.translation.height)
+                            }
+                            .onEnded { _ in paletteDragStart = nil }
+                    )
+                    .accessibilityLabel("Flytta paletten")
+                Text("Ackord").font(.headline)
+                Spacer()
+                Button {
+                    player.chordsOn = false
+                    player.choosingChords = false
+                    player.pastingChords = false
+                    player.selectedChords = []
+                } label: {
+                    Image(systemName: "xmark").frame(width: 32, height: 32)
+                }
+                .accessibilityLabel("Stäng ackordpaletten")
+            }
+            HStack(spacing: 8) {
+                Menu {
+                    ForEach(ChordTheory.allKeys, id: \.self) { option in
+                        Button(option.name + (option.minor ? " (moll)" : " (dur)")) { song.key = option.name }
+                    }
+                } label: {
+                    Text("Tonart: \(key.name)")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+                Button { transpose(-1) } label: { Text("♭").font(.title3.weight(.bold)).frame(width: 30) }
+                    .buttonStyle(.bordered)
+                    .accessibilityLabel("Transponera ner ett halvt tonsteg")
+                Button { transpose(1) } label: { Text("♯").font(.title3.weight(.bold)).frame(width: 30) }
+                    .buttonStyle(.bordered)
+                    .accessibilityLabel("Transponera upp ett halvt tonsteg")
+            }
+            Text("Dra ut ett ackord till låten")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4), spacing: 6) {
+                ForEach(Array(ChordTheory.diatonicChords(in: key).enumerated()), id: \.offset) { _, chord in
+                    paletteChip(root: chord.root, quality: chord.quality)
+                }
+            }
+            HStack(spacing: 4) {
+                ForEach(ChordTheory.naturals, id: \.pitch) { note in
+                    paletteChip(root: note.pitch, quality: "")
+                }
+            }
+            Divider()
+            if player.pastingChords {
+                HStack {
+                    Text("Tryck där sekvensen ska klistras in")
+                        .font(.footnote)
+                    Spacer()
+                    Button("Avbryt") { player.pastingChords = false }
+                }
+            } else if player.choosingChords {
+                chooseBar
+            } else {
+                Button {
+                    player.choosingChords = true
+                    player.selectedChords = []
+                } label: {
+                    Label("Välj ackord", systemImage: "checkmark.circle")
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding(14)
+        .frame(width: 300)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
+        .shadow(color: .black.opacity(0.2), radius: 12, y: 6)
+        .background {
+            GeometryReader { proxy in
+                Color.clear.onAppear { paletteFrame = proxy.frame(in: .named(Self.space)) }
+                    .onChange(of: proxy.frame(in: .named(Self.space))) { _, frame in paletteFrame = frame }
+            }
+        }
+    }
+
+    private var chooseBar: some View {
+        let selected = chords.filter { player.selectedChords.contains($0.id) }
+        return VStack(alignment: .leading, spacing: 8) {
+            Text(selected.isEmpty ? "Tryck på ackorden som ska med" : "\(selected.count) valda")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                Button("Gruppera") {
+                    let id = UUID()
+                    selected.forEach { $0.groupID = id }
+                    finishChoosing()
+                }
+                .disabled(selected.count < 2)
+                Button("Dela upp") {
+                    selected.forEach { $0.groupID = nil }
+                    finishChoosing()
+                }
+                .disabled(selected.allSatisfy { $0.groupID == nil })
+                Button("Kopiera") { copy(selected) }
+                    .disabled(selected.isEmpty)
+                Button("Ta bort", role: .destructive) {
+                    selected.forEach { context.delete($0) }
+                    finishChoosing()
+                }
+                .disabled(selected.isEmpty)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            Button("Klar") { finishChoosing() }
+                .font(.footnote.weight(.semibold))
+        }
+    }
+
+    private func finishChoosing() {
+        player.choosingChords = false
+        player.selectedChords = []
+    }
+
+    private func paletteChip(root: Int, quality: String) -> some View {
+        Text(ChordTheory.label(root: root, quality: quality, bass: nil, in: key))
+            .font(.system(size: 16, weight: .bold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .frame(maxWidth: .infinity, minHeight: 40)
+            .background(Color(white: 0.93), in: RoundedRectangle(cornerRadius: 8))
+            .foregroundStyle(.black)
+            .gesture(
+                DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.space))
+                    .onChanged { value in
+                        dragged = (root, quality)
+                        dragLocation = value.location
+                    }
+                    .onEnded { value in
+                        dragged = nil
+                        // Släppt på låten (inte på paletten) → nytt ackord där.
+                        guard !paletteFrame.contains(value.location) else { return }
+                        let label = ChordTheory.label(root: root, quality: quality, bass: nil, in: key)
+                        let left = value.location.x - estimatedWidth(label) / 2
+                        let chord = ChordStamp(
+                            songID: song.id, root: root, quality: quality,
+                            x: Double((left + geometry.offset.x) / geometry.unit),
+                            y: Double((value.location.y + geometry.offset.y) / geometry.unit)
+                        )
+                        context.insert(chord)
+                        snapToRow([chord])
+                    }
+            )
+            .accessibilityLabel("Ackord \(ChordTheory.label(root: root, quality: quality, bass: nil, in: key))")
+    }
+
+    /// Transponera alla ackord på låten (och tonarten) ett halvt tonsteg.
+    private func transpose(_ step: Int) {
+        for chord in chords {
+            chord.root = (chord.root + step + 12) % 12
+            if let bass = chord.bass { chord.bass = (bass + step + 12) % 12 }
+        }
+        let newKey = ChordTheory.Key(root: (key.root + step + 12) % 12, minor: key.minor)
+        song.key = newKey.name
+    }
+}
+
+/// Menyn när man håller inne ett ackord: förtecken, färgning, bas, kopiera och ta bort.
+private struct ChordMenu: View {
+    let chord: ChordStamp
+    let key: ChordTheory.Key
+    let onAction: (ChordsLayer.MenuAction) -> Void
+    @State private var showsMore = false
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text(ChordTheory.label(root: chord.root, quality: chord.quality, bass: chord.bass, in: key))
+                    .font(.title2.weight(.bold))
+                section("Förtecken") {
+                    HStack(spacing: 8) {
+                        option("♯ Höj") { onAction(.accidental(1)) }
+                        option("♮ Ingen") { onAction(.accidental(0)) }
+                        option("♭ Sänk") { onAction(.accidental(-1)) }
+                    }
+                }
+                section("Färgning") {
+                    let qualities = ChordTheory.commonQualities + (showsMore ? ChordTheory.moreQualities : [])
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4), spacing: 6) {
+                        ForEach(qualities, id: \.self) { quality in
+                            option(quality.isEmpty ? "dur" : quality, selected: chord.quality == quality) { onAction(.quality(quality)) }
+                        }
+                    }
+                    Button(showsMore ? "Färre" : "Fler") { showsMore.toggle() }
+                        .font(.footnote)
+                }
+                section("Bas") {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5), spacing: 6) {
+                        option("ingen", selected: chord.bass == nil) { onAction(.bass(nil)) }
+                        ForEach(0..<12, id: \.self) { pitch in
+                            option(ChordTheory.name(pitch, in: key), selected: chord.bass == pitch) { onAction(.bass(pitch)) }
+                        }
+                    }
+                }
+                Divider()
+                HStack {
+                    Button {
+                        onAction(.copy)
+                    } label: {
+                        Label(chord.groupID == nil ? "Kopiera" : "Kopiera gruppen", systemImage: "doc.on.doc")
+                    }
+                    Spacer()
+                    Button(role: .destructive) {
+                        onAction(.delete)
+                    } label: {
+                        Label("Ta bort", systemImage: "trash")
+                    }
+                }
+            }
+            .padding(18)
+        }
+        .frame(width: 340, height: 520)
+    }
+
+    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            content()
+        }
+    }
+
+    private func option(_ title: String, selected: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity, minHeight: 36)
+                .background(selected ? Color.accentColor : Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
+                .foregroundStyle(selected ? Color.black : Color.primary)
+        }
+        .buttonStyle(.plain)
+    }
+}

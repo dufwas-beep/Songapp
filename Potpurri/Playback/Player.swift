@@ -29,6 +29,24 @@ final class Player {
     var editingMarkers = false
     /// Visa hopplinjerna även när man inte redigerar dem.
     var showsMarkers = true
+    /// Ackordpaletten är öppen (då kan ackorden flyttas och ändras).
+    var chordsOn = false
+    /// "Välj ackord": tryck på ackord för att markera dem.
+    var choosingChords = false
+    var selectedChords: Set<UUID> = []
+    /// Kopierad ackordsekvens (ackord med avstånd till det första) som väntar på att
+    /// klistras in med ett tryck på låten.
+    var chordClipboard: [CopiedChord] = []
+    var pastingChords = false
+
+    struct CopiedChord {
+        let root: Int
+        let quality: String
+        let bass: Int?
+        let dx: Double
+        let dy: Double
+    }
+
     /// Noten som redigeras just nu.
     var editingNoteID: UUID?
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.
