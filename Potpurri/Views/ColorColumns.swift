@@ -55,6 +55,7 @@ struct ColorColumnsHeader: View {
                         .fill(ColorCodes.colors[index])
                         .frame(width: 16, height: 3)
                 }
+                .overlay(alignment: .leading) { ColumnLine() }
                 .contentShape(Rectangle())
                 .onTapGesture {
                     if colorMode { onColumnTap(index) }
@@ -145,6 +146,7 @@ struct ColorDots: View {
                     }
                 }
                 .frame(width: Self.columnWidth, height: 32)
+                .overlay(alignment: .leading) { ColumnLine().padding(.vertical, -14) }
                 .contentShape(Rectangle())
                 .onTapGesture {
                     if editable { song.toggleColor(index) }
@@ -154,6 +156,16 @@ struct ColorDots: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(song.colorTags.isEmpty ? "Inga färgkoder" : "\(song.colorTags.count) färgkoder")
+    }
+}
+
+/// Tunn linje mellan färgkolumnerna. Går lite utanför raden så att linjerna hänger ihop.
+private struct ColumnLine: View {
+    var body: some View {
+        Rectangle()
+            .fill(Color.secondary.opacity(0.25))
+            .frame(width: 1)
+            .allowsHitTesting(false)
     }
 }
 
