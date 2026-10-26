@@ -11,6 +11,7 @@ struct ColorColumnsHeader: View {
     @Environment(Player.self) private var player
     @State private var renaming: Int?
     @State private var draft = ""
+    @State private var showsNames = false
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 0) {
@@ -26,6 +27,19 @@ struct ColorColumnsHeader: View {
             .tint(colorMode ? .accentColor : .secondary)
             .disabled(player.isLocked)
             .padding(.bottom, 4)
+            if colorMode {
+                Button {
+                    showsNames = true
+                } label: {
+                    Label("Byt namn", systemImage: "pencil")
+                        .font(.footnote.weight(.medium))
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .controlSize(.small)
+                .padding(.leading, 6)
+                .padding(.bottom, 4)
+            }
             Spacer()
             ForEach(0..<ColorCodes.count, id: \.self) { index in
                 VStack(spacing: 4) {
@@ -54,6 +68,9 @@ struct ColorColumnsHeader: View {
         }
         .padding(.leading, 16)
         .padding(.trailing, 20)
+        .sheet(isPresented: $showsNames) {
+            ColorNamesSheet()
+        }
         .alert("Byt namn på färgen", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Namn", text: $draft)
             Button("Avbryt", role: .cancel) {}
@@ -62,6 +79,47 @@ struct ColorColumnsHeader: View {
                 if let index = renaming, !name.isEmpty { codes.names[index] = name }
                 renaming = nil
             }
+        }
+    }
+}
+
+/// Byt namn på alla fem färgerna på ett ställe.
+struct ColorNamesSheet: View {
+    @Environment(ColorCodes.self) private var codes
+    @Environment(\.dismiss) private var dismiss
+    @State private var drafts: [String] = []
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    ForEach(drafts.indices, id: \.self) { index in
+                        HStack(spacing: 12) {
+                            Circle().fill(ColorCodes.colors[index]).frame(width: 18, height: 18)
+                            TextField("Namn", text: $drafts[index])
+                        }
+                    }
+                } footer: {
+                    Text("Namnen visas överst i färgkolumnerna och i förslagsrutan.")
+                }
+            }
+            .navigationTitle("Färgernas namn")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Avbryt") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Spara") {
+                        for (index, draft) in drafts.enumerated() {
+                            let name = draft.trimmingCharacters(in: .whitespaces)
+                            if !name.isEmpty { codes.names[index] = name }
+                        }
+                        dismiss()
+                    }
+                }
+            }
+            .onAppear { drafts = codes.names }
         }
     }
 }

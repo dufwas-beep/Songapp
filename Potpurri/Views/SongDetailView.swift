@@ -237,11 +237,17 @@ private struct PreviewPane: View {
                     .padding(.top, 5)
             }
             .gesture(
-                DragGesture()
+                // Mät i skärmens koordinater – kanten flyttar sig själv när rutan ändrar
+                // storlek, och mätt mot den skulle rutan darra.
+                DragGesture(minimumDistance: 1, coordinateSpace: .global)
                     .onChanged { value in
                         let start = startHeight ?? height
                         startHeight = start
-                        height = min(max(start - value.translation.height, 160), 720)
+                        var transaction = Transaction()
+                        transaction.disablesAnimations = true
+                        withTransaction(transaction) {
+                            height = min(max(start - value.translation.height, 160), 720)
+                        }
                     }
                     .onEnded { value in
                         startHeight = nil
@@ -264,6 +270,7 @@ private struct PreviewPane: View {
 private struct SongColorsPanel: View {
     let song: Song
     @Environment(ColorCodes.self) private var codes
+    @State private var showsNames = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -294,5 +301,16 @@ private struct SongColorsPanel: View {
         }
         .padding(20)
         .frame(width: 340)
+        .safeAreaInset(edge: .bottom) {
+            Button {
+                showsNames = true
+            } label: {
+                Label("Byt namn på färgerna", systemImage: "pencil")
+            }
+            .padding(.bottom, 16)
+        }
+        .sheet(isPresented: $showsNames) {
+            ColorNamesSheet()
+        }
     }
 }
