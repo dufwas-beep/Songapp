@@ -48,9 +48,10 @@ struct SetlistDetailView: View {
         return result
     }
 
-    /// Färgkolumnerna – bara färger som någon låt i biblioteket har (alla i färgläget).
+    /// Färgkolumnerna – bara färger som någon låt i just den här listan har (alla i färgläget).
     private var columns: [Int] {
-        visibleColorColumns(songs, colorMode: colorMode)
+        let ids = Set(setlist.songIDs)
+        return visibleColorColumns(songs.filter { ids.contains($0.id) }, colorMode: colorMode)
     }
 
     private var hasSets: Bool {

@@ -209,7 +209,7 @@ vilka låtar som passar efter, eller som medley.
   3. **Många på en gång:** i färgläget kryssar man i flera låtar och trycker på en
      kolumnrubrik → alla markerade får färgen (har alla redan den tas den bort).
 - **Byta namn på en färg:** håll in kolumnrubriken och skriv det nya namnet.
-- **Bara färger som används får en kolumn** – har ingen låt t.ex. lila syns inte den
+- **Bara färger som används får en kolumn** – gäller alla färger och varje lista för sig: har ingen låt i listan t.ex. lila syns inte den
   kolumnen (i färgläget visas alla fem så att man kan börja använda en ny färg).
 - Färgkoderna har en fast, låst ordning och visas som **kolumner** i listorna: tunna
   linjer mellan kolumnerna och en liten rubrik (färgens namn) överst. Varje låt har en

@@ -60,7 +60,7 @@ struct SuggestionsBox: View {
             .padding(12)
             Divider()
             let list = suggestions
-            let columns = visibleColorColumns(songs, colorMode: false)
+            let columns = visibleColorColumns(list, colorMode: false)
             List {
                 ForEach(list) { song in
                     Button {
