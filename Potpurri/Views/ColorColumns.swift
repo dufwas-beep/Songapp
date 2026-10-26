@@ -5,6 +5,8 @@ import SwiftUI
 /// om alla redan har den). Håll in en rubrik för att byta namn på färgen.
 struct ColorColumnsHeader: View {
     @Binding var colorMode: Bool
+    /// Kolumnerna som visas (se `visibleColorColumns`).
+    let columns: [Int]
     let onColumnTap: (Int) -> Void
 
     @Environment(ColorCodes.self) private var codes
@@ -41,7 +43,7 @@ struct ColorColumnsHeader: View {
                 .padding(.bottom, 4)
             }
             Spacer()
-            ForEach(0..<ColorCodes.count, id: \.self) { index in
+            ForEach(columns, id: \.self) { index in
                 VStack(spacing: 4) {
                     Text(codes.names[index])
                         .font(.system(size: 10, weight: .semibold))
@@ -129,10 +131,11 @@ struct ColorDots: View {
     static let columnWidth: CGFloat = 22
     let song: Song
     let editable: Bool
+    let columns: [Int]
 
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(0..<ColorCodes.count, id: \.self) { index in
+            ForEach(columns, id: \.self) { index in
                 let isOn = song.colorTags.contains(index)
                 ZStack {
                     if isOn {
@@ -168,6 +171,13 @@ struct ColorModeCheckbox: View {
         .buttonStyle(.borderless)
         .accessibilityLabel(isChecked ? "Avmarkera" : "Markera")
     }
+}
+
+/// Bara färger som någon låt har får en kolumn. I färgläget visas alla fem,
+/// så att man kan börja använda en ny färg.
+func visibleColorColumns(_ songs: [Song], colorMode: Bool) -> [Int] {
+    if colorMode { return Array(0..<ColorCodes.count) }
+    return Set(songs.flatMap(\.colorTags)).sorted()
 }
 
 /// Ge alla markerade låtar färgen – eller ta bort den om alla redan har den.

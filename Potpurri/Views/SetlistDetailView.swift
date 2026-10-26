@@ -48,6 +48,11 @@ struct SetlistDetailView: View {
         return result
     }
 
+    /// Färgkolumnerna – bara färger som någon låt i biblioteket har (alla i färgläget).
+    private var columns: [Int] {
+        visibleColorColumns(songs, colorMode: colorMode)
+    }
+
     private var hasSets: Bool {
         !setlist.setBreaks.isEmpty
     }
@@ -59,7 +64,7 @@ struct SetlistDetailView: View {
 
         VStack(spacing: 0) {
             header
-            ColorColumnsHeader(colorMode: $colorMode) { index in
+            ColorColumnsHeader(colorMode: $colorMode, columns: columns) { index in
                 applyColor(index, to: songs.filter { checked.contains($0.id) })
             }
             .onChange(of: colorMode) { _, on in
@@ -211,7 +216,7 @@ struct SetlistDetailView: View {
                         }
                     }
                     SetSongRow(number: row.number, song: song, isPlayed: player.isPlayedTonight(song))
-                    ColorDots(song: song, editable: colorMode)
+                    ColorDots(song: song, editable: colorMode, columns: columns)
                 }
                     .tag(song)
                     .draggable("row:\(row.id)") { DragPreview(title: song.title) }

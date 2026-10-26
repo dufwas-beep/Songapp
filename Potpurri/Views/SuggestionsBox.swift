@@ -60,6 +60,7 @@ struct SuggestionsBox: View {
             .padding(12)
             Divider()
             let list = suggestions
+            let columns = visibleColorColumns(songs, colorMode: false)
             List {
                 ForEach(list) { song in
                     Button {
@@ -75,7 +76,7 @@ struct SuggestionsBox: View {
                                 .lineLimit(1)
                                 .foregroundStyle(.primary)
                             Spacer(minLength: 0)
-                            ColorDots(song: song, editable: false)
+                            ColorDots(song: song, editable: false, columns: columns)
                         }
                         .contentShape(Rectangle())
                     }

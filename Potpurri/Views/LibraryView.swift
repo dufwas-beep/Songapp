@@ -77,12 +77,15 @@ struct LibraryView: View {
             .padding(.horizontal, 16)
             .padding(.top, 10)
 
-            ColorFilterChips(selected: $colorFilter)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+            let columns = visibleColorColumns(songs, colorMode: colorMode)
+            if !columns.isEmpty && !colorMode {
+                ColorFilterChips(selected: $colorFilter, columns: columns)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+            }
 
             let list = visibleSongs
-            ColorColumnsHeader(colorMode: $colorMode) { index in
+            ColorColumnsHeader(colorMode: $colorMode, columns: columns) { index in
                 applyColor(index, to: list.filter { checked.contains($0.id) })
             }
             .onChange(of: colorMode) { _, on in
@@ -99,7 +102,7 @@ struct LibraryView: View {
                                 }
                             }
                             SongRow(song: song, isPlayed: player.isPlayedTonight(song))
-                            ColorDots(song: song, editable: colorMode)
+                            ColorDots(song: song, editable: colorMode, columns: columns)
                         }
                             .tag(song)
                             .id(song.id)
@@ -317,12 +320,13 @@ struct SongRow: View {
 /// och de som har flest av färgerna hamnar först.
 struct ColorFilterChips: View {
     @Binding var selected: Set<Int>
+    let columns: [Int]
     @Environment(ColorCodes.self) private var codes
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                ForEach(0..<ColorCodes.count, id: \.self) { index in
+                ForEach(columns, id: \.self) { index in
                     let isOn = selected.contains(index)
                     Button {
                         if isOn { selected.remove(index) } else { selected.insert(index) }
