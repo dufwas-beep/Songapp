@@ -121,7 +121,7 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 - Både huvudlåten och låten i förhandsrutan kan scrollas var för sig med fingret.
 - **Zoom:** huvudlåten och förhandsrutan zoomas var för sig med två fingrar (nyp),
   50–200 %, så att man själv väljer hur mycket som syns i varje fönster.
-  Inga zoomknappar – bara nyp. **Appen kommer ihåg zoomen per låt** (både i huvudvyn
+  Inga zoomknappar – bara nyp (PDF:er, bilder och textlåtar). **Appen kommer ihåg zoomen per låt** (både i huvudvyn
   och i förhandsrutan) och återställer den när låten öppnas igen. Notes, markeringar och ackord
   följer med i zoomen.
 - Nästa låt i listan förladdas så att byten går direkt.
@@ -169,7 +169,7 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
   "+ Linje" (hamnar längst ner på skärmen, dvs. där stycket man ser slutar) och dras sedan
   i sitt nummer till rätt plats. Tryck på numret för att byta nummer eller ta bort linjen.
 - **Ett tryck på skärmen**, pedalen eller **AirTurn** (piltangenter/Page Down) hoppar så att
-  nästa linje hamnar högst upp. Ordningen följer numren (1, 2, 3 …), inte var linjerna
+  nästa linje hamnar nära toppen, med lite av texten ovanför kvar som sammanhang. Ordningen följer numren (1, 2, 3 …), inte var linjerna
   ligger – så man kan hoppa tillbaka till t.ex. en refräng eller mellan text och ackord.
 - Efter sista linjen går pedalen vidare till nästa låt. Bakåt hoppar till förra linjen.
 - Fungerar ihop med zoom: zooma så att ett stycke fyller skärmen, sätt en linje längst ner.

@@ -6,6 +6,13 @@ import SwiftUI
 struct TextSongView: View {
     let song: Song
     var onScrollView: ((UIScrollView) -> Void)?
+    /// Zoomen medan man nyper; sparas på låten när man släpper.
+    @State private var liveZoom: CGFloat?
+    @State private var zoomStart: CGFloat?
+
+    private var zoom: CGFloat {
+        liveZoom ?? CGFloat(song.pdfZoom ?? 1)
+    }
 
     /// Anteckningar (quizmanus) visas med quizformateringen; allt annat som en låt.
     private var showsAsNote: Bool {
@@ -14,7 +21,7 @@ struct TextSongView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let scale = min(max(geometry.size.width / 820, 0.8), 1.3)
+            let scale = min(max(geometry.size.width / 820, 0.8), 1.3) * zoom
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if showsAsNote {
@@ -34,6 +41,20 @@ struct TextSongView: View {
                     if let onScrollView { ScrollViewFinder(onFound: onScrollView) }
                 }
             }
+            // Nyp med två fingrar för att zooma – sparas per låt.
+            .simultaneousGesture(
+                MagnifyGesture()
+                    .onChanged { value in
+                        let start = zoomStart ?? zoom
+                        zoomStart = start
+                        liveZoom = min(max(start * value.magnification, 0.5), 2.5)
+                    }
+                    .onEnded { _ in
+                        if let liveZoom { song.pdfZoom = Double(liveZoom) }
+                        liveZoom = nil
+                        zoomStart = nil
+                    }
+            )
         }
     }
 

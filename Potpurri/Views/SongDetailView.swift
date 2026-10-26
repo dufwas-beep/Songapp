@@ -215,7 +215,8 @@ struct SongDetailView: View {
             return false
         }
         markerIndex = target
-        geometry.scroll(toTop: list[target].y)
+        // Linjen hamnar nära toppen med lite av texten ovanför kvar som sammanhang.
+        geometry.scroll(toTop: list[target].y - Double(90 / geometry.unit))
         return true
     }
 
@@ -314,7 +315,7 @@ struct SongSheetView: View {
             // Zoomen sparas per låt och återställs när låten öppnas igen.
             PDFKitView(url: song.fileURL, zoom: song.pdfZoom, onZoom: { song.pdfZoom = $0 }, onScrollView: onScrollView)
         } else {
-            ImageSongView(url: song.fileURL, onScrollView: onScrollView)
+            ImageSongView(url: song.fileURL, zoom: song.pdfZoom, onZoom: { song.pdfZoom = $0 }, onScrollView: onScrollView)
         }
     }
 }
