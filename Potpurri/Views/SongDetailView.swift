@@ -16,6 +16,7 @@ struct SongDetailView: View {
     let onPlayPreview: (Song) -> Void
 
     @Environment(Player.self) private var player
+    @Environment(SoundEngine.self) private var sounds
     @State private var previewHeight: CGFloat = 320
     @State private var showsColors = false
     @State private var autoscroller = Autoscroller()
@@ -28,6 +29,7 @@ struct SongDetailView: View {
 
     var body: some View {
         if let song {
+            HStack(spacing: 0) {
             VStack(spacing: 0) {
                 ZStack(alignment: .bottomTrailing) {
                     SongSheetView(song: song) { scrollView in
@@ -45,6 +47,17 @@ struct SongDetailView: View {
                     NotesLayer(song: song, geometry: geometry)
                         .id(song.id)
                     HStack(alignment: .center, spacing: 12) {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.25)) { player.soundboardOpen.toggle() }
+                        } label: {
+                            Image(systemName: "speaker.wave.2.fill")
+                                .font(.system(size: 20, weight: .semibold))
+                                .frame(width: 60, height: 60)
+                                .background(player.soundboardOpen ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.regularMaterial), in: Circle())
+                                .foregroundStyle(player.soundboardOpen ? Color.black : Color.primary)
+                                .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                        }
+                        .accessibilityLabel(player.soundboardOpen ? "Stäng ljudklippen" : "Ljudklipp")
                         if !player.isLocked {
                             moreMenu(for: song)
                         }
@@ -52,6 +65,14 @@ struct SongDetailView: View {
                     }
                     .padding(24)
                 }
+                // Lådan i högerkanten (till vänster om soundboarden när den är öppen).
+                .overlay(alignment: .trailing) {
+                    GeometryReader { proxy in
+                        DrawerView(width: min(520, proxy.size.width * 0.48))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                    }
+                }
+                .clipped()
                 .overlay(alignment: .topTrailing) {
                     SongStepButtons(previous: previous, next: next, onSelect: onSelect)
                         .padding(16)
@@ -72,6 +93,11 @@ struct SongDetailView: View {
                         player.previewID = nil
                     }
                 }
+            }
+            if player.soundboardOpen {
+                SoundboardColumn(engine: sounds)
+                    .transition(.move(edge: .trailing))
+            }
             }
             .overlay(alignment: .top) {
                 if player.isLocked {
@@ -102,6 +128,9 @@ struct SongDetailView: View {
             .onKeyPress(keys: [.upArrow, .leftArrow, .pageUp]) { _ in
                 backward()
                 return .handled
+            }
+            .onChange(of: autoscroller.isRunning) { _, running in
+                player.isAutoscrolling = running
             }
             .task(id: song.id) {
                 autoscroller.stop()

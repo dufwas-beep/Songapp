@@ -35,6 +35,8 @@ final class Song {
     /// Låtens zoom (nyp) i förhållande till "hela bredden" (1 = anpassad efter bredden).
     /// Gäller PDF:er, bilder och textlåtar.
     var pdfZoom: Double?
+    /// "Mina anteckningar" – det gula fältet ovanför låten i Lådan.
+    var drawerNote: String?
     /// Låttexten för sökning: utläst ur PDF:en eller textigenkänd ur bilden.
     /// nil = inte indexerad än.
     var searchText: String?

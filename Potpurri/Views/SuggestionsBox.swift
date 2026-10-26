@@ -92,7 +92,7 @@ struct SuggestionsBox: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .listRowBackground(player.previewID == song.id ? Color.accentColor.opacity(0.25) : nil)
+                    .listRowBackground(player.lotteryHighlight == song.id ? Color.accentColor : (player.previewID == song.id ? Color.accentColor.opacity(0.25) : nil))
                     .contextMenu { PinButton(songID: song.id) }
                 }
             }
@@ -106,6 +106,25 @@ struct SuggestionsBox: View {
             }
         }
         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+        // Lyckohjulet: markeringen hoppar mellan förslagen, saktar in och landar på en
+        // slumpad låt som öppnas i förhandsrutan. Spelade låtar finns aldrig med.
+        .onChange(of: player.lotteryRuns) {
+            let list = suggestions
+            guard !list.isEmpty else { return }
+            let target = Int.random(in: 0..<list.count)
+            let hops = list.count * 2 + target
+            Task {
+                var delay = 0.04
+                for hop in 0...hops {
+                    player.lotteryHighlight = list[hop % list.count].id
+                    try? await Task.sleep(for: .seconds(delay))
+                    delay = min(delay * 1.12, 0.35)
+                }
+                player.previewID = list[target].id
+                try? await Task.sleep(for: .seconds(0.6))
+                player.lotteryHighlight = nil
+            }
+        }
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.secondary.opacity(0.2)))
     }
 }

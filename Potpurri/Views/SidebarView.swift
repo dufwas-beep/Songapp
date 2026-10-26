@@ -74,12 +74,34 @@ struct SidebarView: View {
 /// LP-loggan, namnet och en stor klocka (TT:MM). Håll in LP:n för scenlås.
 private struct SidebarHeader: View {
     @Environment(Player.self) private var player
+    @State private var angle: Double = 0
 
     var body: some View {
         HStack(spacing: 12) {
             Image("LPLogo")
                 .resizable()
                 .frame(width: 46, height: 46)
+                .rotationEffect(.degrees(angle))
+                // Snurrar långsamt under autoscroll och stannar mjukt vid paus.
+                .onChange(of: player.isAutoscrolling) { _, running in
+                    if running {
+                        withAnimation(.linear(duration: 3).repeatForever(autoreverses: false)) { angle += 360 }
+                    } else {
+                        withAnimation(.easeOut(duration: 1.2)) { angle += 40 }
+                    }
+                }
+                // Snabb snurr vid "Ny spelning" och lyckohjulet.
+                .onChange(of: player.spinBurst) {
+                    withAnimation(.easeOut(duration: 1.4)) { angle += 1080 }
+                }
+                // Tryck = lyckohjulet (slumpa en låt bland förslagen), dubbeltryck = duvan flyger.
+                .onTapGesture(count: 2) {
+                    player.doveFlights += 1
+                }
+                .onTapGesture {
+                    player.spinBurst += 1
+                    player.lotteryRuns += 1
+                }
                 .overlay {
                     if player.isLocked {
                         Circle().stroke(Color.accentColor, lineWidth: 3)

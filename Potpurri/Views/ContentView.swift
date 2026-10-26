@@ -9,7 +9,9 @@ struct ContentView: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var player = Player()
     @State private var colorCodes = ColorCodes()
+    @State private var sounds = SoundEngine()
     @State private var renameDraft = ""
+    @State private var doveStart: Date?
     @AppStorage("migratedSongNotes") private var migratedSongNotes = false
     @Environment(\.scenePhase) private var scenePhase
 
@@ -57,6 +59,23 @@ struct ContentView: View {
                 }
             }
         }
+        .overlay {
+            LaunchAnimation()
+        }
+        .overlay {
+            if let doveStart {
+                DoveFlight(start: doveStart)
+                    .id(doveStart)
+            }
+        }
+        .onChange(of: player.doveFlights) {
+            let start = Date()
+            doveStart = start
+            Task {
+                try? await Task.sleep(for: .seconds(DoveFlight.duration))
+                if doveStart == start { doveStart = nil }
+            }
+        }
         // Låttexten i PDF:er och bilder läses ut i bakgrunden så att sökningen hittar den.
         .task(id: songs.count) {
             await SearchIndexer.run(songs: songs, progress: player.indexing)
@@ -80,6 +99,7 @@ struct ContentView: View {
         }
         .environment(player)
         .environment(colorCodes)
+        .environment(sounds)
         // Efter 12 timmar börjar en ny spelning av sig själv (t.ex. nästa dag).
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { player.startNewGigIfStale() }

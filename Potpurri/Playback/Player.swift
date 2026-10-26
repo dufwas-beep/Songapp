@@ -53,6 +53,21 @@ final class Player {
     var editingTextSongID: UUID?
     /// Indexering av låttext (för sökning) i bakgrunden.
     let indexing = TaskProgress()
+    /// Lådan: vad som ligger i den (en låt eller anteckning) och om den är utdragen.
+    var drawerSongID: UUID?
+    var drawerOpen = false
+    /// Soundboardens kolumn längs högerkanten.
+    var soundboardOpen = false
+    /// Autoscroll är igång (LP:n snurrar sakta).
+    var isAutoscrolling = false
+    /// Ökar för varje tryck på LP:n – förslagsrutan kör då lyckohjulet.
+    var lotteryRuns = 0
+    /// Låten som lyckohjulets markering står på just nu.
+    var lotteryHighlight: UUID?
+    /// Ökar vid dubbeltryck på LP:n – duvan flyger.
+    var doveFlights = 0
+    /// Snabb snurr på LP:n (t.ex. vid "Ny spelning").
+    var spinBurst = 0
     /// Noten som redigeras just nu.
     var editingNoteID: UUID?
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.
@@ -77,6 +92,7 @@ final class Player {
 
     /// Ny spelning: nollställer gråmarkeringarna och de fästa förslagen.
     func newGig() {
+        spinBurst += 1
         gigStart = Date()
         pinned = []
         previewID = nil

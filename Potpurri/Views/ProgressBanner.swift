@@ -7,6 +7,10 @@ struct ProgressBanner: View {
     var body: some View {
         // Uppdateras varje sekund så att tiden kvar rör sig även när en stor fil laddas ner.
         TimelineView(.periodic(from: .now, by: 1)) { context in
+            HStack(spacing: 12) {
+            if progress.total > 0 {
+                ImportArm(fraction: progress.fraction)
+            }
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text(progress.title)
@@ -34,6 +38,7 @@ struct ProgressBanner: View {
                 }
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+            }
             }
             .padding(14)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))

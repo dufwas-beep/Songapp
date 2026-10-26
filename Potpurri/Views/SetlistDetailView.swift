@@ -283,6 +283,8 @@ struct SetlistDetailView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    // Håll in och dra till Lådan i låtvyn.
+                    .draggable("song:\(song.id.uuidString)")
                     ColorDots(song: song, editable: colorMode, columns: columns)
                 } else {
                     Text("Låten finns inte längre i biblioteket")
@@ -298,6 +300,12 @@ struct SetlistDetailView: View {
             }
             .contextMenu {
                 if let song = songsByID[id] {
+                    Button {
+                        player.drawerSongID = song.id
+                        withAnimation(.spring(response: 0.55, dampingFraction: 1)) { player.drawerOpen = true }
+                    } label: {
+                        Label("Lägg i lådan", systemImage: "tray.and.arrow.down")
+                    }
                     PinButton(songID: song.id)
                     if !player.isLocked {
                         Button {

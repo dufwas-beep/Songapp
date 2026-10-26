@@ -113,3 +113,34 @@ final class ChordStamp {
         self.groupID = groupID
     }
 }
+
+/// Ett ljudklipp i soundboarden. Originalfilen ändras aldrig – trim och volym sparas
+/// som inställningar.
+@Model
+final class SoundClip {
+    var id: UUID = UUID()
+    var name: String = ""
+    var colorHex: String = "FB91FF"
+    var fileName: String = ""
+    var order: Int = 0
+    /// Start och slut i sekunder (slut 0 = till slutet av filen).
+    var trimStart: Double = 0
+    var trimEnd: Double = 0
+    /// Volym i dB, −12 … +6.
+    var volumeDB: Double = 0
+
+    init(name: String, fileName: String, order: Int, colorHex: String) {
+        self.id = UUID()
+        self.name = name
+        self.fileName = fileName
+        self.order = order
+        self.colorHex = colorHex
+    }
+
+    var fileURL: URL {
+        SongFileStore.url(for: fileName)
+    }
+
+    /// Fast palett för ljudknapparna.
+    static let palette = ["FB91FF", "FF6B6B", "FFB25C", "FFE45C", "6EE7A0", "5CC8FF", "8B7CFF", "B0B0B8"]
+}

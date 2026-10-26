@@ -144,7 +144,14 @@ struct LibraryView: View {
                             .tag(song)
                             .id(song.id)
                             .padding(.trailing, showsAlphabet ? 18 : 0)
+                            .draggable("song:\(song.id.uuidString)")
                             .contextMenu {
+                                Button {
+                                    player.drawerSongID = song.id
+                                    withAnimation(.spring(response: 0.55, dampingFraction: 1)) { player.drawerOpen = true }
+                                } label: {
+                                    Label("Lägg i lådan", systemImage: "tray.and.arrow.down")
+                                }
                                 PinButton(songID: song.id)
                                 if !player.isLocked { rowMenu(for: song) }
                             }
