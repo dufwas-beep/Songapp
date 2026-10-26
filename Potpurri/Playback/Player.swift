@@ -23,6 +23,8 @@ final class Player {
     var pen: AnnotationOverlay.Pen = .off
     /// Visa/dölj alla lappar.
     var notesHidden = false
+    /// När nedräkningstimern (vid klockan) når noll, t.ex. slutet av ett set.
+    var timerEnd: Date?
     /// Lappen som redigeras just nu.
     var editingNoteID: UUID?
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.

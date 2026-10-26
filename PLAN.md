@@ -135,6 +135,9 @@ Gör få saker – men gör dem pålitligt på scen. Ersätter OnSong för dagli
 ### 3b. Klocka
 - En **tydlig digital klocka** (TT:MM, 24-timmars, stora siffror) i sidospaltens topp.
 - När sidospalten är dold visas klockan i en liten etikett överst i mitten av låtvyn.
+- **Nedräkningstimer** (upp till 60 min) under klockan, t.ex. för att hålla koll på setet:
+  tryck "Timer", välj 5–60 min (snabbval eller reglage). Tiden kvar visas under klockan och
+  blir rosa när den når noll. Tryck igen för att stoppa.
 
 ### 4. Autoscroll (som i OnSong)
 - En egen rund knapp **längst ner i högra hörnet** – ingen meny behövs.
@@ -234,10 +237,11 @@ vilka låtar som passar efter, eller som medley.
 
 **Förhandsruta**
 - Tryck på ett förslag → låten öppnas i en förhandsruta under huvudlåten.
+- **Förslagsrutan kan dras större/mindre** i handtaget ovanför den (mindre ruta = fler låtar syns i listan).
 - Förhandsrutan är mindre än huvudlåten och ändras i storlek genom att dra i dess
   överkant (fritt, mellan en min- och maxhöjd).
 - Autoscroll i huvudlåten fortsätter medan förhandsrutan visas.
-- Tryck på förhandsrutan → förslaget ersätter huvudlåten.
+- Tryck på låten i förhandsrutan → förslaget ersätter huvudlåten (ingen separat knapp).
 - Förhandsrutan kan stängas (t.ex. svep nedåt) utan att byta låt.
 - Låtlistan ändras inte när ett förslag spelas. När ett förslag är huvudlåt
   bläddrar pedalen bara inom förslaget (går inte vidare till nästa låt i listan).

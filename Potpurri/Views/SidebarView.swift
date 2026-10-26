@@ -4,6 +4,8 @@ import SwiftUI
 struct SidebarView: View {
     @Binding var selection: Song?
     @AppStorage("sidebarTab") private var tab = SidebarTab.setlists
+    @AppStorage("suggestionsHeight") private var suggestionsHeight: Double = 260
+    @State private var dragStartHeight: Double?
 
     enum SidebarTab: String {
         case setlists
@@ -11,23 +13,43 @@ struct SidebarView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            Group {
-                switch tab {
-                case .setlists:
-                    SetlistsView(selection: $selection)
-                case .library:
-                    LibraryView(selection: $selection)
-                }
+        Group {
+            switch tab {
+            case .setlists:
+                SetlistsView(selection: $selection)
+            case .library:
+                LibraryView(selection: $selection)
             }
-            .frame(maxHeight: .infinity)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 10) {
+                // Dra i handtaget för att göra förslagsrutan större eller mindre.
+                Capsule()
+                    .fill(Color.secondary.opacity(0.45))
+                    .frame(width: 56, height: 5)
+                    .frame(maxWidth: .infinity, minHeight: 22)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(coordinateSpace: .global)
+                            .onChanged { value in
+                                let start = dragStartHeight ?? suggestionsHeight
+                                dragStartHeight = start
+                                var transaction = Transaction()
+                                transaction.disablesAnimations = true
+                                withTransaction(transaction) {
+                                    suggestionsHeight = min(max(start - value.translation.height, 90), 560)
+                                }
+                            }
+                            .onEnded { _ in dragStartHeight = nil }
+                    )
+                    .accessibilityLabel("Ändra storlek på förslagsrutan")
                 SuggestionsBox(current: selection)
-                    .frame(height: 260)
+                    .frame(height: suggestionsHeight)
                 GigFooter()
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.bottom, 10)
+            .background(.bar)
         }
         .safeAreaInset(edge: .top, spacing: 0) {
             VStack(spacing: 12) {
@@ -84,12 +106,94 @@ private struct SidebarHeader: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            TimelineView(.everyMinute) { context in
-                Text(context.date, format: Date.FormatStyle(locale: Locale(identifier: "sv_SE")).hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
-                    .font(.system(size: 32, weight: .medium))
-                    .monospacedDigit()
-                    .accessibilityLabel("Klockan")
+            VStack(alignment: .trailing, spacing: 0) {
+                TimelineView(.everyMinute) { context in
+                    Text(context.date, format: Date.FormatStyle(locale: Locale(identifier: "sv_SE")).hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
+                        .font(.system(size: 32, weight: .medium))
+                        .monospacedDigit()
+                        .accessibilityLabel("Klockan")
+                }
+                SetTimerButton()
             }
         }
+    }
+}
+
+/// Nedräkning under klockan, t.ex. hur länge setet har kvar. Tryck för att starta
+/// (upp till 60 minuter) eller stoppa.
+struct SetTimerButton: View {
+    @Environment(Player.self) private var player
+    @State private var showsPicker = false
+
+    var body: some View {
+        Button {
+            showsPicker = true
+        } label: {
+            if let end = player.timerEnd {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    let left = max(0, Int(end.timeIntervalSince(context.date).rounded(.up)))
+                    Text(String(format: "%d:%02d", left / 60, left % 60))
+                        .font(.system(size: 17, weight: .semibold))
+                        .monospacedDigit()
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(left == 0 ? Color.accentColor : Color.accentColor.opacity(0.2), in: Capsule())
+                        .foregroundStyle(left == 0 ? Color.black : Color.primary)
+                        .accessibilityLabel(left == 0 ? "Timern är slut" : "Timer, \(left / 60) minuter och \(left % 60) sekunder kvar")
+                }
+            } else {
+                Label("Timer", systemImage: "timer")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $showsPicker) {
+            TimerPicker()
+        }
+    }
+}
+
+private struct TimerPicker: View {
+    @Environment(Player.self) private var player
+    @Environment(\.dismiss) private var dismiss
+    @State private var minutes: Double = 45
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Nedräkning")
+                .font(.headline)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 10) {
+                ForEach([5, 10, 15, 20, 30, 40, 45, 60], id: \.self) { value in
+                    Button("\(value) min") { start(Double(value)) }
+                        .buttonStyle(.bordered)
+                }
+            }
+            HStack {
+                Slider(value: $minutes, in: 1...60, step: 1)
+                Text("\(Int(minutes)) min")
+                    .monospacedDigit()
+                    .frame(width: 64, alignment: .trailing)
+            }
+            HStack {
+                if player.timerEnd != nil {
+                    Button("Stoppa timern", role: .destructive) {
+                        player.timerEnd = nil
+                        dismiss()
+                    }
+                }
+                Spacer()
+                Button("Starta \(Int(minutes)) min") { start(minutes) }
+                    .buttonStyle(.borderedProminent)
+                    .foregroundStyle(.black)
+            }
+        }
+        .padding(20)
+        .frame(width: 380)
+    }
+
+    private func start(_ minutes: Double) {
+        player.timerEnd = Date().addingTimeInterval(minutes * 60)
+        dismiss()
     }
 }

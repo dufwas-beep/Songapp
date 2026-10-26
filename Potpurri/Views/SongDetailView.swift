@@ -242,7 +242,7 @@ struct SongSheetView: View {
 }
 
 /// Förhandsrutan under huvudlåten: ett förslag man tittar på medan låten spelas.
-/// Dra i överkanten för att ändra storlek. "Spela nu" (eller tryck i rutan) byter låt.
+/// Dra i överkanten för att ändra storlek. Tryck på låten i rutan för att byta till den.
 private struct PreviewPane: View {
     let song: Song
     @Binding var height: CGFloat
@@ -262,11 +262,6 @@ private struct PreviewPane: View {
                     .font(.headline)
                     .lineLimit(1)
                 Spacer()
-                Button(action: onPlay) {
-                    Label("Spela nu", systemImage: "play.fill")
-                }
-                .buttonStyle(.borderedProminent)
-                .foregroundStyle(.black)
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                         .frame(width: 36, height: 36)
@@ -301,9 +296,11 @@ private struct PreviewPane: View {
                         if value.translation.height > 140 { onClose() }
                     }
             )
-            SongSheetView(song: song) { _ in }
-                .id(song.id)
-                .simultaneousGesture(TapGesture().onEnded { onPlay() })
+            // Ett tryck i låten byter till den (scrollning och zoom fungerar som vanligt).
+            SongSheetView(song: song) { scrollView in
+                TapToPlay.attach(to: scrollView, action: onPlay)
+            }
+            .id(song.id)
         }
         .frame(height: height)
         .overlay(alignment: .top) {
@@ -375,5 +372,31 @@ private struct NoteEditorLoader: View {
         if let note = notes.first {
             NoteEditor(note: note, unit: unit)
         }
+    }
+}
+
+/// Ett tryck i förhandsrutans låt byter till den. Läggs direkt på låtens scrollvy så att
+/// det fungerar även för PDF:er.
+@MainActor
+private final class TapToPlay: NSObject {
+    private static var key = 0
+    private let action: () -> Void
+
+    private init(action: @escaping () -> Void) {
+        self.action = action
+    }
+
+    static func attach(to scrollView: UIScrollView, action: @escaping () -> Void) {
+        let target = TapToPlay(action: action)
+        // Målet hålls vid liv av scrollvyn.
+        objc_setAssociatedObject(scrollView, &key, target, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        scrollView.gestureRecognizers?.filter { $0.name == "potpurri.tapToPlay" }.forEach(scrollView.removeGestureRecognizer)
+        let tap = UITapGestureRecognizer(target: target, action: #selector(tapped))
+        tap.name = "potpurri.tapToPlay"
+        scrollView.addGestureRecognizer(tap)
+    }
+
+    @objc private func tapped() {
+        action()
     }
 }

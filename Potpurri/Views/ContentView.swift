@@ -82,13 +82,16 @@ struct ContentView: View {
 /// Liten klocka (TT:MM) när sidospalten är dold.
 private struct ClockLabel: View {
     var body: some View {
-        TimelineView(.everyMinute) { context in
-            Text(context.date, format: Date.FormatStyle(locale: Locale(identifier: "sv_SE")).hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
-                .font(.system(size: 17, weight: .semibold))
-                .monospacedDigit()
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(.regularMaterial, in: Capsule())
+        HStack(spacing: 8) {
+            TimelineView(.everyMinute) { context in
+                Text(context.date, format: Date.FormatStyle(locale: Locale(identifier: "sv_SE")).hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
+                    .font(.system(size: 17, weight: .semibold))
+                    .monospacedDigit()
+            }
+            SetTimerButton()
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(.regularMaterial, in: Capsule())
     }
 }

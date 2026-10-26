@@ -33,6 +33,7 @@ final class AnnotationOverlay: UIView {
 
     private weak var scrollView: UIScrollView?
     private var sizeObservation: NSKeyValueObservation?
+    private var offsetObservation: NSKeyValueObservation?
     private var notes: [NoteItem] = []
     private var highlights: [HighlightItem] = []
     private var noteViews: [UUID: NoteView] = [:]
@@ -71,8 +72,18 @@ final class AnnotationOverlay: UIView {
         sizeObservation = scrollView.observe(\.contentSize, options: [.new]) { [weak self] _, _ in
             MainActor.assumeIsolated { self?.updateFrame() }
         }
+        // SwiftUI kan lägga sitt innehåll överst igen (t.ex. efter att en ruta stängts);
+        // då skulle lappen inte gå att ta tag i. Lagret läggs därför alltid överst.
+        offsetObservation = scrollView.observe(\.contentOffset, options: []) { [weak self] _, _ in
+            MainActor.assumeIsolated { self?.keepOnTop() }
+        }
         updateFrame()
         applyPen()
+    }
+
+    private func keepOnTop() {
+        guard let scrollView, scrollView.subviews.last !== self else { return }
+        scrollView.bringSubviewToFront(self)
     }
 
     private func updateFrame() {
@@ -84,6 +95,7 @@ final class AnnotationOverlay: UIView {
     }
 
     func update(notes: [NoteItem], highlights: [HighlightItem], notesHidden: Bool, locked: Bool, pen: Pen) {
+        keepOnTop()
         let changed = notes != self.notes || highlights != self.highlights || notesHidden != self.notesHidden || locked != self.locked
         self.notes = notes
         self.highlights = highlights
@@ -226,7 +238,7 @@ final class AnnotationOverlay: UIView {
 /// En lapp: dra för att flytta, dra i hörnet för att ändra storlek, tryck för att redigera.
 /// Texten krymper eller växer så att allt alltid får plats.
 @MainActor
-final class NoteView: UIView {
+final class NoteView: UIView, UIGestureRecognizerDelegate {
     var onMoved: ((CGRect) -> Void)?
     var onResized: ((CGRect) -> Void)?
     var onTap: (() -> Void)?
@@ -265,8 +277,12 @@ final class NoteView: UIView {
         corner.fillColor = UIColor.clear.cgColor
         corner.lineWidth = 2
         handle.layer.addSublayer(corner)
-        addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(handleMove(_:))))
-        handle.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(handleResize(_:))))
+        let movePan = UIPanGestureRecognizer(target: self, action: #selector(handleMove(_:)))
+        movePan.delegate = self
+        addGestureRecognizer(movePan)
+        let resizePan = UIPanGestureRecognizer(target: self, action: #selector(handleResize(_:)))
+        resizePan.delegate = self
+        handle.addGestureRecognizer(resizePan)
         addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap)))
         isAccessibilityElement = true
         accessibilityHint = "Tryck för att redigera"
@@ -311,6 +327,12 @@ final class NoteView: UIView {
             if rect.height <= size.height && rect.width <= size.width { low = mid } else { high = mid }
         }
         return low
+    }
+
+    /// Låtens scrollning får vänta tills lappens drag har avgjorts, så att man flyttar
+    /// lappen (i alla riktningar) i stället för att scrolla låten.
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy other: UIGestureRecognizer) -> Bool {
+        isEditable && other.view is UIScrollView
     }
 
     @objc private func handleTap() {
