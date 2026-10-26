@@ -279,9 +279,11 @@ struct SetlistDetailView: View {
     }
 
     /// Varje set har en svag egen färgton så att seten syns isär.
+    /// Ordningen är vald så att två set i rad aldrig får snarlika färger
+    /// (rosa, turkos, orange, blå, grön, gul – och sedan om från början).
     static func tint(for setNumber: Int) -> Color {
-        let colors: [Color] = [Color.accentColor, .purple, .teal, .orange, .blue]
-        return colors[(setNumber - 1) % colors.count].opacity(0.08)
+        let colors: [Color] = [Color.accentColor, .teal, .orange, .blue, .green, .yellow]
+        return colors[(setNumber - 1) % colors.count].opacity(0.16)
     }
 }
 
