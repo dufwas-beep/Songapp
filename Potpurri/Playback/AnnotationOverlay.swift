@@ -258,9 +258,9 @@ final class NoteView: UIView {
         corner.fillColor = UIColor.clear.cgColor
         corner.lineWidth = 2
         handle.layer.addSublayer(corner)
-        addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(move(_:))))
-        handle.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(resize(_:))))
-        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(tapped)))
+        addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(handleMove(_:))))
+        handle.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(handleResize(_:))))
+        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap)))
         isAccessibilityElement = true
         accessibilityHint = "Tryck för att redigera"
     }
@@ -304,11 +304,11 @@ final class NoteView: UIView {
         return low
     }
 
-    @objc private func tapped() {
+    @objc private func handleTap() {
         if isEditable { onTap?() }
     }
 
-    @objc private func move(_ gesture: UIPanGestureRecognizer) {
+    @objc private func handleMove(_ gesture: UIPanGestureRecognizer) {
         guard isEditable, let parent = superview else { return }
         switch gesture.state {
         case .began:
@@ -325,7 +325,7 @@ final class NoteView: UIView {
         }
     }
 
-    @objc private func resize(_ gesture: UIPanGestureRecognizer) {
+    @objc private func handleResize(_ gesture: UIPanGestureRecognizer) {
         guard isEditable, let parent = superview else { return }
         switch gesture.state {
         case .began:
