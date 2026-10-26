@@ -18,6 +18,8 @@ struct SetlistDetailView: View {
     @State private var showAddSongs = false
     /// Raden som en dragen låt just nu hänger över (där den rosa linjen visas).
     @State private var dropTarget: Int?
+    @State private var colorMode = false
+    @State private var checked: Set<UUID> = []
 
     /// En rad i listan med uppgift om vilket set den hör till.
     private struct Row: Identifiable {
@@ -57,6 +59,13 @@ struct SetlistDetailView: View {
 
         VStack(spacing: 0) {
             header
+            ColorColumnsHeader(colorMode: $colorMode) { index in
+                applyColor(index, to: songs.filter { checked.contains($0.id) })
+            }
+            .onChange(of: colorMode) { _, on in
+                if !on { checked = [] }
+            }
+            Divider()
             List(selection: $selection) {
                 if hasSets, allRows.first.map({ $0.item != .setBreak }) ?? false {
                     SetHeaderRow(number: 1, count: counts[1] ?? 0, onRemove: nil)
@@ -125,7 +134,7 @@ struct SetlistDetailView: View {
             }
         }
         .onChange(of: selection) { _, song in
-            if let song, setlist.songIDs.contains(song.id) {
+            if let song, song.id != player.playingSuggestionID, setlist.songIDs.contains(song.id) {
                 player.queue = setlist.songIDs
             }
         }
@@ -195,10 +204,21 @@ struct SetlistDetailView: View {
                 .listRowBackground(Self.tint(for: row.setNumber))
         case .song(let id):
             if let song = songsByID[id] {
-                SetSongRow(number: row.number, song: song)
+                HStack(spacing: 8) {
+                    if colorMode {
+                        ColorModeCheckbox(isChecked: checked.contains(song.id)) {
+                            if checked.contains(song.id) { checked.remove(song.id) } else { checked.insert(song.id) }
+                        }
+                    }
+                    SetSongRow(number: row.number, song: song, isPlayed: player.isPlayedTonight(song))
+                    ColorDots(song: song, editable: colorMode)
+                }
                     .tag(song)
                     .draggable("row:\(row.id)") { DragPreview(title: song.title) }
-                    .contextMenu { removeMenu(at: row.id) }
+                    .contextMenu {
+                        PinButton(songID: song.id)
+                        removeMenu(at: row.id)
+                    }
                     .listRowBackground(selection == song ? Color.accentColor.opacity(0.35) : (hasSets ? Self.tint(for: row.setNumber) : nil))
             } else {
                 Text("Låten finns inte längre i biblioteket")
@@ -322,6 +342,7 @@ private struct SetHeaderRow: View {
 private struct SetSongRow: View {
     let number: Int
     let song: Song
+    let isPlayed: Bool
 
     var body: some View {
         HStack(spacing: 12) {
@@ -334,12 +355,18 @@ private struct SetSongRow: View {
                 .frame(minWidth: 22, alignment: .trailing)
             Text(song.title)
                 .lineLimit(1)
+                .foregroundStyle(isPlayed ? .secondary : .primary)
             if song.kind == .note {
                 Image(systemName: "note.text")
                     .foregroundStyle(.secondary)
                     .accessibilityLabel("Anteckning")
             }
             Spacer(minLength: 0)
+            if isPlayed {
+                Text("spelad")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             if let key = song.key {
                 Text(key)
                     .font(.callout)

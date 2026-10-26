@@ -11,13 +11,23 @@ struct SidebarView: View {
     }
 
     var body: some View {
-        Group {
-            switch tab {
-            case .setlists:
-                SetlistsView(selection: $selection)
-            case .library:
-                LibraryView(selection: $selection)
+        VStack(spacing: 0) {
+            Group {
+                switch tab {
+                case .setlists:
+                    SetlistsView(selection: $selection)
+                case .library:
+                    LibraryView(selection: $selection)
+                }
             }
+            .frame(maxHeight: .infinity)
+            VStack(spacing: 10) {
+                SuggestionsBox(current: selection)
+                    .frame(height: 260)
+                GigFooter()
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
         }
         .safeAreaInset(edge: .top, spacing: 0) {
             VStack(spacing: 12) {

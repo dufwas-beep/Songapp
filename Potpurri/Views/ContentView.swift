@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var selection: Song?
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var player = Player()
+    @State private var colorCodes = ColorCodes()
     @AppStorage("migratedSongNotes") private var migratedSongNotes = false
 
     private func song(_ id: UUID?) -> Song? {
@@ -17,7 +18,8 @@ struct ContentView: View {
 
     /// Nästa (+1) eller förra (−1) låt: i listan låten valdes ur, annars i biblioteket.
     private func neighbor(_ step: Int) -> Song? {
-        guard let id = selection?.id else { return nil }
+        // Ett förslag som spelas har ingen nästa låt – pedalen bläddrar bara inom det.
+        guard let id = selection?.id, player.playingSuggestionID != id else { return nil }
         let order = player.queue.contains(id) ? player.queue : songs.sorted(by: Song.swedishOrder).map(\.id)
         guard let index = order.firstIndex(of: id), order.indices.contains(index + step) else { return nil }
         return song(order[index + step])
@@ -32,7 +34,17 @@ struct ContentView: View {
                 song: selection,
                 previous: neighbor(-1),
                 next: neighbor(1),
-                onSelect: { selection = $0 }
+                preview: song(player.previewID),
+                onSelect: { song in
+                    player.playingSuggestionID = nil
+                    selection = song
+                },
+                onPlayPreview: { song in
+                    // Låtlistan ändras inte när ett förslag spelas.
+                    player.previewID = nil
+                    player.playingSuggestionID = song.id
+                    selection = song
+                }
             )
             .overlay(alignment: .topLeading) {
                 // När sidospalten är dold visas klockan i låtvyn i stället.
@@ -44,6 +56,11 @@ struct ContentView: View {
             }
         }
         .environment(player)
+        .environment(colorCodes)
+        .onChange(of: selection) { _, song in
+            player.updateColors(for: song)
+            if player.previewID == song?.id { player.previewID = nil }
+        }
         .onAppear {
             // Skärmen släcks aldrig medan Potpurri är öppen.
             UIApplication.shared.isIdleTimerDisabled = true

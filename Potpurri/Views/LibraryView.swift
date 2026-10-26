@@ -33,25 +33,38 @@ struct LibraryView: View {
     @State private var onSongBackup: OnSongBackup?
     @State private var importMessage: String?
     @State private var progress = TaskProgress()
+    @State private var colorMode = false
+    @State private var checked: Set<UUID> = []
+    @State private var colorFilter: Set<Int> = []
 
-    /// Sökning på titel och vald sortering.
+    /// Sökning på titel, färgfilter och vald sortering.
     private var visibleSongs: [Song] {
         let q = query.trimmingCharacters(in: .whitespaces)
-        let filtered = q.isEmpty ? songs : songs.filter { $0.title.localizedCaseInsensitiveContains(q) }
+        var filtered = q.isEmpty ? songs : songs.filter { $0.title.localizedCaseInsensitiveContains(q) }
+        if !colorFilter.isEmpty {
+            filtered = filtered.filter { !colorFilter.isDisjoint(with: $0.colorTags) }
+        }
+        let sorted: [Song]
         switch sort {
         case .name:
-            return filtered.sorted(by: Song.swedishOrder)
+            sorted = filtered.sorted(by: Song.swedishOrder)
         case .added:
-            return filtered.sorted { $0.dateAdded > $1.dateAdded }
+            sorted = filtered.sorted { $0.dateAdded > $1.dateAdded }
         case .lastPlayed:
-            return filtered.sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
+            sorted = filtered.sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
         case .mostPlayed:
-            return filtered.sorted { $0.playCount != $1.playCount ? $0.playCount > $1.playCount : Song.swedishOrder($0, $1) }
+            sorted = filtered.sorted { $0.playCount != $1.playCount ? $0.playCount > $1.playCount : Song.swedishOrder($0, $1) }
         }
+        guard !colorFilter.isEmpty else { return sorted }
+        // Låtar med flest av de valda färgerna först, i övrigt vald sortering.
+        let overlap = { (song: Song) in colorFilter.intersection(song.colorTags).count }
+        return sorted.enumerated()
+            .sorted { overlap($0.element) != overlap($1.element) ? overlap($0.element) > overlap($1.element) : $0.offset < $1.offset }
+            .map(\.element)
     }
 
     private var showsAlphabet: Bool {
-        sort == .name && query.isEmpty && songs.count > 20
+        sort == .name && query.isEmpty && colorFilter.isEmpty && !colorMode && songs.count > 20
     }
 
     var body: some View {
@@ -62,17 +75,37 @@ struct LibraryView: View {
                 importMenu
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.top, 10)
+
+            ColorFilterChips(selected: $colorFilter)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
 
             let list = visibleSongs
+            ColorColumnsHeader(colorMode: $colorMode) { index in
+                applyColor(index, to: list.filter { checked.contains($0.id) })
+            }
+            .onChange(of: colorMode) { _, on in
+                if !on { checked = [] }
+            }
+            Divider()
             ScrollViewReader { proxy in
                 List(selection: $selection) {
                     ForEach(list) { song in
-                        SongRow(song: song)
+                        HStack(spacing: 8) {
+                            if colorMode {
+                                ColorModeCheckbox(isChecked: checked.contains(song.id)) {
+                                    if checked.contains(song.id) { checked.remove(song.id) } else { checked.insert(song.id) }
+                                }
+                            }
+                            SongRow(song: song, isPlayed: player.isPlayedTonight(song))
+                            ColorDots(song: song, editable: colorMode)
+                        }
                             .tag(song)
                             .id(song.id)
                             .padding(.trailing, showsAlphabet ? 18 : 0)
                             .contextMenu {
+                                PinButton(songID: song.id)
                                 if !player.isLocked { rowMenu(for: song) }
                             }
                     }
@@ -81,7 +114,7 @@ struct LibraryView: View {
                 .listStyle(.plain)
                 // Nästa/förra låt följer biblioteket när man valt en låt här.
                 .onChange(of: selection) { _, song in
-                    if let song, list.contains(song) {
+                    if let song, song.id != player.playingSuggestionID, list.contains(song) {
                         player.queue = list.map(\.id)
                     }
                 }
@@ -251,11 +284,14 @@ struct LibraryView: View {
 
 struct SongRow: View {
     let song: Song
+    /// Spelad under kvällen – visas grå men kan fortfarande väljas.
+    var isPlayed = false
 
     var body: some View {
         HStack(spacing: 10) {
             Text(song.title)
                 .lineLimit(1)
+                .foregroundStyle(isPlayed ? .secondary : .primary)
             // Bara anteckningar (t.ex. quizmanus) märks – om en låt är PDF eller bild spelar ingen roll.
             if song.kind == .note {
                 Image(systemName: "note.text")
@@ -263,10 +299,47 @@ struct SongRow: View {
                     .accessibilityLabel("Anteckning")
             }
             Spacer(minLength: 0)
+            if isPlayed {
+                Text("spelad")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             if let key = song.key {
                 Text(key)
                     .font(.callout)
                     .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+/// Färgfiltret: tryck på en eller flera färger. Låtar med någon av dem visas,
+/// och de som har flest av färgerna hamnar först.
+struct ColorFilterChips: View {
+    @Binding var selected: Set<Int>
+    @Environment(ColorCodes.self) private var codes
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(0..<ColorCodes.count, id: \.self) { index in
+                    let isOn = selected.contains(index)
+                    Button {
+                        if isOn { selected.remove(index) } else { selected.insert(index) }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Circle().fill(ColorCodes.colors[index]).frame(width: 10, height: 10)
+                            Text(codes.names[index])
+                                .font(.footnote.weight(isOn ? .semibold : .regular))
+                        }
+                        .padding(.horizontal, 10)
+                        .frame(height: 30)
+                        .background(isOn ? ColorCodes.colors[index].opacity(0.25) : Color(.tertiarySystemFill), in: Capsule())
+                        .overlay(Capsule().stroke(isOn ? ColorCodes.colors[index] : .clear, lineWidth: 1.5))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(isOn ? .isSelected : [])
+                }
             }
         }
     }

@@ -32,6 +32,8 @@ final class Song {
     var importedNote: String?
     /// Låtens längd för autoscroll, i sekunder (0:30–10:00). Saknas den används 3:00.
     var autoscrollSeconds: Int?
+    /// Låtens färgkoder (0–4, se `ColorCodes`).
+    var colorTags: [Int] = []
 
     init(title: String, kind: SongKind, fileName: String = "", text: String? = nil, key: String? = nil, importedNote: String? = nil) {
         self.id = UUID()
@@ -46,6 +48,14 @@ final class Song {
 
     var kind: SongKind {
         SongKind(rawValue: kindRaw) ?? .pdf
+    }
+
+    func toggleColor(_ index: Int) {
+        if colorTags.contains(index) {
+            colorTags.removeAll { $0 == index }
+        } else {
+            colorTags = (colorTags + [index]).sorted()
+        }
     }
 
     /// Har låten en egen fil (PDF eller bild)?

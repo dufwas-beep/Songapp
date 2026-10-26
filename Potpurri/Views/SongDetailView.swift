@@ -7,22 +7,52 @@ struct SongDetailView: View {
     let song: Song?
     let previous: Song?
     let next: Song?
+    let preview: Song?
     let onSelect: (Song) -> Void
+    let onPlayPreview: (Song) -> Void
 
     @Environment(Player.self) private var player
+    @State private var previewHeight: CGFloat = 320
+    @State private var showsColors = false
     @State private var autoscroller = Autoscroller()
     @FocusState private var focused: Bool
 
     var body: some View {
         if let song {
-            ZStack(alignment: .bottomTrailing) {
-                songSheet(for: song)
-                    .id(song.id)
-                HStack(alignment: .center, spacing: 12) {
-                    SongStepButtons(previous: previous, next: next, onSelect: onSelect)
-                    AutoscrollButton(autoscroller: autoscroller, seconds: secondsBinding(for: song))
+            VStack(spacing: 0) {
+                ZStack(alignment: .bottomTrailing) {
+                    SongSheetView(song: song) { autoscroller.attach($0) }
+                        .id(song.id)
+                    HStack(alignment: .center, spacing: 12) {
+                        SongStepButtons(previous: previous, next: next, onSelect: onSelect)
+                        AutoscrollButton(autoscroller: autoscroller, seconds: secondsBinding(for: song))
+                    }
+                    .padding(24)
                 }
-                .padding(24)
+                .overlay(alignment: .topTrailing) {
+                    if !player.isLocked {
+                        Button {
+                            showsColors = true
+                        } label: {
+                            Image(systemName: "paintpalette")
+                                .font(.system(size: 18, weight: .medium))
+                                .frame(width: 48, height: 48)
+                                .background(.regularMaterial, in: Circle())
+                        }
+                        .padding(16)
+                        .accessibilityLabel("Låtens färgkoder")
+                        .popover(isPresented: $showsColors) {
+                            SongColorsPanel(song: song)
+                        }
+                    }
+                }
+                if let preview {
+                    PreviewPane(song: preview, height: $previewHeight) {
+                        onPlayPreview(preview)
+                    } onClose: {
+                        player.previewID = nil
+                    }
+                }
             }
             .overlay(alignment: .top) {
                 if player.isLocked {
@@ -66,24 +96,6 @@ struct SongDetailView: View {
                 systemImage: "music.note",
                 description: Text("Välj en låt i listan till vänster.")
             )
-        }
-    }
-
-    @ViewBuilder
-    private func songSheet(for song: Song) -> some View {
-        let attach: (UIScrollView) -> Void = { autoscroller.attach($0) }
-        if song.kind == .text || song.kind == .note {
-            TextSongView(song: song, onScrollView: attach)
-        } else if !FileManager.default.fileExists(atPath: song.fileURL.path) {
-            ContentUnavailableView(
-                "Filen saknas",
-                systemImage: "exclamationmark.triangle",
-                description: Text("Låtens fil hittades inte. Importera den igen.")
-            )
-        } else if song.kind == .pdf {
-            PDFKitView(url: song.fileURL, onScrollView: attach)
-        } else {
-            ImageSongView(url: song.fileURL, onScrollView: attach)
         }
     }
 
@@ -158,5 +170,129 @@ private struct SongStepButtons: View {
         .foregroundStyle(.primary)
         .background(.regularMaterial, in: Capsule())
         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+    }
+}
+
+/// Låtbladet för en låt: textlåt/anteckning, PDF eller bild.
+struct SongSheetView: View {
+    let song: Song
+    let onScrollView: (UIScrollView) -> Void
+
+    var body: some View {
+        if song.kind == .text || song.kind == .note {
+            TextSongView(song: song, onScrollView: onScrollView)
+        } else if !FileManager.default.fileExists(atPath: song.fileURL.path) {
+            ContentUnavailableView(
+                "Filen saknas",
+                systemImage: "exclamationmark.triangle",
+                description: Text("Låtens fil hittades inte. Importera den igen.")
+            )
+        } else if song.kind == .pdf {
+            PDFKitView(url: song.fileURL, onScrollView: onScrollView)
+        } else {
+            ImageSongView(url: song.fileURL, onScrollView: onScrollView)
+        }
+    }
+}
+
+/// Förhandsrutan under huvudlåten: ett förslag man tittar på medan låten spelas.
+/// Dra i överkanten för att ändra storlek. "Spela nu" (eller tryck i rutan) byter låt.
+private struct PreviewPane: View {
+    let song: Song
+    @Binding var height: CGFloat
+    let onPlay: () -> Void
+    let onClose: () -> Void
+
+    @State private var startHeight: CGFloat?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Text("NÄSTA?")
+                    .font(.system(size: 12, weight: .semibold))
+                    .tracking(1)
+                    .foregroundStyle(.secondary)
+                Text(song.title)
+                    .font(.headline)
+                    .lineLimit(1)
+                Spacer()
+                Button(action: onPlay) {
+                    Label("Spela nu", systemImage: "play.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .foregroundStyle(.black)
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .frame(width: 36, height: 36)
+                }
+                .accessibilityLabel("Stäng förhandsrutan")
+            }
+            .padding(.horizontal, 16)
+            .frame(height: 56)
+            .background(.bar)
+            .overlay(alignment: .top) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.5))
+                    .frame(width: 56, height: 5)
+                    .padding(.top, 5)
+            }
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        let start = startHeight ?? height
+                        startHeight = start
+                        height = min(max(start - value.translation.height, 160), 720)
+                    }
+                    .onEnded { value in
+                        startHeight = nil
+                        // Svep nedåt långt = stäng.
+                        if value.translation.height > 140 { onClose() }
+                    }
+            )
+            SongSheetView(song: song) { _ in }
+                .id(song.id)
+                .simultaneousGesture(TapGesture().onEnded { onPlay() })
+        }
+        .frame(height: height)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Color.accentColor).frame(height: 2)
+        }
+    }
+}
+
+/// Inne i låten: fem stora knappar för låtens färgkoder.
+private struct SongColorsPanel: View {
+    let song: Song
+    @Environment(ColorCodes.self) private var codes
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Färgkoder för \(song.title)")
+                .font(.headline)
+                .lineLimit(1)
+            ForEach(0..<ColorCodes.count, id: \.self) { index in
+                let isOn = song.colorTags.contains(index)
+                Button {
+                    song.toggleColor(index)
+                } label: {
+                    HStack(spacing: 12) {
+                        Circle().fill(ColorCodes.colors[index]).frame(width: 18, height: 18)
+                        Text(codes.names[index])
+                            .font(.body.weight(isOn ? .semibold : .regular))
+                        Spacer()
+                        Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                            .font(.title3)
+                            .foregroundStyle(isOn ? ColorCodes.colors[index] : .secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .frame(height: 52)
+                    .background(isOn ? ColorCodes.colors[index].opacity(0.18) : Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(isOn ? .isSelected : [])
+            }
+        }
+        .padding(20)
+        .frame(width: 340)
     }
 }
