@@ -306,8 +306,10 @@ vilka låtar som passar efter, eller som medley.
 - **Ingen träff → "Sök på webben".** Två vägar, utan att lämna appen:
   1. **Direktträffar** från en låttextdatabas (förslag: LRCLIB, gratis och utan konto)
      visas som en lista med titel och artist. Tryck → förhandsvisning → "Lägg till".
-  2. **Inbyggd webbläsare** med Google-sökning "<sökord> lyrics". Markera texten på
-     valfri sida → knappen "Lägg till som ny låt".
+  2. **Inbyggd webbläsare**: välj **Google**, **AZLyrics** eller **Genius** (valet sparas).
+     Knappen **"Hämta låttexten från sidan"** tar markerad text – eller, om inget är markerat,
+     letar appen själv upp blocket som ser ut som en låttext (t.ex. Googles låttextruta).
+     Texten visas för kontroll och kan rättas innan den läggs till som ny låt.
 - Den nya låten blir en **textlåt** med titel/artist förifyllda och kan direkt få tonart,
   ackord, färgkoder och läggas i en låtlista.
 - Endast låttext hämtas (inga ackord) – ackord läggs med ackordstämplarna.

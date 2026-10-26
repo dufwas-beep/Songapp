@@ -178,8 +178,10 @@ struct ChordsLayer: View {
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.black.opacity(0.08)))
     }
 
+    /// Ackordets verkliga bredd (texten mätt i samma typsnitt + rutans kanter).
     private func estimatedWidth(_ label: String) -> CGFloat {
-        CGFloat(label.count) * fontSize * 0.62 + 14
+        let font = UIFont.systemFont(ofSize: fontSize, weight: .bold)
+        return (label as NSString).size(withAttributes: [.font: font]).width + 14
     }
 
     /// Kort drag flyttar ackordet – eller hela gruppen om det sitter i en.
@@ -230,20 +232,23 @@ struct ChordsLayer: View {
         }
     }
 
-    /// Jämna avstånd: första och sista ackordet ligger kvar, de andra fördelas jämnt
-    /// emellan (men aldrig tätare än att de får plats).
+    /// Jämna avstånd: lika stort mellanrum mellan varje ackord (från slutet av ett ackord
+    /// till början av nästa), oavsett hur långa ackorden är. Första och sista ackordet
+    /// ligger kvar; mellanrummet blir aldrig mindre än lite luft.
     private func spaceEvenly(_ members: [ChordStamp]) {
         let sorted = members.sorted { $0.x < $1.x }
-        guard sorted.count > 2, let first = sorted.first, let last = sorted.last else {
-            resolveOverlaps(members)
-            return
-        }
-        let widest = sorted.map(minimumGap(after:)).max() ?? 0
-        let step = max((last.x - first.x) / Double(sorted.count - 1), widest)
+        guard sorted.count > 1, let first = sorted.first, let last = sorted.last else { return }
+        let unit = Double(geometry.unit)
+        let widths = sorted.map { Double(estimatedWidth(labelText($0))) / unit }
+        let span = last.x + widths[widths.count - 1] - first.x
+        let minimumGap = Double(fontSize * 0.5) / unit
+        let gap = max((span - widths.reduce(0, +)) / Double(sorted.count - 1), minimumGap)
         withAnimation(.easeOut(duration: 0.2)) {
+            var x = first.x
             for (index, chord) in sorted.enumerated() {
-                chord.x = first.x + step * Double(index)
+                chord.x = x
                 chord.y = first.y
+                x += widths[index] + gap
             }
         }
     }

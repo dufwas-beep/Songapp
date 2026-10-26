@@ -20,6 +20,7 @@ struct WebSearchSheet: View {
     @State private var web = WebController()
     @State private var newTitle = ""
     @State private var pendingText: String?
+    @AppStorage("webLyricsSite") private var site = WebController.Site.google
 
     private let source: LyricsSource = LRCLIBSource()
 
@@ -41,7 +42,7 @@ struct WebSearchSheet: View {
                 .padding(12)
                 Picker("Källa", selection: $tab) {
                     Text("Låttexter").tag(Tab.database)
-                    Text("Webben (Google)").tag(Tab.web)
+                    Text("Webben").tag(Tab.web)
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, 12)
@@ -52,11 +53,24 @@ struct WebSearchSheet: View {
                     databaseView
                 case .web:
                     WebView(controller: web)
+                        .safeAreaInset(edge: .top) {
+                            // Välj var på webben det söks: Google, AZLyrics eller Genius.
+                            Picker("Sök på", selection: $site) {
+                                ForEach(WebController.Site.allCases, id: \.self) { site in
+                                    Text(site.label).tag(site)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(.bar)
+                            .onChange(of: site) { web.load(query, on: site) }
+                        }
                         .safeAreaInset(edge: .bottom) {
                             Button {
-                                Task { await addSelection() }
+                                Task { await addFromPage() }
                             } label: {
-                                Label("Lägg till markerad text som ny låt", systemImage: "plus")
+                                Label("Hämta låttexten från sidan", systemImage: "text.badge.plus")
                                     .frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.borderedProminent)
@@ -78,14 +92,34 @@ struct WebSearchSheet: View {
                 query = initialQuery
                 search()
             }
-            .alert("Ny låt", isPresented: Binding(get: { pendingText != nil }, set: { if !$0 { pendingText = nil } })) {
-                TextField("Titel", text: $newTitle)
-                Button("Avbryt", role: .cancel) {}
-                Button("Lägg till") {
-                    if let text = pendingText { add(title: newTitle, artist: "", lyrics: text) }
+            // Texten från sidan visas först så att man kan rätta den innan låten läggs till.
+            .sheet(isPresented: Binding(get: { pendingText != nil }, set: { if !$0 { pendingText = nil } })) {
+                NavigationStack {
+                    Form {
+                        Section("Titel") {
+                            TextField("Titel", text: $newTitle)
+                        }
+                        Section("Låttext – rätta vid behov") {
+                            TextEditor(text: Binding(get: { pendingText ?? "" }, set: { pendingText = $0 }))
+                                .frame(minHeight: 360)
+                        }
+                    }
+                    .navigationTitle("Ny låt")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Avbryt") { pendingText = nil }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Lägg till") {
+                                if let text = pendingText {
+                                    pendingText = nil
+                                    add(title: newTitle, artist: "", lyrics: text)
+                                }
+                            }
+                        }
+                    }
                 }
-            } message: {
-                Text("Vad ska låten heta?")
             }
             .alert("Sök på webben", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
                 Button("OK", role: .cancel) {}
@@ -147,7 +181,7 @@ struct WebSearchSheet: View {
     private func search() {
         let q = query.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return }
-        web.load(q)
+        web.load(q, on: site)
         searching = true
         Task {
             do {
@@ -160,11 +194,16 @@ struct WebSearchSheet: View {
         }
     }
 
-    /// Markerad text i webbläsaren blir en ny låt.
-    private func addSelection() async {
-        let text = await web.selectedText()
+    /// Hämtar låttexten från sidan: markerad text om man markerat något, annars letar
+    /// appen själv upp textblocket som ser ut som en låttext (t.ex. Googles låttextruta
+    /// eller texten på AZLyrics). Texten visas för kontroll innan den läggs till.
+    private func addFromPage() async {
+        var text = await web.selectedText()
+        if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            text = await web.findLyrics()
+        }
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            message = "Markera texten på sidan först (håll in och dra), och tryck sedan igen."
+            message = "Hittade ingen låttext på sidan. Öppna en sida med texten, eller markera texten (håll in och dra) och tryck igen."
             return
         }
         newTitle = query.trimmingCharacters(in: .whitespaces)
@@ -192,14 +231,69 @@ final class WebController {
         return view
     }()
 
-    func load(_ query: String) {
-        var components = URLComponents(string: "https://www.google.com/search")!
-        components.queryItems = [URLQueryItem(name: "q", value: query + " lyrics")]
-        if let url = components.url { view.load(URLRequest(url: url)) }
+    /// Sajter man kan söka på i webbläsaren.
+    enum Site: String, CaseIterable {
+        case google
+        case azlyrics
+        case genius
+
+        var label: String {
+            switch self {
+            case .google: return "Google"
+            case .azlyrics: return "AZLyrics"
+            case .genius: return "Genius"
+            }
+        }
+
+        func url(for query: String) -> URL? {
+            var components: URLComponents?
+            switch self {
+            case .google:
+                components = URLComponents(string: "https://www.google.com/search")
+                components?.queryItems = [URLQueryItem(name: "q", value: query + " lyrics")]
+            case .azlyrics:
+                components = URLComponents(string: "https://search.azlyrics.com/search.php")
+                components?.queryItems = [URLQueryItem(name: "q", value: query)]
+            case .genius:
+                components = URLComponents(string: "https://genius.com/search")
+                components?.queryItems = [URLQueryItem(name: "q", value: query)]
+            }
+            return components?.url
+        }
+    }
+
+    func load(_ query: String, on site: Site) {
+        if let url = site.url(for: query) { view.load(URLRequest(url: url)) }
     }
 
     func selectedText() async -> String {
         (try? await view.evaluateJavaScript("window.getSelection().toString()") as? String) ?? ""
+    }
+
+    /// Letar upp det textblock på sidan som mest liknar en låttext: många korta rader och
+    /// nästan inga länkar. Det minsta sådana blocket vinner (inte hela sidan runt omkring).
+    func findLyrics() async -> String {
+        let script = """
+        (function() {
+          let best = null, bestScore = 0;
+          document.querySelectorAll('div, p, pre, section, article, span').forEach(function(el) {
+            const text = el.innerText || '';
+            if (text.length < 80 || text.length > 12000) return;
+            const lines = text.split('\\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+            if (lines.length < 6) return;
+            const short = lines.filter(function(l) { return l.length < 70; }).length;
+            if (short / lines.length < 0.85) return;
+            const links = el.querySelectorAll('a').length;
+            if (links > 2) return;
+            const score = short * 1000 - text.length / 50;
+            if (score > bestScore || (score === bestScore && best && best.contains(el))) {
+              bestScore = score; best = el;
+            }
+          });
+          return best ? best.innerText.trim() : '';
+        })();
+        """
+        return (try? await view.evaluateJavaScript(script) as? String) ?? ""
     }
 }
 
