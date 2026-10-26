@@ -43,6 +43,7 @@ final class Player {
         let root: Int
         let quality: String
         let bass: Int?
+        let flats: Bool
         let dx: Double
         let dy: Double
     }

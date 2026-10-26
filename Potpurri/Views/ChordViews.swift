@@ -1,5 +1,7 @@
+import PDFKit
 import SwiftData
 import SwiftUI
+import UIKit
 
 /// Ackordstämplarna ovanpå låtbladet, plus paletten när den är öppen.
 /// Ackorden ritas utifrån bladets scrollposition och bredd, så de följer låten.
@@ -18,6 +20,8 @@ struct ChordsLayer: View {
     @State private var dragged: (root: Int, quality: String)?
     @State private var dragLocation: CGPoint = .zero
     @State private var menuChord: ChordStamp?
+    /// Rutan man drar med fingret i "Välj ackord".
+    @State private var lasso: CGRect?
 
     static let space = "chords"
 
@@ -36,9 +40,14 @@ struct ChordsLayer: View {
         player.chordsOn && !player.isLocked
     }
 
-    /// Textstorleken följer bladets bredd, så ackorden zoomar med låten.
+    /// Textstorleken följer bladets bredd, så ackorden zoomar med låten. Storleken kan
+    /// ställas in per låt (eller anpassas efter låttexten) i paletten.
     private var fontSize: CGFloat {
-        max(14, geometry.unit * 0.026)
+        max(10, geometry.unit * CGFloat(song.chordSize ?? 0.026))
+    }
+
+    private func labelText(_ chord: ChordStamp) -> String {
+        ChordTheory.label(root: chord.root, quality: chord.quality, bass: chord.bass, flats: chord.flats ?? key.usesFlats)
     }
 
     var body: some View {
@@ -50,6 +59,37 @@ struct ChordsLayer: View {
                     .onTapGesture(coordinateSpace: .named(Self.space)) { location in
                         paste(at: location)
                     }
+            } else if player.choosingChords && editable {
+                // Dra en ruta med fingret runt ackorden som ska väljas.
+                Color.white.opacity(0.001)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 4, coordinateSpace: .named(Self.space))
+                            .onChanged { value in
+                                lasso = CGRect(
+                                    x: min(value.startLocation.x, value.location.x),
+                                    y: min(value.startLocation.y, value.location.y),
+                                    width: abs(value.location.x - value.startLocation.x),
+                                    height: abs(value.location.y - value.startLocation.y)
+                                )
+                            }
+                            .onEnded { _ in
+                                if let lasso {
+                                    for chord in chords where lasso.insetBy(dx: -10, dy: -10).contains(screenPoint(chord)) {
+                                        player.selectedChords.insert(chord.id)
+                                    }
+                                }
+                                lasso = nil
+                            }
+                    )
+                if let lasso {
+                    Rectangle()
+                        .fill(Color.accentColor.opacity(0.12))
+                        .overlay(Rectangle().stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6, 4])))
+                        .frame(width: lasso.width, height: lasso.height)
+                        .offset(x: lasso.minX, y: lasso.minY)
+                        .allowsHitTesting(false)
+                }
             } else {
                 Color.clear.allowsHitTesting(false)
             }
@@ -80,7 +120,7 @@ struct ChordsLayer: View {
     }
 
     private func stamp(_ chord: ChordStamp) -> some View {
-        let label = ChordTheory.label(root: chord.root, quality: chord.quality, bass: chord.bass, in: key)
+        let label = labelText(chord)
         let point = screenPoint(chord)
         let selected = player.selectedChords.contains(chord.id)
         // Ackordet (och hela gruppen) som dras lyfts: rosa, lite större och med skugga.
@@ -148,6 +188,7 @@ struct ChordsLayer: View {
                 draggingGroup = []
                 withAnimation(.easeOut(duration: 0.15)) {
                     snapToRow(group(of: chord))
+                    resolveOverlaps(row(of: chord))
                 }
             }
     }
@@ -155,6 +196,44 @@ struct ChordsLayer: View {
     @State private var lastTranslation: CGSize = .zero
     /// Ackorden som dras just nu (ett ackord eller hela dess grupp).
     @State private var draggingGroup: Set<UUID> = []
+
+    /// Ackorden på samma rad som ett ackord.
+    private func row(of chord: ChordStamp) -> [ChordStamp] {
+        chords.filter { abs($0.y - chord.y) < 0.004 }
+    }
+
+    /// Avståndet som behövs mellan två ackord på raden (bredd + luft), i bladets enheter.
+    private func minimumGap(after chord: ChordStamp) -> Double {
+        Double((estimatedWidth(labelText(chord)) + fontSize * 0.5) / geometry.unit)
+    }
+
+    /// Ackord som hamnat på varandra knuffas åt höger så att de aldrig överlappar.
+    private func resolveOverlaps(_ row: [ChordStamp]) {
+        let sorted = row.sorted { $0.x < $1.x }
+        guard sorted.count > 1 else { return }
+        for index in 1..<sorted.count {
+            let needed = sorted[index - 1].x + minimumGap(after: sorted[index - 1])
+            if sorted[index].x < needed { sorted[index].x = needed }
+        }
+    }
+
+    /// Jämna avstånd: första och sista ackordet ligger kvar, de andra fördelas jämnt
+    /// emellan (men aldrig tätare än att de får plats).
+    private func spaceEvenly(_ members: [ChordStamp]) {
+        let sorted = members.sorted { $0.x < $1.x }
+        guard sorted.count > 2, let first = sorted.first, let last = sorted.last else {
+            resolveOverlaps(members)
+            return
+        }
+        let widest = sorted.map(minimumGap(after:)).max() ?? 0
+        let step = max((last.x - first.x) / Double(sorted.count - 1), widest)
+        withAnimation(.easeOut(duration: 0.2)) {
+            for (index, chord) in sorted.enumerated() {
+                chord.x = first.x + step * Double(index)
+                chord.y = first.y
+            }
+        }
+    }
 
     private func group(of chord: ChordStamp) -> [ChordStamp] {
         guard let groupID = chord.groupID else { return [chord] }
@@ -183,7 +262,7 @@ struct ChordsLayer: View {
             if members.count > 1 {
                 let points = members.map(screenPoint)
                 let minX = (points.map(\.x).min() ?? 0) - 8
-                let maxX = zip(points, members).map { $0.0.x + estimatedWidth(ChordTheory.label(root: $0.1.root, quality: $0.1.quality, bass: $0.1.bass, in: key)) }.max() ?? 0
+                let maxX = zip(points, members).map { $0.0.x + estimatedWidth(labelText($0.1)) }.max() ?? 0
                 let minY = (points.map(\.y).min() ?? 0) - 26
                 let maxY = (points.map(\.y).max() ?? 0) + 26
                 let rect = CGRect(x: minX, y: minY, width: maxX - minX + 8, height: maxY - minY)
@@ -202,6 +281,11 @@ struct ChordsLayer: View {
                             copy(members)
                         } label: {
                             Label("Kopiera gruppen", systemImage: "doc.on.doc")
+                        }
+                        Button {
+                            spaceEvenly(members)
+                        } label: {
+                            Label("Jämna ut avstånden", systemImage: "arrow.left.and.right")
                         }
                         Button(role: .destructive) {
                             members.forEach { context.delete($0) }
@@ -230,6 +314,7 @@ struct ChordsLayer: View {
     // MARK: Menyn för ett ackord
 
     enum MenuAction {
+        case evenRow
         case accidental(Int)
         case quality(String)
         case bass(Int?)
@@ -239,13 +324,18 @@ struct ChordsLayer: View {
 
     private func handle(_ action: MenuAction, for chord: ChordStamp) {
         switch action {
+        case .evenRow:
+            spaceEvenly(row(of: chord))
+            menuChord = nil
         case .accidental(let step):
-            // ♯ höjer, ♭ sänker, ♮ tar bort förtecknet (tillbaka till stamtonen).
+            // ♯ höjer (stavas med #), ♭ sänker (stavas med b), ♮ tar bort förtecknet.
+            // Bara det här ackordet ändras – inte låtens tonart.
             if step == 0 {
-                let name = ChordTheory.name(chord.root, in: key)
+                let name = labelText(chord)
                 chord.root = ChordTheory.pitch(of: String(name.prefix(1))) ?? chord.root
             } else {
                 chord.root = (chord.root + step + 12) % 12
+                chord.flats = step < 0
             }
         case .quality(let quality):
             chord.quality = quality
@@ -263,7 +353,7 @@ struct ChordsLayer: View {
     private func copy(_ members: [ChordStamp]) {
         let sorted = members.sorted { ($0.y, $0.x) < ($1.y, $1.x) }
         guard let first = sorted.first else { return }
-        player.chordClipboard = sorted.map { .init(root: $0.root, quality: $0.quality, bass: $0.bass, dx: $0.x - first.x, dy: $0.y - first.y) }
+        player.chordClipboard = sorted.map { .init(root: $0.root, quality: $0.quality, bass: $0.bass, flats: $0.flats ?? key.usesFlats, dx: $0.x - first.x, dy: $0.y - first.y) }
         player.pastingChords = true
         player.choosingChords = false
         player.selectedChords = []
@@ -275,7 +365,9 @@ struct ChordsLayer: View {
         let y = Double((location.y + geometry.offset.y) / geometry.unit)
         let groupID = player.chordClipboard.count > 1 ? UUID() : nil
         for item in player.chordClipboard {
-            context.insert(ChordStamp(songID: song.id, root: item.root, quality: item.quality, bass: item.bass, x: x + item.dx, y: y + item.dy, groupID: groupID))
+            let chord = ChordStamp(songID: song.id, root: item.root, quality: item.quality, bass: item.bass, x: x + item.dx, y: y + item.dy, groupID: groupID)
+            chord.flats = item.flats
+            context.insert(chord)
         }
         player.pastingChords = false
     }
@@ -322,12 +414,30 @@ struct ChordsLayer: View {
                 }
                 .buttonStyle(.bordered)
                 Spacer()
-                Button { transpose(-1) } label: { Text("♭").font(.title3.weight(.bold)).frame(width: 30) }
+                // ♭/♯ byter bara palettens tonart (t.ex. för refrängen) – ackord som redan
+                // ligger på låten ändras inte.
+                Button { stepPaletteKey(-1) } label: { Text("♭").font(.title3.weight(.bold)).frame(width: 30) }
                     .buttonStyle(.bordered)
-                    .accessibilityLabel("Transponera ner ett halvt tonsteg")
-                Button { transpose(1) } label: { Text("♯").font(.title3.weight(.bold)).frame(width: 30) }
+                    .accessibilityLabel("Palettens tonart ett halvt tonsteg ner")
+                Button { stepPaletteKey(1) } label: { Text("♯").font(.title3.weight(.bold)).frame(width: 30) }
                     .buttonStyle(.bordered)
-                    .accessibilityLabel("Transponera upp ett halvt tonsteg")
+                    .accessibilityLabel("Palettens tonart ett halvt tonsteg upp")
+            }
+            HStack(spacing: 8) {
+                Image(systemName: "textformat.size")
+                    .foregroundStyle(.secondary)
+                Slider(value: Binding(get: { song.chordSize ?? 0.026 }, set: { song.chordSize = $0 }), in: 0.014...0.06)
+                    .accessibilityLabel("Ackordens storlek")
+                Button("Som texten") { song.chordSize = textSize() }
+                    .font(.footnote)
+                    .buttonStyle(.bordered)
+            }
+            Menu {
+                Button("Upp ett halvt tonsteg") { transpose(1) }
+                Button("Ner ett halvt tonsteg") { transpose(-1) }
+            } label: {
+                Label("Transponera hela låten", systemImage: "arrow.up.arrow.down")
+                    .font(.footnote.weight(.semibold))
             }
             Text("Dra ut ett ackord till låten")
                 .font(.caption)
@@ -372,7 +482,7 @@ struct ChordsLayer: View {
     private var chooseBar: some View {
         let selected = chords.filter { player.selectedChords.contains($0.id) }
         return VStack(alignment: .leading, spacing: 8) {
-            Text(selected.isEmpty ? "Tryck på ackorden som ska med" : "\(selected.count) valda")
+            Text(selected.isEmpty ? "Tryck på ackorden – eller dra en ruta runt dem" : "\(selected.count) valda")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
             HStack(spacing: 6) {
@@ -389,6 +499,8 @@ struct ChordsLayer: View {
                 .disabled(selected.allSatisfy { $0.groupID == nil })
                 Button("Kopiera") { copy(selected) }
                     .disabled(selected.isEmpty)
+                Button("Jämna ut") { spaceEvenly(selected) }
+                    .disabled(selected.count < 2)
                 Button("Ta bort", role: .destructive) {
                     selected.forEach { context.delete($0) }
                     finishChoosing()
@@ -432,21 +544,57 @@ struct ChordsLayer: View {
                             x: Double((left + geometry.offset.x) / geometry.unit),
                             y: Double((value.location.y + geometry.offset.y) / geometry.unit)
                         )
+                        // Stavningen följer palettens tonart just nu och står sedan kvar.
+                        chord.flats = key.usesFlats
                         context.insert(chord)
                         snapToRow([chord])
+                        resolveOverlaps(chords.filter { abs($0.y - chord.y) < 0.004 } + [chord])
                     }
             )
             .accessibilityLabel("Ackord \(ChordTheory.label(root: root, quality: quality, bass: nil, in: key))")
     }
 
-    /// Transponera alla ackord på låten (och tonarten) ett halvt tonsteg.
+    /// Palettens tonart ett halvt tonsteg upp/ner (ackorden på låten ändras inte).
+    private func stepPaletteKey(_ step: Int) {
+        song.key = ChordTheory.Key(root: (key.root + step + 12) % 12, minor: key.minor).name
+    }
+
+    /// Transponera alla ackord på låten (och tonarten) ett halvt tonsteg. Ackorden stavas
+    /// om efter den nya tonarten.
     private func transpose(_ step: Int) {
+        let newKey = ChordTheory.Key(root: (key.root + step + 12) % 12, minor: key.minor)
         for chord in chords {
             chord.root = (chord.root + step + 12) % 12
             if let bass = chord.bass { chord.bass = (bass + step + 12) % 12 }
+            chord.flats = newKey.usesFlats
         }
-        let newKey = ChordTheory.Key(root: (key.root + step + 12) % 12, minor: key.minor)
         song.key = newKey.name
+    }
+
+    /// Ackordstorlek som passar låttexten: textlåtarnas egen storlek, eller den vanligaste
+    /// teckenstorleken i PDF:en (i förhållande till sidans bredd).
+    private func textSize() -> Double {
+        switch song.kind {
+        case .text, .note:
+            let unit = Double(max(geometry.unit, 1))
+            let scale = min(max(unit / 820, 0.8), 1.3) * (song.pdfZoom ?? 1)
+            return 22 * scale / unit
+        case .pdf:
+            guard let page = PDFCache.shared.document(for: song.fileURL)?.page(at: 0),
+                  let text = page.attributedString else { return 0.026 }
+            var sizes: [CGFloat] = []
+            text.enumerateAttribute(.font, in: NSRange(location: 0, length: text.length)) { value, range, _ in
+                if let font = value as? UIFont, range.length > 2 {
+                    sizes.append(contentsOf: Array(repeating: font.pointSize, count: min(range.length, 200)))
+                }
+            }
+            let width = page.bounds(for: .mediaBox).width
+            guard !sizes.isEmpty, width > 0 else { return 0.026 }
+            let median = sizes.sorted()[sizes.count / 2]
+            return Double(median / width)
+        case .image:
+            return 0.026
+        }
     }
 }
 
@@ -460,7 +608,7 @@ private struct ChordMenu: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Text(ChordTheory.label(root: chord.root, quality: chord.quality, bass: chord.bass, in: key))
+                Text(ChordTheory.label(root: chord.root, quality: chord.quality, bass: chord.bass, flats: chord.flats ?? key.usesFlats))
                     .font(.title2.weight(.bold))
                 section("Förtecken") {
                     HStack(spacing: 8) {
@@ -483,11 +631,16 @@ private struct ChordMenu: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5), spacing: 6) {
                         option("ingen", selected: chord.bass == nil) { onAction(.bass(nil)) }
                         ForEach(0..<12, id: \.self) { pitch in
-                            option(ChordTheory.name(pitch, in: key), selected: chord.bass == pitch) { onAction(.bass(pitch)) }
+                            option(ChordTheory.name(pitch, flats: chord.flats ?? key.usesFlats), selected: chord.bass == pitch) { onAction(.bass(pitch)) }
                         }
                     }
                 }
                 Divider()
+                Button {
+                    onAction(.evenRow)
+                } label: {
+                    Label("Jämna ut avstånden på raden", systemImage: "arrow.left.and.right")
+                }
                 HStack {
                     Button {
                         onAction(.copy)

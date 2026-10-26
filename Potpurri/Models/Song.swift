@@ -35,6 +35,8 @@ final class Song {
     /// Låtens zoom (nyp) i förhållande till "hela bredden" (1 = anpassad efter bredden).
     /// Gäller PDF:er, bilder och textlåtar.
     var pdfZoom: Double?
+    /// Ackordstämplarnas storlek i förhållande till bladets bredd (nil = standard).
+    var chordSize: Double?
     /// Låtens färgkoder (0–4, se `ColorCodes`).
     var colorTags: [Int] = []
 

@@ -98,6 +98,9 @@ final class ChordStamp {
     var y: Double = 0
     /// Ackord i samma grupp sitter ihop och flyttas tillsammans.
     var groupID: UUID?
+    /// Stavning med b (Ab) i stället för # (G#). Bestäms av paletten när ackordet läggs ut,
+    /// så att ackord i versen inte stavas om när man byter tonart för refrängen.
+    var flats: Bool?
 
     init(songID: UUID, root: Int, quality: String, bass: Int? = nil, x: Double, y: Double, groupID: UUID? = nil) {
         self.id = UUID()

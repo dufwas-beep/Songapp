@@ -30,6 +30,18 @@ enum ChordTheory {
         return key.usesFlats ? flatNames[index] : sharpNames[index]
     }
 
+    static func name(_ pitch: Int, flats: Bool) -> String {
+        let index = ((pitch % 12) + 12) % 12
+        return flats ? flatNames[index] : sharpNames[index]
+    }
+
+    /// Hela ackordnamnet med egen stavning (# eller b), t.ex. "Ab" eller "G#".
+    static func label(root: Int, quality: String, bass: Int?, flats: Bool) -> String {
+        var text = name(root, flats: flats) + quality
+        if let bass { text += "/" + name(bass, flats: flats) }
+        return text
+    }
+
     /// Hela ackordnamnet, t.ex. "D/F#".
     static func label(root: Int, quality: String, bass: Int?, in key: Key) -> String {
         var text = name(root, in: key) + quality
