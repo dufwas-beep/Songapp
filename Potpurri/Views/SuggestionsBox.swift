@@ -31,7 +31,7 @@ struct SuggestionsBox: View {
             // färgen ska styra förslagen – valda färger är markerade.
             HStack(alignment: .bottom, spacing: 0) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("PASSAR EFTER")
+                    Text("NEXT")
                         .font(.system(size: 11, weight: .semibold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)

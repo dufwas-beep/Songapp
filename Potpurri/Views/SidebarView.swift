@@ -13,17 +13,19 @@ struct SidebarView: View {
     }
 
     var body: some View {
-        Group {
-            switch tab {
-            case .setlists:
-                SetlistsView(selection: $selection)
-            case .library:
-                LibraryView(selection: $selection)
+        // Listan och Next-rutan delar på höjden: krymper Next-rutan växer listan.
+        VStack(spacing: 0) {
+            Group {
+                switch tab {
+                case .setlists:
+                    SetlistsView(selection: $selection)
+                case .library:
+                    LibraryView(selection: $selection)
+                }
             }
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+            .frame(maxHeight: .infinity)
             VStack(spacing: 10) {
-                // Dra i handtaget för att göra förslagsrutan större eller mindre.
+                // Dra i handtaget för att göra Next-rutan större eller mindre.
                 Capsule()
                     .fill(Color.secondary.opacity(0.45))
                     .frame(width: 56, height: 5)
@@ -42,7 +44,7 @@ struct SidebarView: View {
                             }
                             .onEnded { _ in dragStartHeight = nil }
                     )
-                    .accessibilityLabel("Ändra storlek på förslagsrutan")
+                    .accessibilityLabel("Ändra storlek på Next-rutan")
                 SuggestionsBox(current: selection)
                     .frame(height: suggestionsHeight)
                 GigFooter()

@@ -56,24 +56,24 @@ struct AutoscrollButton: View {
 /// så att det går mjukt att dra.
 private struct LengthPanel: View {
     @Binding var seconds: Int
+    /// Värdet medan man drar – sparas först när man släpper, så att reglaget går mjukt.
+    @State private var value: Double = 180
 
     var body: some View {
         VStack(spacing: 14) {
             Text("Låtens längd")
                 .font(.headline)
-            Text(AutoscrollButton.format(seconds))
+            Text(AutoscrollButton.format(Int(value.rounded())))
                 .font(.system(size: 44, weight: .semibold))
                 .monospacedDigit()
-            Slider(
-                value: Binding(get: { Double(min(seconds, 300)) }, set: { seconds = Int($0.rounded()) }),
-                in: 30...300,
-                step: 1
-            ) {
+            Slider(value: $value, in: 30...300) {
                 Text("Låtens längd")
             } minimumValueLabel: {
                 Text("0:30").font(.caption)
             } maximumValueLabel: {
                 Text("5:00").font(.caption)
+            } onEditingChanged: { editing in
+                if !editing { seconds = Int(value.rounded()) }
             }
             Text("Dra åt höger för längre, åt vänster för kortare. Sparas för låten.")
                 .font(.footnote)
@@ -82,5 +82,7 @@ private struct LengthPanel: View {
         }
         .padding(24)
         .frame(width: 360)
+        .onAppear { value = Double(min(max(seconds, 30), 300)) }
+        .onDisappear { seconds = Int(value.rounded()) }
     }
 }

@@ -245,7 +245,7 @@ vilka låtar som passar efter, eller som medley.
   i sträck. Byter man innan dess blir den inte grå.
 - Knappen "Ny spelning" nollställer gråmarkeringarna och de fästa förslagen. **Efter 12
   timmar** börjar en ny spelning automatiskt.
-- Förslagsrutan har **samma färgrubriker som låtlistan**; man trycker på en rubrik för att
+- Förslagsrutan heter **Next** och har **samma färgrubriker som låtlistan**; man trycker på en rubrik för att
   välja vilka färger som styr förslagen (valda är markerade).
 
 **Förhandsruta**
