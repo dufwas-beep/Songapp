@@ -60,7 +60,7 @@ struct DoveFlight: View {
         .accessibilityHidden(true)
     }
 
-    private struct State {
+    private struct FlightState {
         var position: CGPoint
         var scale: CGFloat
         var tilt: Double
@@ -69,7 +69,7 @@ struct DoveFlight: View {
     }
 
     /// Bana: ut från LP:n uppe till vänster, en stor båge över skärmen och tillbaka.
-    private func flightState(_ t: Double, size: CGSize) -> State {
+    private func flightState(_ t: Double, size: CGSize) -> FlightState {
         let home = CGPoint(x: 39, y: 52)
         let angle = t * 2 * .pi
         let x = home.x + (size.width * 0.42) * (1 - cos(angle)) + size.width * 0.05 * sin(angle * 2)
@@ -91,7 +91,7 @@ struct DoveFlight: View {
         } else {
             frame = 2
         }
-        return State(position: CGPoint(x: x, y: y), scale: scale, tilt: dx >= 0 ? tilt : -tilt, frame: frame, facingRight: dx >= 0)
+        return FlightState(position: CGPoint(x: x, y: y), scale: scale, tilt: dx >= 0 ? tilt : -tilt, frame: frame, facingRight: dx >= 0)
     }
 }
 
