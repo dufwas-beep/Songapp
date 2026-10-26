@@ -347,7 +347,12 @@ final class NoteView: UIView, UIGestureRecognizerDelegate {
             startFrame = frame
         case .changed:
             let t = gesture.translation(in: parent)
-            frame.origin = CGPoint(x: max(0, min(parent.bounds.width - frame.width, startFrame.minX + t.x)), y: max(0, startFrame.minY + t.y))
+            // Lappen får gå ända ut till kanten (och en bit utanför); minst 60 punkter syns alltid.
+            let visibleWidth = max(parent.bounds.width, parent.superview?.bounds.width ?? 0)
+            frame.origin = CGPoint(
+                x: min(max(startFrame.minX + t.x, 60 - frame.width), visibleWidth - 60),
+                y: max(0, startFrame.minY + t.y)
+            )
         case .ended, .cancelled:
             isInteracting = false
             onMoved?(frame)
