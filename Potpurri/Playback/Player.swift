@@ -72,6 +72,11 @@ final class Player {
     var editingNoteID: UUID?
     /// Låtar som ska tas bort (t.ex. testlåtarna). ContentView släpper dem först ur vyerna.
     var songsToDelete: Set<UUID> = []
+    /// Den låt som visas (speglas från ContentView). Biblioteket läser den bara i raderna,
+    /// så att inte hela biblioteket ritas om vid varje låtbyte.
+    var selectedSongID: UUID?
+    /// Biblioteket ber ContentView att visa en låt.
+    var requestedSongID: UUID?
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.
     /// Efter 12 timmar börjar automatiskt en ny spelning.
     private(set) var gigStart: Date {

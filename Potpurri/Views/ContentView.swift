@@ -147,13 +147,23 @@ struct ContentView: View {
         }
         .onChange(of: player.songsToDelete) { _, ids in
             guard !ids.isEmpty else { return }
-            Task {
-                // Vänta tills inställningarna har stängts.
-                try? await Task.sleep(for: .milliseconds(400))
+            if ids.count == 1 {
                 deleteSongs(ids)
+            } else {
+                Task {
+                    // Testlåtarna: vänta tills inställningarna har stängts.
+                    try? await Task.sleep(for: .milliseconds(400))
+                    deleteSongs(ids)
+                }
             }
         }
+        .onChange(of: player.requestedSongID) { _, id in
+            guard let id else { return }
+            selection = song(id)
+            player.requestedSongID = nil
+        }
         .onChange(of: selection) { _, song in
+            player.selectedSongID = song?.id
             player.updateColors(for: song)
             if player.previewID == song?.id { player.previewID = nil }
         }

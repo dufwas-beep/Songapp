@@ -21,7 +21,7 @@ struct SidebarView: View {
                 case .setlists:
                     SetlistsView(selection: $selection)
                 case .library:
-                    LibraryView(selection: $selection)
+                    LibraryView()
                 }
             }
             .frame(maxHeight: .infinity)

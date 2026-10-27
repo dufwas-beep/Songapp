@@ -24,7 +24,6 @@ struct LibraryView: View {
     @Environment(Player.self) private var player
     @Query private var songs: [Song]
     @Query private var setlists: [Setlist]
-    @Binding var selection: Song?
 
     @AppStorage("librarySort") private var sort = LibrarySort.name
     @State private var query = ""
@@ -145,7 +144,7 @@ struct LibraryView: View {
             }
             Divider()
             ScrollViewReader { proxy in
-                List(selection: $selection) {
+                List {
                     ForEach(list) { song in
                         HStack(spacing: 8) {
                             if colorMode {
@@ -156,7 +155,9 @@ struct LibraryView: View {
                             SongRow(song: song, isPlayed: player.isPlayedTonight(song))
                             ColorDots(song: song, editable: colorMode, columns: columns)
                         }
-                            .tag(song)
+                            .contentShape(Rectangle())
+                            .onTapGesture { open(song, in: list) }
+                            .listRowBackground(SelectedRowBackground(songID: song.id))
                             .id(song.id)
                             .padding(.trailing, showsAlphabet ? 18 : 0)
                             .draggable("song:\(song.id.uuidString)")
@@ -195,12 +196,6 @@ struct LibraryView: View {
                 }
                 .listStyle(.plain)
                 // Nästa/förra låt följer biblioteket när man valt en låt här.
-                .onChange(of: selection) { _, song in
-                    if let song, song.id != player.playingSuggestionID, list.contains(song) {
-                        let ids = list.map(\.id)
-                        if player.queue != ids { player.queue = ids }
-                    }
-                }
                 .overlay(alignment: .trailing) {
                     if showsAlphabet {
                         AlphabetScrubber(available: cache.letters) { letter in
@@ -241,7 +236,7 @@ struct LibraryView: View {
         .sheet(isPresented: Binding(get: { webQuery != nil }, set: { if !$0 { webQuery = nil } })) {
             WebSearchSheet(initialQuery: webQuery ?? "") { song in
                 query = ""
-                selection = song
+                player.requestedSongID = song.id
             }
         }
         .fileImporter(
@@ -380,15 +375,17 @@ struct LibraryView: View {
         }
     }
 
+    /// Öppnar en låt. Nästa/förra låt följer sedan biblioteket.
+    private func open(_ song: Song, in list: [Song]) {
+        let ids = list.map(\.id)
+        if player.queue != ids { player.queue = ids }
+        player.requestedSongID = song.id
+    }
+
     /// Tar bort låten ur biblioteket och ur alla låtlistor.
     private func delete(_ song: Song) {
-        if selection == song { selection = nil }
-        for list in setlists where list.songIDs.contains(song.id) {
-            list.removeSong(song.id)
-        }
-        SongFileStore.delete(song.fileName)
-        context.delete(song)
-        try? context.save()
+        // ContentView släpper låten ur alla vyer och listor och tar sedan bort den.
+        player.songsToDelete = [song.id]
     }
 }
 
@@ -452,6 +449,21 @@ struct ColorFilterChips: View {
                     .accessibilityAddTraits(isOn ? .isSelected : [])
                 }
             }
+        }
+    }
+}
+
+/// Markeringen bakom den låt som visas. Egen vy så att bara den här raden ritas om
+/// när man byter låt – inte hela biblioteket.
+private struct SelectedRowBackground: View {
+    let songID: UUID
+    @Environment(Player.self) private var player
+
+    var body: some View {
+        if player.selectedSongID == songID {
+            Color.accentColor.opacity(0.3)
+        } else {
+            Color.clear
         }
     }
 }
