@@ -70,6 +70,8 @@ final class Player {
     var spinBurst = 0
     /// Noten som redigeras just nu.
     var editingNoteID: UUID?
+    /// Låtar som ska tas bort (t.ex. testlåtarna). ContentView släpper dem först ur vyerna.
+    var songsToDelete: Set<UUID> = []
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.
     /// Efter 12 timmar börjar automatiskt en ny spelning.
     private(set) var gigStart: Date {

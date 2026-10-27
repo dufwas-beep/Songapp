@@ -125,8 +125,10 @@ struct SettingsView: View {
         }
         .confirmationDialog("Ta bort \(testSongs.count) testlåtar?", isPresented: $confirmsRemoveTestSongs, titleVisibility: .visible) {
             Button("Ta bort", role: .destructive) {
-                for song in testSongs { context.delete(song) }
-                try? context.save()
+                // Inställningarna stängs först; själva borttagningen görs i ContentView
+                // så att ingen vy håller kvar en borttagen låt.
+                player.songsToDelete = Set(testSongs.map(\.id))
+                dismiss()
             }
         }
         // Säkerhetskopian sparas där man väljer i Filer (t.ex. iCloud Drive eller Dropbox).

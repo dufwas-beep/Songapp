@@ -5,6 +5,8 @@ import SwiftUI
 /// Stående: låten i helskärm och sidospalten som en meny man drar fram.
 struct ContentView: View {
     @Query private var songs: [Song]
+    @Query private var setlists: [Setlist]
+    @Environment(\.modelContext) private var context
     @State private var selection: Song?
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var player = Player()
@@ -122,6 +124,14 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { player.startNewGigIfStale() }
         }
+        .onChange(of: player.songsToDelete) { _, ids in
+            guard !ids.isEmpty else { return }
+            Task {
+                // Vänta tills inställningarna har stängts.
+                try? await Task.sleep(for: .milliseconds(400))
+                deleteSongs(ids)
+            }
+        }
         .onChange(of: selection) { _, song in
             player.updateColors(for: song)
             if player.previewID == song?.id { player.previewID = nil }
@@ -140,6 +150,25 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    /// Tar bort låtar ur biblioteket, låtlistorna och allt som visas just nu.
+    private func deleteSongs(_ ids: Set<UUID>) {
+        if let id = selection?.id, ids.contains(id) { selection = nil }
+        if let id = player.previewID, ids.contains(id) { player.previewID = nil }
+        if let id = player.playingSuggestionID, ids.contains(id) { player.playingSuggestionID = nil }
+        if let id = player.drawerSongID, ids.contains(id) { player.drawerSongID = nil }
+        player.queue.removeAll(where: ids.contains)
+        player.pinned.removeAll(where: ids.contains)
+        for list in setlists where list.songIDs.contains(where: ids.contains) {
+            for id in list.songIDs where ids.contains(id) { list.removeSong(id) }
+        }
+        for song in songs where ids.contains(song.id) {
+            SongFileStore.delete(song.fileName)
+            context.delete(song)
+        }
+        try? context.save()
+        player.songsToDelete = []
     }
 
     /// Tidigare blev OnSong-låtar utan ackord felaktigt anteckningar. Bara quizmanus
