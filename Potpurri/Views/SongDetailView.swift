@@ -47,6 +47,7 @@ struct SongDetailView: View {
                     NotesLayer(song: song, geometry: geometry)
                         .id(song.id)
                     HStack(alignment: .center, spacing: 12) {
+                        SpotifyButton()
                         Button {
                             withAnimation(.easeInOut(duration: 0.25)) { player.soundboardOpen.toggle() }
                         } label: {

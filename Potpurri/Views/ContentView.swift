@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var player = Player()
     @State private var colorCodes = ColorCodes()
     @State private var sounds = SoundEngine()
+    @State private var spotify = SpotifyController()
     @State private var renameDraft = ""
     @State private var doveStart: Date?
     @AppStorage("migratedSongNotes") private var migratedSongNotes = false
@@ -100,6 +101,7 @@ struct ContentView: View {
         .environment(player)
         .environment(colorCodes)
         .environment(sounds)
+        .environment(spotify)
         // Efter 12 timmar börjar en ny spelning av sig själv (t.ex. nästa dag).
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { player.startNewGigIfStale() }
