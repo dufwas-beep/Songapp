@@ -29,6 +29,9 @@ struct SongTextEditor: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Avbryt") { dismiss() }
                     }
+                    ToolbarItem(placement: .principal) {
+                        UndoButtons()
+                    }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Spara") {
                             song.text = draft

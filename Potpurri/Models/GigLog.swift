@@ -49,6 +49,10 @@ enum GigLogger {
     /// En låt har spelats (varit huvudlåt i 30 sekunder).
     static func played(_ song: Song, in context: ModelContext, since gigStart: Date) {
         let log = current(in: context, since: gigStart)
-        log.entries.append(.init(songID: song.id, title: song.title, time: Date()))
+        // Hela listan sätts om – en ändring inne i listan märks annars inte och sparas inte.
+        var entries = log.entries
+        entries.append(.init(songID: song.id, title: song.title, time: Date()))
+        log.entries = entries
+        try? context.save()
     }
 }

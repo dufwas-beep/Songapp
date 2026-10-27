@@ -3,39 +3,31 @@ import SwiftUI
 
 /// Kvällsloggarna: vad som spelades, i ordning och med tid. Bra för att se vad som
 /// spelades senast på samma ställe. En kväll kan bli en ny låtlista.
-struct GigLogsView: View {
-    @Environment(\.dismiss) private var dismiss
+struct GigLogsList: View {
     @Query(sort: \GigLog.started, order: .reverse) private var logs: [GigLog]
 
     var body: some View {
-        NavigationStack {
-            List {
-                ForEach(logs.filter { !$0.entries.isEmpty }) { log in
-                    NavigationLink {
-                        GigLogDetail(log: log)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(log.name)
-                            Text(log.entries.count == 1 ? "1 låt" : "\(log.entries.count) låtar")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+        List {
+            ForEach(logs.filter { !$0.entries.isEmpty }) { log in
+                NavigationLink {
+                    GigLogDetail(log: log)
+                } label: {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(log.name)
+                        Text(log.entries.count == 1 ? "1 låt" : "\(log.entries.count) låtar")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
-            .overlay {
-                if logs.allSatisfy({ $0.entries.isEmpty }) {
-                    ContentUnavailableView("Inga kvällsloggar än", systemImage: "music.note.list", description: Text("En låt hamnar i loggen när den har spelats i 30 sekunder."))
-                }
-            }
-            .navigationTitle("Kvällsloggar")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Klar") { dismiss() }
-                }
+        }
+        .overlay {
+            if logs.allSatisfy({ $0.entries.isEmpty }) {
+                ContentUnavailableView("Inga kvällsloggar än", systemImage: "music.note.list", description: Text("En låt hamnar i loggen när den har spelats i 30 sekunder."))
             }
         }
+        .navigationTitle("Kvällsloggar")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

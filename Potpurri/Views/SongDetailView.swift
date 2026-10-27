@@ -17,7 +17,6 @@ struct SongDetailView: View {
 
     @Environment(Player.self) private var player
     @Environment(SoundEngine.self) private var sounds
-    @Environment(\.undoManager) private var undoManager
     @State private var previewHeight: CGFloat = 320
     @State private var showsColors = false
     @State private var autoscroller = Autoscroller()
@@ -66,8 +65,11 @@ struct SongDetailView: View {
                 }
                 .clipped()
                 .overlay(alignment: .topTrailing) {
-                    SongStepButtons(previous: previous, next: next, onSelect: onSelect)
-                        .padding(16)
+                    HStack(spacing: 10) {
+                        SongStepButtons(previous: previous, next: next, onSelect: onSelect)
+                        SettingsButton()
+                    }
+                    .padding(16)
                 }
                 .overlay(alignment: .top) {
                     if player.pen != .off && !player.isLocked {
@@ -164,6 +166,9 @@ struct SongDetailView: View {
                     }
                     .padding(24)
                 }
+                .overlay(alignment: .topTrailing) {
+                    SettingsButton().padding(16)
+                }
                 if player.soundboardOpen {
                     SoundboardColumn(engine: sounds)
                         .transition(.move(edge: .trailing))
@@ -228,18 +233,6 @@ struct SongDetailView: View {
                 showsColors = true
             } label: {
                 Label("Färgkoder", systemImage: "paintpalette")
-            }
-            Divider()
-            // Ångra/gör om de senaste ändringarna (ackord, notes, markeringar, grupper …).
-            Button {
-                undoManager?.undo()
-            } label: {
-                Label("Ångra", systemImage: "arrow.uturn.backward")
-            }
-            Button {
-                undoManager?.redo()
-            } label: {
-                Label("Gör om", systemImage: "arrow.uturn.forward")
             }
             Divider()
             Button {

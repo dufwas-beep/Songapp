@@ -411,6 +411,7 @@ struct ChordsLayer: View {
                     .accessibilityLabel("Flytta paletten")
                 Text("Ackord").font(.headline)
                 Spacer()
+                UndoButtons()
                 Button {
                     player.chordsOn = false
                     player.choosingChords = false

@@ -332,6 +332,9 @@ struct NoteEditor: View {
             .navigationTitle("Note")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    UndoButtons()
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Klar") { dismiss() }
                 }
@@ -394,6 +397,7 @@ struct PenBar: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Sudd")
+            UndoButtons()
             Button {
                 player.pen = .off
             } label: {
@@ -444,6 +448,7 @@ struct MarkerBar: View {
             }
             .buttonStyle(.bordered)
             .disabled(markers.count >= 10)
+            UndoButtons()
             Button {
                 player.editingMarkers = false
             } label: {
