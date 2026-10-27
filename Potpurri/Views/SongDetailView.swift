@@ -411,7 +411,10 @@ struct SongSheetView: View {
     var body: some View {
         if song.kind == .text || song.kind == .note {
             TextSongView(song: song, onScrollView: onScrollView)
-                .onAppear { player.finishSwitchTimer() }
+                .onAppear {
+                    player.markSwitchViewBuilt()
+                    player.finishSwitchTimer(kind: "text")
+                }
         } else if !FileManager.default.fileExists(atPath: song.fileURL.path) {
             ContentUnavailableView(
                 "Filen saknas",
@@ -421,8 +424,10 @@ struct SongSheetView: View {
         } else if song.kind == .pdf {
             // Zoomen sparas per låt och återställs när låten öppnas igen.
             PDFPagesView(url: song.fileURL, zoom: song.pdfZoom, onZoom: { song.pdfZoom = $0 }, onScrollView: onScrollView)
+                .onAppear { player.markSwitchViewBuilt() }
         } else {
             ImageSongView(url: song.fileURL, zoom: song.pdfZoom, onZoom: { song.pdfZoom = $0 }, onScrollView: onScrollView)
+                .onAppear { player.markSwitchViewBuilt() }
         }
     }
 }

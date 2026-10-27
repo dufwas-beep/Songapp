@@ -168,6 +168,7 @@ struct ContentView: View {
             player.requestedSongID = nil
         }
         .onChange(of: selection) { _, song in
+            player.markSwitchSelected()
             player.selectedSongID = song?.id
             player.updateColors(for: song)
             if player.previewID == song?.id { player.previewID = nil }
@@ -241,8 +242,8 @@ private struct SwitchTimerLabel: View {
     @AppStorage("showsSwitchTimer") private var showsSwitchTimer = false
 
     var body: some View {
-        if showsSwitchTimer, let ms = player.lastSwitchMilliseconds {
-            Text("Låtbyte \(ms) ms")
+        if showsSwitchTimer, let report = player.lastSwitchReport {
+            Text(report)
                 .font(.footnote.monospacedDigit().weight(.semibold))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)

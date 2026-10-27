@@ -9,7 +9,6 @@ struct SetlistDetailView: View {
     @Environment(Player.self) private var player
     @Bindable var setlist: Setlist
     @Query private var songs: [Song]
-    @Query private var setlists: [Setlist]
     @Binding var selection: Song?
     let onClose: () -> Void
     let onRename: () -> Void
@@ -304,7 +303,7 @@ struct SetlistDetailView: View {
             .padding(.trailing, 16)
             .frame(height: Self.songHeight)
             .background(rowBackground(row, songsByID[id]))
-            // Svep åt vänster = ta bort ur listan, åt höger = lägg i en annan låtlista eller Lådan.
+            // Svep åt vänster = ta bort ur listan, åt höger = lägg i Lådan.
             .modifier(SwipeRow(
                 canDelete: !player.isLocked,
                 onDelete: { remove(at: row.id) },
@@ -315,24 +314,6 @@ struct SetlistDetailView: View {
                             player.drawerSongID = song.id
                             withAnimation(.spring(response: 0.55, dampingFraction: 1)) { player.drawerOpen = true }
                         }
-                        Menu {
-                            ForEach(setlists.filter { $0.id != setlist.id }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }) { list in
-                                Button {
-                                    list.songIDs.append(song.id)
-                                    try? context.save()
-                                    close()
-                                } label: {
-                                    if list.songIDs.contains(song.id) {
-                                        Label(list.name + " (finns redan)", systemImage: "checkmark")
-                                    } else {
-                                        Text(list.name)
-                                    }
-                                }
-                            }
-                        } label: {
-                            SwipeButtonLabel(title: "Låtlista", systemImage: "text.badge.plus", color: .teal)
-                        }
-                        .disabled(setlists.count < 2)
                     }
                 }
             ))
@@ -506,7 +487,7 @@ private struct SwipeRow<Leading: View>: ViewModifier {
     @State private var start: CGFloat?
     @State private var horizontal: Bool?
 
-    private static var leadingWidth: CGFloat { 2 * SwipeButtonLabel.width }
+    private static var leadingWidth: CGFloat { SwipeButtonLabel.width }
     private static var deleteWidth: CGFloat { SwipeButtonLabel.width }
 
     func body(content: Content) -> some View {

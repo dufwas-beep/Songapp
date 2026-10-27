@@ -88,7 +88,9 @@ struct PDFPagesView: View {
                     if let page = await PDFPageRenderer.shared.page(url, index: index, pixelWidth: pixels) {
                         pages[index] = page
                     }
-                    if index == 0 { player.finishSwitchTimer() }
+                    if index == 0 {
+                        player.finishSwitchTimer(kind: PDFPageRenderer.shared.lastSource)
+                    }
                 }
             }
         }
@@ -105,6 +107,12 @@ final class PDFPageRenderer: @unchecked Sendable {
     private var inFlight: [String: Task<UIImage?, Never>] = [:]
     private var sizes: [URL: [CGSize]] = [:]
     private var queue: [URL] = []
+    /// Varifrån den senaste sidan kom (för tidtagaren): minnet, disken eller nyritad.
+    private var _lastSource = "PDF"
+    var lastSource: String {
+        get { lock.withLock { _lastSource } }
+        set { lock.withLock { _lastSource = newValue } }
+    }
     private var working = false
     private let folder: URL
 
@@ -163,13 +171,17 @@ final class PDFPageRenderer: @unchecked Sendable {
     /// En sida: ur minnet, från disken eller nyritad.
     func page(_ url: URL, index: Int, pixelWidth: Int) async -> UIImage? {
         let key = Self.key(url, index)
-        if let rendered = memory.object(forKey: key), rendered.width >= pixelWidth { return rendered.image }
+        if let rendered = memory.object(forKey: key), rendered.width >= pixelWidth {
+            lastSource = "PDF minne"
+            return rendered.image
+        }
         let flightKey = "\(key)#\(pixelWidth)"
         let task: Task<UIImage?, Never> = lock.withLock {
             if let running = inFlight[flightKey] { return running }
             let task = Task.detached(priority: .userInitiated) { [self] () -> UIImage? in
                 let file = diskURL(url, index)
                 var image = Self.load(file, minWidth: pixelWidth)
+                lastSource = image == nil ? "PDF nyritad \(pixelWidth)" : "PDF disk"
                 if image == nil, let rendered = Self.render(url, index: index, pixelWidth: pixelWidth) {
                     Self.save(rendered, to: file)
                     image = rendered

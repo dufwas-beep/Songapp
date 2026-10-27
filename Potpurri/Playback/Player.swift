@@ -82,19 +82,36 @@ final class Player {
     /// Next kan visa bara dem.
     var setlistSongIDs: [UUID]?
     /// Tidtagaren: när låtbytet började och hur lång tid det senaste tog.
-    var switchStartedAt: CFTimeInterval?
-    var lastSwitchMilliseconds: Int?
+    @ObservationIgnored var switchStartedAt: CFTimeInterval?
+    @ObservationIgnored private var switchSelectedAt: CFTimeInterval?
+    @ObservationIgnored private var switchViewAt: CFTimeInterval?
+    var lastSwitchReport: String?
 
     func startSwitchTimer() {
         switchStartedAt = CACurrentMediaTime()
+        switchSelectedAt = nil
+        switchViewAt = nil
     }
 
-    /// Anropas när den nya låten syns. Mäts efter nästa ritning.
-    func finishSwitchTimer() {
+    /// Steg 1: låten är vald. Steg 2: låtvyn har byggts.
+    func markSwitchSelected() {
+        if switchStartedAt != nil, switchSelectedAt == nil { switchSelectedAt = CACurrentMediaTime() }
+    }
+
+    func markSwitchViewBuilt() {
+        if switchStartedAt != nil, switchViewAt == nil { switchViewAt = CACurrentMediaTime() }
+    }
+
+    /// Steg 3: låten syns (första sidan är på plats). Mäts efter nästa ritning.
+    func finishSwitchTimer(kind: String) {
         guard let start = switchStartedAt else { return }
+        let selected = switchSelectedAt ?? start
+        let view = switchViewAt ?? selected
         switchStartedAt = nil
         DispatchQueue.main.async {
-            self.lastSwitchMilliseconds = Int((CACurrentMediaTime() - start) * 1000)
+            let end = CACurrentMediaTime()
+            let ms = { (seconds: CFTimeInterval) in Int(seconds * 1000) }
+            self.lastSwitchReport = "Låtbyte \(ms(end - start)) ms · vald \(ms(selected - start)) · vy \(ms(view - selected)) · sida \(ms(end - view)) · \(kind)"
         }
     }
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.

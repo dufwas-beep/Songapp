@@ -61,7 +61,7 @@ struct ImageSongView: View {
         .task(id: url) {
             image = await ImageCache.shared.image(for: url)
             loaded = true
-            player.finishSwitchTimer()
+            player.finishSwitchTimer(kind: "bild")
         }
     }
 }
