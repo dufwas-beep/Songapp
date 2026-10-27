@@ -389,8 +389,8 @@ vilka låtar som passar efter, eller som medley.
 - Låtar visas med mörk bakgrund och ljus text (PDF/bild inverteras, notes behåller sina färger).
 - Kan slås av/på.
 
-### 17. iCloud
-- Låtfiler, notes, listor och inställningar synkas/säkerhetskopieras via iCloud.
+### 17. iCloud (struket)
+- Stryks: säkerhetskopian till fil i Filer (t.ex. iCloud Drive eller Dropbox) räcker.
 
 ### 18. Guide för nya användare
 - Visas automatiskt första gången appen startas (efter LP-animationen).
@@ -454,7 +454,7 @@ ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritn
    markeringspennor, ackordstämplar (radsnäpp, grupper, kopiera, transponera).
 6. **Redigera & webben:** ✅ sök i titel och låttext (PDF-text läses ut, bilder/inskannade textigenkänns i bakgrunden med statusfält), ✅ "Sök på webben" (LRCLIB-träffar med förhandsvisning + inbyggd Google-webbläsare där markerad text blir en ny låt), ✅ byt namn (håll in i listorna eller ⋯), ✅ Gör redigerbar / Återställ PDF, ✅ Redigera texten (textstorlek = nyp-zoom). Ursprungligt: sök i låttext, lägg till låt från webben, namnbyte, "Gör redigerbar" (PDF → textlåt), redigera text, textstorlek, återställ.
 7. **Soundboard, Lådan, Spotify & animationer:** steg 1 ✅ soundboard (+ för nya ljud alltid synligt, håll in ett ljud = redigera/ta bort, högtalarknapp, kolumn i högerkanten, spela/stoppa, Stoppa alla, Redigera: namn, färg, trimma på vågform, volym −12…+6 dB, lyssna, byt fil, ta bort, ordning), ✅ Lådan (handtag, dra ut/tryck, låt eller anteckning, dra dit från listorna, svep åt höger på en låt eller "Lägg i lådan", Skriv: redigera texten eller gult fält), ✅ LP-animationer (start, snurr under autoscroll, snabb snurr vid Ny spelning, tryck = lyckohjul, dubbeltryck = duvan flyger, pickup-arm vid import). Steg 2 ✅ Spotify-knapp (Web API). Ursprungligt: ljudklipp, anteckningar i Lådan, Spotify-knapp, LP-animationer.
-8. **iCloud & säkerhet:** ✅ säkerhetskopia till fil (⋯ längst ner i sidospalten → Spara/Läs in säkerhetskopia; .potpurri-fil med allt inklusive låt- och ljudfiler, sparas där man väljer i Filer), ✅ ångra/gör om (⋯ i låten), ✅ kvällslogg (automatisk, döps efter datum och tid, kan döpas om, "Gör låtlista av kvällen"). ⏸ iCloud-synk kräver Apples betalda utvecklarkonto (99 USD/år) – görs när/om kontot finns. Ursprungligt: synk, säkerhetskopia till fil, ångra, kvällslogg.
+8. **iCloud & säkerhet:** ✅ säkerhetskopia till fil (⋯ längst ner i sidospalten → Spara/Läs in säkerhetskopia; .potpurri-fil med allt inklusive låt- och ljudfiler, sparas där man väljer i Filer), ✅ ångra/gör om (⋯ i låten), ✅ kvällslogg (automatisk, döps efter datum och tid, kan döpas om, "Gör låtlista av kvällen"). iCloud-synk stryks – säkerhetskopia till Filer räcker (beslut 2026-10-27). Ursprungligt: synk, säkerhetskopia till fil, ångra, kvällslogg.
 9. **Finputs:** guide för nya användare, prestandatest med 200 låtar, scenläge, testning på iPad via Xcode.
 
 Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
