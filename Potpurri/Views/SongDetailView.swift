@@ -48,17 +48,7 @@ struct SongDetailView: View {
                         .id(song.id)
                     HStack(alignment: .center, spacing: 12) {
                         SpotifyButton()
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.25)) { player.soundboardOpen.toggle() }
-                        } label: {
-                            Image(systemName: "speaker.wave.2.fill")
-                                .font(.system(size: 20, weight: .semibold))
-                                .frame(width: 60, height: 60)
-                                .background(player.soundboardOpen ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.regularMaterial), in: Circle())
-                                .foregroundStyle(player.soundboardOpen ? Color.black : Color.primary)
-                                .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
-                        }
-                        .accessibilityLabel(player.soundboardOpen ? "Stäng ljudklippen" : "Ljudklipp")
+                        soundboardButton
                         if !player.isLocked {
                             moreMenu(for: song)
                         }
@@ -150,12 +140,49 @@ struct SongDetailView: View {
                 song.lastPlayed = Date()
             }
         } else {
-            ContentUnavailableView(
-                "Välj en låt",
-                systemImage: "music.note",
-                description: Text("Välj en låt i listan till vänster.")
-            )
+            // Ingen låt vald än: välkomstbild med loggan, men Spotify och ljudklippen
+            // finns redan – det kan behövas innan första låten.
+            HStack(spacing: 0) {
+                ZStack(alignment: .bottomTrailing) {
+                    VStack(spacing: 18) {
+                        Image("LPLogo")
+                            .resizable()
+                            .frame(width: 180, height: 180)
+                            .shadow(color: .black.opacity(0.25), radius: 14, y: 8)
+                        Text("Hej!")
+                            .font(.system(size: 44, weight: .semibold))
+                        Text("Välj en låt så kör vi!")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    HStack(spacing: 12) {
+                        SpotifyButton()
+                        soundboardButton
+                    }
+                    .padding(24)
+                }
+                if player.soundboardOpen {
+                    SoundboardColumn(engine: sounds)
+                        .transition(.move(edge: .trailing))
+                }
+            }
         }
+    }
+
+    /// Högtalarknappen som öppnar och stänger soundboarden.
+    private var soundboardButton: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.25)) { player.soundboardOpen.toggle() }
+        } label: {
+            Image(systemName: "speaker.wave.2.fill")
+                .font(.system(size: 20, weight: .semibold))
+                .frame(width: 60, height: 60)
+                .background(player.soundboardOpen ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.regularMaterial), in: Circle())
+                .foregroundStyle(player.soundboardOpen ? Color.black : Color.primary)
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+        }
+        .accessibilityLabel(player.soundboardOpen ? "Stäng ljudklippen" : "Ljudklipp")
     }
 
     /// Menyn ⋯ nere till höger (som i skissen): notes, hopplinjer, penna och färgkoder.
