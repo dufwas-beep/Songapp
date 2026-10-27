@@ -32,10 +32,13 @@ struct AddSongsSheet: View {
                             Image(systemName: selected.contains(song.id) ? "checkmark.circle.fill" : "circle")
                                 .font(.title2)
                                 .foregroundStyle(selected.contains(song.id) ? Color.accentColor : Color.secondary)
+                            // Låtar som redan finns i listan är gråa men går ändå att välja.
+                            let alreadyIn = setlist.songIDs.contains(song.id)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(song.title)
                                     .lineLimit(1)
-                                if setlist.songIDs.contains(song.id) {
+                                    .foregroundStyle(alreadyIn ? .secondary : .primary)
+                                if alreadyIn {
                                     Text("Finns redan i listan")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)

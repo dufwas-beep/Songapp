@@ -5,8 +5,6 @@ import UIKit
 struct SidebarView: View {
     @Binding var selection: Song?
     @AppStorage("sidebarTab") private var tab = SidebarTab.setlists
-    @AppStorage("suggestionsHeight") private var suggestionsHeight: Double = 260
-    @State private var dragStartHeight: Double?
     /// Medan tangentbordet är uppe (t.ex. vid sökning) döljs Next-rutan så att listan syns.
     @State private var keyboardVisible = false
 
@@ -28,34 +26,7 @@ struct SidebarView: View {
             }
             .frame(maxHeight: .infinity)
             if !keyboardVisible {
-            VStack(spacing: 10) {
-                // Dra i handtaget för att göra Next-rutan större eller mindre.
-                Capsule()
-                    .fill(Color.secondary.opacity(0.45))
-                    .frame(width: 56, height: 5)
-                    .frame(maxWidth: .infinity, minHeight: 22)
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(coordinateSpace: .global)
-                            .onChanged { value in
-                                let start = dragStartHeight ?? suggestionsHeight
-                                dragStartHeight = start
-                                var transaction = Transaction()
-                                transaction.disablesAnimations = true
-                                withTransaction(transaction) {
-                                    suggestionsHeight = min(max(start - value.translation.height, 90), 560)
-                                }
-                            }
-                            .onEnded { _ in dragStartHeight = nil }
-                    )
-                    .accessibilityLabel("Ändra storlek på Next-rutan")
-                SuggestionsBox(current: selection)
-                    .frame(height: suggestionsHeight)
-                GigFooter()
-            }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 10)
-            .background(.bar)
+                NextPanel(selection: selection)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
@@ -230,5 +201,49 @@ private struct TimerPicker: View {
     private func start(_ minutes: Double) {
         player.timerEnd = Date().addingTimeInterval(minutes * 60)
         dismiss()
+    }
+}
+
+/// Next-rutan med handtaget och "Ny spelning". Höjden ändras här inne medan man drar
+/// och sparas när man släpper, så att listorna ovanför inte ritas om vid varje rörelse.
+private struct NextPanel: View {
+    let selection: Song?
+    @AppStorage("suggestionsHeight") private var suggestionsHeight: Double = 260
+    @State private var liveHeight: Double?
+    @State private var dragStartHeight: Double?
+
+    var body: some View {
+        VStack(spacing: 10) {
+            // Dra i handtaget för att göra Next-rutan större eller mindre.
+            Capsule()
+                .fill(Color.secondary.opacity(0.45))
+                .frame(width: 56, height: 5)
+                .frame(maxWidth: .infinity, minHeight: 22)
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(coordinateSpace: .global)
+                        .onChanged { value in
+                            let start = dragStartHeight ?? suggestionsHeight
+                            dragStartHeight = start
+                            var transaction = Transaction()
+                            transaction.disablesAnimations = true
+                            withTransaction(transaction) {
+                                liveHeight = min(max(start - value.translation.height, 90), 560)
+                            }
+                        }
+                        .onEnded { _ in
+                            if let liveHeight { suggestionsHeight = liveHeight }
+                            liveHeight = nil
+                            dragStartHeight = nil
+                        }
+                )
+                .accessibilityLabel("Ändra storlek på Next-rutan")
+            SuggestionsBox(current: selection)
+                .frame(height: liveHeight ?? suggestionsHeight)
+            GigFooter()
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 10)
+        .background(.bar)
     }
 }

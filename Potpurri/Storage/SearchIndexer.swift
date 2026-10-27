@@ -12,16 +12,26 @@ enum SearchIndexer {
         let pending = songs.filter { $0.searchText == nil && ($0.kind == .pdf || $0.kind == .image) && $0.hasFile }
         guard !pending.isEmpty, !progress.isRunning else { return }
         progress.start("Indexerar låttext", total: pending.count)
+        // Texterna sparas i omgångar om tio. Varje sparad text gör att alla listor ritas om,
+        // så en i taget gjorde appen seg medan indexeringen pågick.
+        var batch: [(Song, String)] = []
         for song in pending {
             progress.currentName = song.title
             let url = song.fileURL
             let kind = song.kind
-            let text = await Task.detached(priority: .utility) {
+            let text = await Task.detached(priority: .background) {
                 extractText(from: url, kind: kind)
             }.value
-            song.searchText = text
+            batch.append((song, text))
             progress.done += 1
+            if batch.count >= 10 {
+                for (song, text) in batch { song.searchText = text }
+                batch.removeAll()
+            }
+            // Lämna plats åt det man gör i appen under tiden.
+            try? await Task.sleep(for: .milliseconds(150))
         }
+        for (song, text) in batch { song.searchText = text }
         progress.finish()
     }
 

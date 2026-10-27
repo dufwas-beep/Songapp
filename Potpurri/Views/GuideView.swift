@@ -88,7 +88,7 @@ struct GuideView: View {
     }
 }
 
-/// Utseende: följ iPaden, eller alltid ljust, grått (ljust men nedtonat) eller mörkt.
+/// Utseende: följ iPaden, eller alltid ljust, grått eller mörkt.
 enum Appearance: String, CaseIterable, Identifiable {
     case system, light, gray, dark
     var id: Self { self }
@@ -105,8 +105,30 @@ enum Appearance: String, CaseIterable, Identifiable {
     var colorScheme: ColorScheme? {
         switch self {
         case .system: nil
-        case .light, .gray: .light
-        case .dark: .dark
+        case .light: .light
+        case .gray, .dark: .dark
         }
     }
+}
+
+/// Grått tema: det mörka utseendet där det svarta lyfts till grått (vit text på grå
+/// bakgrund). PDF:erna och det som redan är ljust påverkas knappt.
+struct GrayTheme: ViewModifier {
+    @AppStorage("appearance") private var appearance = Appearance.system
+    @AppStorage("grayTone") private var grayTone = 0.3
+
+    func body(content: Content) -> some View {
+        content.overlay {
+            if appearance == .gray {
+                Color(white: grayTone)
+                    .blendMode(.screen)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+}
+
+extension View {
+    func grayTheme() -> some View { modifier(GrayTheme()) }
 }

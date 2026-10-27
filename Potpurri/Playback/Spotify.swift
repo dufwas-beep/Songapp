@@ -185,9 +185,26 @@ final class SpotifyController {
         }
     }
 
-    private func send(_ command: String, token: String) async throws {
+    /// Nästa (+1) eller föregående (−1) låt i Spotify.
+    func skip(_ step: Int) async {
+        guard !busy else { return }
+        busy = true
+        defer { busy = false }
+        do {
+            let token = try await validToken()
+            if try await playerState(token) == nil { try await wakeDevice(token) }
+            try await send(step > 0 ? "next" : "previous", method: "POST", token: token)
+            isPlaying = true
+        } catch let SpotifyError.message(text) {
+            errorMessage = text
+        } catch {
+            errorMessage = "Kunde inte nå Spotify: \(error.localizedDescription)"
+        }
+    }
+
+    private func send(_ command: String, method: String = "PUT", token: String) async throws {
         var request = URLRequest(url: URL(string: "https://api.spotify.com/v1/me/player/\(command)")!)
-        request.httpMethod = "PUT"
+        request.httpMethod = method
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let (_, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0

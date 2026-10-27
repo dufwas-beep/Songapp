@@ -10,34 +10,30 @@ struct SpotifyButton: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        Button {
-            if spotify.clientID.isEmpty || !spotify.isConnected {
-                showsSetup = true
-            } else {
-                Task { await spotify.toggle() }
-            }
-        } label: {
-            HStack(spacing: 8) {
+        HStack(spacing: 2) {
+            skipButton(-1)
+            Button {
+                run { await spotify.toggle() }
+            } label: {
                 ZStack {
-                    Circle().fill(Color(red: 0.12, green: 0.84, blue: 0.38)).frame(width: 34, height: 34)
+                    Circle().fill(Color(red: 0.12, green: 0.84, blue: 0.38)).frame(width: 40, height: 40)
                     if spotify.busy {
                         ProgressView().tint(.black)
                     } else {
                         Image(systemName: spotify.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.system(size: 16, weight: .bold))
                             .foregroundStyle(.black)
                     }
                 }
-                Text("Spotify")
-                    .font(.subheadline.weight(.semibold))
             }
-            .padding(.leading, 10)
-            .padding(.trailing, 16)
-            .frame(height: 56)
-            .background(.regularMaterial, in: Capsule())
-            .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+            .accessibilityLabel(spotify.isPlaying ? "Pausa Spotify" : "Spela Spotify")
+            skipButton(1)
         }
         .buttonStyle(.plain)
+        .padding(.horizontal, 6)
+        .frame(height: 56)
+        .background(.regularMaterial, in: Capsule())
+        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
         // Håll in för att logga in igen eller koppla från.
         .contextMenu {
             Button {
@@ -50,7 +46,6 @@ struct SpotifyButton: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await spotify.refreshState() } }
         }
-        .accessibilityLabel(spotify.isPlaying ? "Pausa Spotify" : "Spela Spotify")
         .sheet(isPresented: $showsSetup) {
             SpotifySetup()
         }
@@ -59,6 +54,28 @@ struct SpotifyButton: View {
         } message: {
             Text(spotify.errorMessage ?? "")
         }
+    }
+
+    /// Första gången öppnas inloggningen i stället.
+    private func run(_ action: @escaping @MainActor @Sendable () async -> Void) {
+        if spotify.clientID.isEmpty || !spotify.isConnected {
+            showsSetup = true
+        } else {
+            Task { await action() }
+        }
+    }
+
+    private func skipButton(_ step: Int) -> some View {
+        Button {
+            run { await spotify.skip(step) }
+        } label: {
+            Image(systemName: step > 0 ? "forward.fill" : "backward.fill")
+                .font(.system(size: 15, weight: .semibold))
+                .frame(width: 40, height: 44)
+                .contentShape(Rectangle())
+        }
+        .disabled(spotify.busy)
+        .accessibilityLabel(step > 0 ? "Nästa låt i Spotify" : "Föregående låt i Spotify")
     }
 }
 

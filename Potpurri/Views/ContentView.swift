@@ -17,21 +17,45 @@ struct ContentView: View {
     @State private var doveStart: Date?
     @AppStorage("migratedSongNotes") private var migratedSongNotes = false
     @AppStorage("appearance") private var appearance = Appearance.system
-    @AppStorage("grayLevel") private var grayLevel = 0.2
     @AppStorage("hasSeenGuide") private var hasSeenGuide = false
     @State private var showsGuide = false
+    @State private var order = LibraryOrder()
+    /// Ökas när en låt byter namn, så att bokstavsordningen räknas om.
+    @State private var titleVersion = 0
+
+    /// Låtarna i bokstavsordning och uppslag på id. Räknas bara om när låtar läggs till,
+    /// tas bort eller byter namn – inte vid varje låtbyte.
+    final class LibraryOrder {
+        var key: Int?
+        var ids: [UUID] = []
+        var byID: [UUID: Song] = [:]
+    }
+
+    private var currentOrder: LibraryOrder {
+        var hasher = Hasher()
+        hasher.combine(titleVersion)
+        for song in songs { hasher.combine(ObjectIdentifier(song)) }
+        let key = hasher.finalize()
+        if order.key != key {
+            let sorted = songs.sorted(by: Song.swedishOrder)
+            order.ids = sorted.map(\.id)
+            order.byID = Dictionary(sorted.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            order.key = key
+        }
+        return order
+    }
     @Environment(\.scenePhase) private var scenePhase
 
     private func song(_ id: UUID?) -> Song? {
         guard let id else { return nil }
-        return songs.first { $0.id == id }
+        return currentOrder.byID[id]
     }
 
     /// Nästa (+1) eller förra (−1) låt: i listan låten valdes ur, annars i biblioteket.
     private func neighbor(_ step: Int) -> Song? {
         // Ett förslag som spelas har ingen nästa låt – pedalen bläddrar bara inom det.
         guard let id = selection?.id, player.playingSuggestionID != id else { return nil }
-        let order = player.queue.contains(id) ? player.queue : songs.sorted(by: Song.swedishOrder).map(\.id)
+        let order = player.queue.contains(id) ? player.queue : currentOrder.ids
         guard let index = order.firstIndex(of: id), order.indices.contains(index + step) else { return nil }
         return song(order[index + step])
     }
@@ -97,6 +121,7 @@ struct ContentView: View {
             }
         }
         .onChange(of: player.renamingSongID) { _, id in
+            if id == nil { titleVersion += 1 }
             renameDraft = song(id)?.title ?? ""
         }
         .sheet(isPresented: Binding(get: { player.editingTextSongID != nil }, set: { if !$0 { player.editingTextSongID = nil } })) {
@@ -104,16 +129,9 @@ struct ContentView: View {
                 SongTextEditor(song: found)
             }
         }
-        .overlay {
-            // Grått läge: allt vitt blir grått (även PDF:erna), svart förblir svart.
-            if appearance == .gray {
-                Color.black.opacity(grayLevel)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-            }
-        }
+        .grayTheme()
         .sheet(isPresented: $showsGuide) {
-            GuideView()
+            GuideView().grayTheme()
         }
         .preferredColorScheme(appearance.colorScheme)
         .environment(player)

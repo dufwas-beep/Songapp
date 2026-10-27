@@ -17,7 +17,7 @@ struct SettingsButton: View {
         .buttonBorderShape(.circle)
         .accessibilityLabel("Inställningar")
         .sheet(isPresented: $showsSettings) {
-            SettingsView()
+            SettingsView().grayTheme()
         }
     }
 }
@@ -36,7 +36,7 @@ struct SettingsView: View {
     @State private var showsGuide = false
     @State private var confirmsRemoveTestSongs = false
     @AppStorage("appearance") private var appearance = Appearance.system
-    @AppStorage("grayLevel") private var grayLevel = 0.2
+    @AppStorage("grayTone") private var grayTone = 0.3
     @Query private var songs: [Song]
 
     private var testSongs: [Song] { songs.filter(TestSongs.isTestSong) }
@@ -51,10 +51,11 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                     if appearance == .gray {
                         HStack {
-                            Image(systemName: "sun.max")
-                            Slider(value: $grayLevel, in: 0.08...0.45)
-                            Image(systemName: "sun.min")
+                            Text("Mörkare")
+                            Slider(value: $grayTone, in: 0.15...0.45)
+                            Text("Ljusare")
                         }
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                     }
                 }
@@ -121,7 +122,7 @@ struct SettingsView: View {
             }
         }
         .sheet(isPresented: $showsGuide) {
-            GuideView()
+            GuideView().grayTheme()
         }
         .confirmationDialog("Ta bort \(testSongs.count) testlåtar?", isPresented: $confirmsRemoveTestSongs, titleVisibility: .visible) {
             Button("Ta bort", role: .destructive) {

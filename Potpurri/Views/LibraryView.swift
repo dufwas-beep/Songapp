@@ -197,7 +197,8 @@ struct LibraryView: View {
                 // Nästa/förra låt följer biblioteket när man valt en låt här.
                 .onChange(of: selection) { _, song in
                     if let song, song.id != player.playingSuggestionID, list.contains(song) {
-                        player.queue = list.map(\.id)
+                        let ids = list.map(\.id)
+                        if player.queue != ids { player.queue = ids }
                     }
                 }
                 .overlay(alignment: .trailing) {
@@ -331,9 +332,16 @@ struct LibraryView: View {
         }
         Menu {
             ForEach(setlists.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }) { list in
-                Button(list.name) {
+                Button {
                     list.songIDs.append(song.id)
                     try? context.save()
+                } label: {
+                    // Bock = låten finns redan i listan (går ändå att lägga till igen).
+                    if list.songIDs.contains(song.id) {
+                        Label(list.name + " (finns redan)", systemImage: "checkmark")
+                    } else {
+                        Text(list.name)
+                    }
                 }
             }
         } label: {
