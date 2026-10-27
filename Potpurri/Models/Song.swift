@@ -102,7 +102,11 @@ extension Song {
 
     /// Svensk bokstavsordning (Å, Ä, Ö sist) och siffror i nummerordning.
     static func swedishOrder(_ a: Song, _ b: Song) -> Bool {
-        a.title.compare(b.title, options: [.caseInsensitive, .numeric], range: nil, locale: swedish) == .orderedAscending
+        TitleOrder.shared.rank(of: a.title) < TitleOrder.shared.rank(of: b.title)
+    }
+
+    fileprivate static func compareTitles(_ a: String, _ b: String) -> Bool {
+        a.compare(b, options: [.caseInsensitive, .numeric], range: nil, locale: swedish) == .orderedAscending
     }
 
     /// Bokstaven låten sorteras under i alfabetet vid sidan av biblioteket.
@@ -116,5 +120,30 @@ extension Song {
             return plain
         }
         return "#"
+    }
+}
+
+/// Kom ihåg varje titels plats i bokstavsordningen. Svensk jämförelse är långsam, och
+/// listorna sorteras om varje gång man byter låt – nu jämförs bara heltal.
+private final class TitleOrder: @unchecked Sendable {
+    static let shared = TitleOrder()
+    private let lock = NSLock()
+    private var sorted: [String] = []
+    private var ranks: [String: Int] = [:]
+
+    func rank(of title: String) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        if let rank = ranks[title] { return rank }
+        // Ny titel: sätt in den på rätt plats och numrera om.
+        var low = 0, high = sorted.count
+        while low < high {
+            let mid = (low + high) / 2
+            if Song.compareTitles(sorted[mid], title) { low = mid + 1 } else { high = mid }
+        }
+        sorted.insert(title, at: low)
+        ranks.removeAll(keepingCapacity: true)
+        for (index, known) in sorted.enumerated() { ranks[known] = index }
+        return low
     }
 }

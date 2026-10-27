@@ -135,7 +135,11 @@ struct SongDetailView: View {
                 player.pastingChords = false
                 autoscroller.duration = TimeInterval(song.autoscrollSeconds ?? 180)
                 focused = true
-                if let next, next.kind == .pdf { PDFCache.shared.preload(next.fileURL) }
+                // Nästa och förra låten läses in i förväg så att bytet går direkt.
+                for neighbor in [next, previous].compactMap({ $0 }) {
+                    if neighbor.kind == .pdf { PDFCache.shared.preload(neighbor.fileURL) }
+                    if neighbor.kind == .image { ImageCache.shared.preload(neighbor.fileURL) }
+                }
                 // En låt räknas som spelad när den varit öppen i 30 sekunder.
                 try? await Task.sleep(for: .seconds(30))
                 guard !Task.isCancelled else { return }

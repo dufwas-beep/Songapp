@@ -103,9 +103,21 @@ final class SpotifyController {
     private func validToken() async throws -> String {
         if let accessToken, Date() < expiry { return accessToken }
         guard let refreshToken else { throw SpotifyError.message("Logga in på Spotify först.") }
-        try await requestToken(["grant_type": "refresh_token", "refresh_token": refreshToken, "client_id": clientID])
+        do {
+            try await requestToken(["grant_type": "refresh_token", "refresh_token": refreshToken, "client_id": clientID])
+        } catch SpotifyError.message {
+            // Inloggningen har gått ut eller dragits tillbaka – logga in igen nästa tryck.
+            disconnect()
+            throw SpotifyError.message("Inloggningen till Spotify har gått ut. Tryck på Spotify-knappen och logga in igen.")
+        }
         guard let accessToken else { throw SpotifyError.message("Logga in på Spotify igen.") }
         return accessToken
+    }
+
+    /// Läser av om Spotify spelar just nu, så att knappen visar rätt (t.ex. när appen öppnas).
+    func refreshState() async {
+        guard isConnected, !busy, let token = try? await validToken() else { return }
+        if let playing = try? await playerState(token) { isPlaying = playing }
     }
 
     // MARK: Spela / pausa
@@ -116,9 +128,14 @@ final class SpotifyController {
         defer { busy = false }
         do {
             let token = try await validToken()
-            let playing = try await currentlyPlaying(token)
-            try await send(playing ? "pause" : "play", token: token)
-            isPlaying = !playing
+            if let playing = try await playerState(token) {
+                try await send(playing ? "pause" : "play", token: token)
+                isPlaying = !playing
+            } else {
+                // Ingen aktiv enhet (Spotify har somnat): väck en enhet och spela där.
+                try await wakeDevice(token)
+                isPlaying = true
+            }
         } catch let SpotifyError.message(text) {
             errorMessage = text
         } catch {
@@ -126,16 +143,46 @@ final class SpotifyController {
         }
     }
 
-    private func currentlyPlaying(_ token: String) async throws -> Bool {
+    /// Spelar Spotify? nil = ingen aktiv enhet.
+    private func playerState(_ token: String) async throws -> Bool? {
         var request = URLRequest(url: URL(string: "https://api.spotify.com/v1/me/player")!)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        if status == 204 || data.isEmpty {
-            throw SpotifyError.message("Ingen Spotify-enhet är aktiv. Öppna Spotify och spela en låt en gång, sedan fungerar knappen.")
+        if status == 401 {
+            expiry = .distantPast
+            throw SpotifyError.message("Spotify behövde logga in på nytt. Tryck en gång till.")
         }
+        if status == 204 || data.isEmpty { return nil }
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard json?["device"] != nil else { return nil }
         return json?["is_playing"] as? Bool ?? false
+    }
+
+    /// Flyttar uppspelningen till en enhet (helst iPaden) och startar den.
+    private func wakeDevice(_ token: String) async throws {
+        var request = URLRequest(url: URL(string: "https://api.spotify.com/v1/me/player/devices")!)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let devices = json?["devices"] as? [[String: Any]] ?? []
+        let preferred = devices.first { ($0["type"] as? String) == "Tablet" }
+            ?? devices.first { ($0["is_active"] as? Bool) == true }
+            ?? devices.first
+        guard let id = preferred?["id"] as? String else {
+            throw SpotifyError.message("Spotify är inte igång på någon enhet. Öppna Spotify-appen en kort stund och tryck igen.")
+        }
+        var transfer = URLRequest(url: URL(string: "https://api.spotify.com/v1/me/player")!)
+        transfer.httpMethod = "PUT"
+        transfer.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        transfer.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        transfer.httpBody = try JSONSerialization.data(withJSONObject: ["device_ids": [id], "play": true])
+        let (_, response) = try await URLSession.shared.data(for: transfer)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        if status == 403 { throw SpotifyError.message("Spotify tillåter bara styrning med Premium.") }
+        guard (200..<300).contains(status) else {
+            throw SpotifyError.message("Spotify kunde inte starta (\(status)). Öppna Spotify-appen en kort stund och tryck igen.")
+        }
     }
 
     private func send(_ command: String, token: String) async throws {
@@ -146,6 +193,10 @@ final class SpotifyController {
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         if status == 403 {
             throw SpotifyError.message("Spotify tillåter bara styrning med Premium.")
+        }
+        if status == 401 {
+            expiry = .distantPast
+            throw SpotifyError.message("Spotify behövde logga in på nytt. Tryck en gång till.")
         }
         guard (200..<300).contains(status) else {
             throw SpotifyError.message("Spotify svarade med fel (\(status)).")

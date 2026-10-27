@@ -9,6 +9,15 @@ struct ImageSongView: View {
     var onZoom: ((Double) -> Void)?
     var onScrollView: ((UIScrollView) -> Void)?
     @State private var image: UIImage?
+
+    init(url: URL, zoom: Double? = nil, onZoom: ((Double) -> Void)? = nil, onScrollView: ((UIScrollView) -> Void)? = nil) {
+        self.url = url
+        self.zoom = zoom
+        self.onZoom = onZoom
+        self.onScrollView = onScrollView
+        // Redan inläst (t.ex. förladdad som nästa låt): visa direkt utan väntan.
+        _image = State(initialValue: ImageCache.shared.cached(url))
+    }
     @State private var loaded = false
     @State private var liveZoom: CGFloat?
     @State private var zoomStart: CGFloat?
@@ -49,7 +58,7 @@ struct ImageSongView: View {
             }
         }
         .task(id: url) {
-            image = UIImage(contentsOfFile: url.path)
+            image = await ImageCache.shared.image(for: url)
             loaded = true
         }
     }

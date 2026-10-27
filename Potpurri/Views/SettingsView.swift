@@ -36,6 +36,7 @@ struct SettingsView: View {
     @State private var showsGuide = false
     @State private var confirmsRemoveTestSongs = false
     @AppStorage("appearance") private var appearance = Appearance.system
+    @AppStorage("grayLevel") private var grayLevel = 0.2
     @Query private var songs: [Song]
 
     private var testSongs: [Song] { songs.filter(TestSongs.isTestSong) }
@@ -48,6 +49,14 @@ struct SettingsView: View {
                         ForEach(Appearance.allCases) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.segmented)
+                    if appearance == .gray {
+                        HStack {
+                            Image(systemName: "sun.max")
+                            Slider(value: $grayLevel, in: 0.08...0.45)
+                            Image(systemName: "sun.min")
+                        }
+                        .foregroundStyle(.secondary)
+                    }
                 }
                 Section("Spelningar") {
                     NavigationLink {

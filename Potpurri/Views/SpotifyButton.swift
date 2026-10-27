@@ -7,6 +7,7 @@ struct SpotifyButton: View {
     @Environment(SpotifyController.self) private var spotify
     @Environment(\.webAuthenticationSession) private var authSession
     @State private var showsSetup = false
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Button {
@@ -37,6 +38,18 @@ struct SpotifyButton: View {
             .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
         }
         .buttonStyle(.plain)
+        // Håll in för att logga in igen eller koppla från.
+        .contextMenu {
+            Button {
+                showsSetup = true
+            } label: {
+                Label("Spotify-inloggning", systemImage: "person.badge.key")
+            }
+        }
+        .task { await spotify.refreshState() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await spotify.refreshState() } }
+        }
         .accessibilityLabel(spotify.isPlaying ? "Pausa Spotify" : "Spela Spotify")
         .sheet(isPresented: $showsSetup) {
             SpotifySetup()

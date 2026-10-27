@@ -27,7 +27,7 @@ struct GuideView: View {
         Page(symbol: "speaker.wave.2", title: "Ljud och Spotify",
              text: "Ljudknappen öppnar en ljudpanel med egna klipp. Spotify-knappen startar och pausar musik mellan låtarna."),
         Page(symbol: "gearshape", title: "Inställningar",
-             text: "Kugghjulet uppe till höger har kvällsloggar, säkerhetskopia, mörkt läge och den här guiden igen."),
+             text: "Kugghjulet uppe till höger har kvällsloggar, säkerhetskopia, grått och mörkt läge och den här guiden igen."),
     ]
 
     var body: some View {
@@ -88,15 +88,16 @@ struct GuideView: View {
     }
 }
 
-/// Utseende: följ iPaden, eller alltid ljust/mörkt.
+/// Utseende: följ iPaden, eller alltid ljust, grått (ljust men nedtonat) eller mörkt.
 enum Appearance: String, CaseIterable, Identifiable {
-    case system, light, dark
+    case system, light, gray, dark
     var id: Self { self }
 
     var title: String {
         switch self {
         case .system: "Automatiskt"
         case .light: "Ljust"
+        case .gray: "Grått"
         case .dark: "Mörkt"
         }
     }
@@ -104,7 +105,7 @@ enum Appearance: String, CaseIterable, Identifiable {
     var colorScheme: ColorScheme? {
         switch self {
         case .system: nil
-        case .light: .light
+        case .light, .gray: .light
         case .dark: .dark
         }
     }

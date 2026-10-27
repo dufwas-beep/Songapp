@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var doveStart: Date?
     @AppStorage("migratedSongNotes") private var migratedSongNotes = false
     @AppStorage("appearance") private var appearance = Appearance.system
+    @AppStorage("grayLevel") private var grayLevel = 0.2
     @AppStorage("hasSeenGuide") private var hasSeenGuide = false
     @State private var showsGuide = false
     @Environment(\.scenePhase) private var scenePhase
@@ -99,6 +100,14 @@ struct ContentView: View {
         .sheet(isPresented: Binding(get: { player.editingTextSongID != nil }, set: { if !$0 { player.editingTextSongID = nil } })) {
             if let found = song(player.editingTextSongID) {
                 SongTextEditor(song: found)
+            }
+        }
+        .overlay {
+            // Grått läge: allt vitt blir grått (även PDF:erna), svart förblir svart.
+            if appearance == .gray {
+                Color.black.opacity(grayLevel)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
             }
         }
         .sheet(isPresented: $showsGuide) {
