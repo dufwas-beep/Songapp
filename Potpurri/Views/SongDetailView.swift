@@ -70,6 +70,10 @@ struct SongDetailView: View {
                         SettingsButton()
                     }
                     .padding(16)
+                    // Ur vägen medan Lådan är öppen.
+                    .opacity(player.drawerOpen ? 0 : 1)
+                    .allowsHitTesting(!player.drawerOpen)
+                    .animation(.easeInOut(duration: 0.2), value: player.drawerOpen)
                 }
                 .overlay(alignment: .top) {
                     if player.pen != .off && !player.isLocked {

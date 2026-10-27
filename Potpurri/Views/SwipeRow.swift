@@ -56,13 +56,15 @@ struct SwipeRow<Leading: View>: ViewModifier {
                         let maxRight: CGFloat = onFullSwipeRight == nil ? Self.leadingWidth + 40 : 400
                         offset = min(max(begin + value.translation.width, maxLeft), maxRight)
                     }
-                    .onEnded { _ in
+                    .onEnded { value in
                         defer {
                             start = nil
                             horizontal = nil
                         }
                         guard horizontal == true else { return }
-                        if let onFullSwipeRight, offset > 200 {
+                        // Hela vägen: långt svep, eller ett snabbt svep som skulle ha nått långt.
+                        let flung = (start ?? 0) + value.predictedEndTranslation.width > 320
+                        if let onFullSwipeRight, offset > 150 || (flung && offset > 60) {
                             flyAway(onFullSwipeRight)
                             return
                         }
