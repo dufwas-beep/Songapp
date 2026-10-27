@@ -144,57 +144,28 @@ struct LibraryView: View {
             }
             Divider()
             ScrollViewReader { proxy in
-                List {
-                    ForEach(list) { song in
-                        HStack(spacing: 8) {
-                            if colorMode {
-                                ColorModeCheckbox(isChecked: checked.contains(song.id)) {
-                                    if checked.contains(song.id) { checked.remove(song.id) } else { checked.insert(song.id) }
-                                }
-                            }
-                            SongRow(song: song, isPlayed: player.isPlayedTonight(song))
-                            ColorDots(song: song, editable: colorMode, columns: columns)
+                // Egen lista (som i låtlistorna) i stället för iPadens: den inbyggda listan
+                // räknade om alla rader vid varje låtbyte, vilket tog nästan en sekund.
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(list) { song in
+                            libraryRow(song, in: list, columns: columns)
+                                .id(song.id)
                         }
-                            .contentShape(Rectangle())
-                            .onTapGesture { open(song, in: list) }
-                            .listRowBackground(SelectedRowBackground(songID: song.id))
-                            .id(song.id)
-                            .padding(.trailing, showsAlphabet ? 18 : 0)
-                            .draggable("song:\(song.id.uuidString)")
-                            // Svep åt höger = lägg i Lådan.
-                            .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                                Button {
-                                    player.drawerSongID = song.id
-                                    withAnimation(.spring(response: 0.55, dampingFraction: 1)) { player.drawerOpen = true }
-                                } label: {
-                                    Label("Lådan", systemImage: "tray.and.arrow.down")
-                                }
-                                .tint(.accentColor)
+                        // Hittar man inte låten: sök på webben.
+                        if !query.trimmingCharacters(in: .whitespaces).isEmpty && !player.isLocked {
+                            Button {
+                                webQuery = query
+                            } label: {
+                                Label("Hittar du inte låten? Sök \"\(query)\" på webben", systemImage: "globe")
+                                    .font(.subheadline)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(16)
                             }
-                            .contextMenu {
-                                Button {
-                                    player.drawerSongID = song.id
-                                    withAnimation(.spring(response: 0.55, dampingFraction: 1)) { player.drawerOpen = true }
-                                } label: {
-                                    Label("Lägg i lådan", systemImage: "tray.and.arrow.down")
-                                }
-                                PinButton(songID: song.id)
-                                if !player.isLocked { rowMenu(for: song) }
-                            }
-                    }
-                    .onDelete(perform: deleteAction(in: list))
-                    // Hittar man inte låten: sök på webben.
-                    if !query.trimmingCharacters(in: .whitespaces).isEmpty && !player.isLocked {
-                        Button {
-                            webQuery = query
-                        } label: {
-                            Label("Hittar du inte låten? Sök \"\(query)\" på webben", systemImage: "globe")
-                                .font(.subheadline)
                         }
-                        .listRowSeparator(.hidden)
+                        Color.clear.frame(height: 40)
                     }
                 }
-                .listStyle(.plain)
                 // Nästa/förra låt följer biblioteket när man valt en låt här.
                 .overlay(alignment: .trailing) {
                     if showsAlphabet {
@@ -367,12 +338,52 @@ struct LibraryView: View {
         }
     }
 
-    /// Svep för att ta bort – av när scenlåset är på.
-    private func deleteAction(in list: [Song]) -> ((IndexSet) -> Void)? {
-        guard !player.isLocked else { return nil }
-        return { offsets in
-            offsets.map { list[$0] }.forEach(delete)
+    /// En rad i biblioteket. Svep åt höger = Lådan, åt vänster = ta bort.
+    private func libraryRow(_ song: Song, in list: [Song], columns: [Int]) -> some View {
+        HStack(spacing: 8) {
+            if colorMode {
+                ColorModeCheckbox(isChecked: checked.contains(song.id)) {
+                    if checked.contains(song.id) { checked.remove(song.id) } else { checked.insert(song.id) }
+                }
+            }
+            SongRow(song: song, isPlayed: player.isPlayedTonight(song))
+            ColorDots(song: song, editable: colorMode, columns: columns)
         }
+        .padding(.leading, 16)
+        .padding(.trailing, showsAlphabet ? 18 : 0)
+        .frame(minHeight: 44)
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onTapGesture { open(song, in: list) }
+        .background(SelectedRowBackground(songID: song.id))
+        .modifier(SwipeRow(
+            canDelete: !player.isLocked,
+            onDelete: { delete(song) },
+            leading: { close in
+                SwipeButton(title: "Lådan", systemImage: "tray.and.arrow.down", color: .accentColor) {
+                    close()
+                    putInDrawer(song)
+                }
+            }
+        ))
+        .overlay(alignment: .bottom) {
+            Divider().padding(.leading, 16)
+        }
+        .draggable("song:\(song.id.uuidString)")
+        .contextMenu {
+            Button {
+                putInDrawer(song)
+            } label: {
+                Label("Lägg i lådan", systemImage: "tray.and.arrow.down")
+            }
+            PinButton(songID: song.id)
+            if !player.isLocked { rowMenu(for: song) }
+        }
+    }
+
+    private func putInDrawer(_ song: Song) {
+        player.drawerSongID = song.id
+        withAnimation(.spring(response: 0.55, dampingFraction: 1)) { player.drawerOpen = true }
     }
 
     /// Öppnar en låt. Nästa/förra låt följer sedan biblioteket.
