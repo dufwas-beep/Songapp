@@ -148,7 +148,10 @@ struct ContentView: View {
         .environment(spotify)
         // Efter 12 timmar börjar en ny spelning av sig själv (t.ex. nästa dag).
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { player.startNewGigIfStale() }
+            if phase == .active {
+                player.startNewGigIfStale()
+                runAutoBackup()
+            }
         }
         .onChange(of: player.songsToDelete) { _, ids in
             guard !ids.isEmpty else { return }
@@ -178,6 +181,7 @@ struct ContentView: View {
             UIApplication.shared.isIdleTimerDisabled = true
             fixSongsImportedAsNotes()
             player.startNewGigIfStale()
+            runAutoBackup()
             // Guiden visas första gången, efter startanimationen.
             if !hasSeenGuide {
                 hasSeenGuide = true
@@ -186,6 +190,15 @@ struct ContentView: View {
                     showsGuide = true
                 }
             }
+        }
+    }
+
+    /// Veckans automatiska säkerhetskopia – en stund efter start så att appen hinner igång.
+    private func runAutoBackup() {
+        guard AutoBackup.isOn else { return }
+        Task {
+            try? await Task.sleep(for: .seconds(20))
+            try? await AutoBackup.runIfDue(context: context, colorNames: colorCodes.names)
         }
     }
 

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 /// Kugghjulet uppe till höger – öppnar inställningarna.
 struct SettingsButton: View {
@@ -34,6 +35,11 @@ struct SettingsView: View {
     @State private var pendingRestore: (content: Backup.Content, archive: ZipArchive)?
     @State private var message: String?
     @State private var showsGuide = false
+    @State private var choosingFolder = false
+    /// Vad filväljaren är öppen för (finns kvar när den stängs, till svaret).
+    @State private var pickingFolder = false
+    @State private var autoFolder = AutoBackup.folderName
+    @State private var autoLast = AutoBackup.lastBackup
     @State private var confirmsRemoveTestSongs = false
     @AppStorage("appearance") private var appearance = Appearance.system
     @AppStorage("grayTone") private var grayTone = Theme.defaultTone
@@ -74,6 +80,7 @@ struct SettingsView: View {
                         Label("Spara säkerhetskopia", systemImage: "externaldrive.badge.plus")
                     }
                     Button {
+                        pickingFolder = false
                         importing = true
                     } label: {
                         Label("Läs in säkerhetskopia", systemImage: "externaldrive.badge.timemachine")
@@ -86,6 +93,46 @@ struct SettingsView: View {
                     Text("Säkerhetskopia")
                 } footer: {
                     Text("Sparar alla låtar, låtlistor, anteckningar och ljud i en fil som du lägger i Filer, t.ex. iCloud Drive.")
+                }
+                Section {
+                    Button {
+                        pickingFolder = true
+                        choosingFolder = true
+                    } label: {
+                        LabeledContent {
+                            Text(autoFolder ?? "Av")
+                        } label: {
+                            Label("Varje vecka till mappen", systemImage: "folder.badge.gearshape")
+                        }
+                    }
+                    if autoFolder != nil {
+                        Button {
+                            Task {
+                                do {
+                                    try await AutoBackup.runIfDue(context: context, colorNames: colorCodes.names, force: true)
+                                    autoLast = AutoBackup.lastBackup
+                                    message = "Säkerhetskopian är sparad i \(autoFolder ?? "mappen")."
+                                } catch {
+                                    message = "Kunde inte spara i mappen: \(error.localizedDescription). Välj mappen igen."
+                                }
+                            }
+                        } label: {
+                            Label("Spara en kopia dit nu", systemImage: "arrow.clockwise")
+                        }
+                        Button("Stäng av automatisk kopia", role: .destructive) {
+                            AutoBackup.turnOff()
+                            autoFolder = nil
+                        }
+                    }
+                } header: {
+                    Text("Automatisk säkerhetskopia")
+                } footer: {
+                    if let autoLast {
+                        Text("Senast: \(autoLast.formatted(date: .abbreviated, time: .shortened)). De fyra senaste kopiorna sparas.")
+                    } else {
+                        Text("Välj en mapp i Filer, t.ex. samma som du sparat i förut. En kopia sparas när appen öppnas och det gått en vecka sedan sist. De fyra senaste sparas.")
+                    }
+                }
                 }
                 .disabled(backupProgress.isRunning)
                 Section("Hjälp") {
@@ -141,8 +188,16 @@ struct SettingsView: View {
         .fileMover(isPresented: Binding(get: { exportedURL != nil }, set: { if !$0 { exportedURL = nil } }), file: exportedURL) { result in
             if case .success = result { message = "Säkerhetskopian är sparad." }
         }
-        .fileImporter(isPresented: $importing, allowedContentTypes: [.data]) { result in
+        // En enda filväljare (två i samma vy krånglar): säkerhetskopia att läsa in eller mapp.
+        .fileImporter(
+            isPresented: Binding(get: { importing || choosingFolder }, set: { if !$0 { importing = false; choosingFolder = false } }),
+            allowedContentTypes: pickingFolder ? [.folder] : [.data]
+        ) { result in
             guard case .success(let url) = result else { return }
+            if pickingFolder {
+                chooseFolder(url)
+                return
+            }
             Task {
                 do {
                     pendingRestore = try await Task.detached { try Backup.read(url) }.value
@@ -177,6 +232,19 @@ struct SettingsView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(message ?? "")
+        }
+    }
+
+    private func chooseFolder(_ url: URL) {
+        do {
+            try AutoBackup.setFolder(url)
+            autoFolder = AutoBackup.folderName
+            Task {
+                try? await AutoBackup.runIfDue(context: context, colorNames: colorCodes.names)
+                autoLast = AutoBackup.lastBackup
+            }
+        } catch {
+            message = "Mappen kunde inte väljas: \(error.localizedDescription)"
         }
     }
 
