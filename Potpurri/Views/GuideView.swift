@@ -111,24 +111,58 @@ enum Appearance: String, CaseIterable, Identifiable {
     }
 }
 
-/// Grått tema: det mörka utseendet där det svarta lyfts till grått (vit text på grå
-/// bakgrund). PDF:erna och det som redan är ljust påverkas knappt.
-struct GrayTheme: ViewModifier {
+/// Grått tema: samma som mörkt läge (ljus text och ljusa symboler) men med grå
+/// bakgrunder i stället för svarta. Gråtonen väljs under kugghjulet.
+enum Theme {
+    static let defaultTone = 0.3
+
+    static func background(_ tone: Double) -> Color { Color(white: tone) }
+    /// Rutor ovanpå bakgrunden (t.ex. Next-rutan) – lite ljusare.
+    static func raised(_ tone: Double) -> Color { Color(white: tone + 0.08) }
+}
+
+/// Grå bakgrund bakom en vy och dess listor när det gråa temat är valt.
+struct ThemedBackground: ViewModifier {
     @AppStorage("appearance") private var appearance = Appearance.system
-    @AppStorage("grayTone") private var grayTone = 0.3
+    @AppStorage("grayTone") private var grayTone = Theme.defaultTone
 
     func body(content: Content) -> some View {
-        content.overlay {
-            if appearance == .gray {
-                Color(white: grayTone)
-                    .blendMode(.screen)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-            }
+        if appearance == .gray {
+            content
+                .scrollContentBackground(.hidden)
+                .background(Theme.background(grayTone).ignoresSafeArea())
+        } else {
+            content
         }
     }
 }
 
+/// Bakgrunden för en ruta (t.ex. Next-rutan): ljusgrå i ljust läge, ljusare grå i grått.
+struct ThemedBox: ViewModifier {
+    var cornerRadius: CGFloat = 14
+    @AppStorage("appearance") private var appearance = Appearance.system
+    @AppStorage("grayTone") private var grayTone = Theme.defaultTone
+
+    func body(content: Content) -> some View {
+        content.background(
+            appearance == .gray ? Theme.raised(grayTone) : Color(.secondarySystemBackground),
+            in: RoundedRectangle(cornerRadius: cornerRadius)
+        )
+    }
+}
+
+/// Bakgrunden för en panel (lådan, ljudpanelen): som vanligt, eller grå i grått tema.
+struct ThemedPanel: ViewModifier {
+    @AppStorage("appearance") private var appearance = Appearance.system
+    @AppStorage("grayTone") private var grayTone = Theme.defaultTone
+
+    func body(content: Content) -> some View {
+        content.background(appearance == .gray ? Theme.raised(grayTone) : Color(.systemBackground))
+    }
+}
+
 extension View {
-    func grayTheme() -> some View { modifier(GrayTheme()) }
+    func themedBackground() -> some View { modifier(ThemedBackground()) }
+    func themedBox(cornerRadius: CGFloat = 14) -> some View { modifier(ThemedBox(cornerRadius: cornerRadius)) }
+    func themedPanel() -> some View { modifier(ThemedPanel()) }
 }

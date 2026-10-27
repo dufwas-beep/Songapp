@@ -24,7 +24,7 @@ struct DrawerView: View {
             handle
             content
                 .frame(width: width)
-                .background(Color(.systemBackground))
+                .themedPanel()
                 .overlay(alignment: .leading) { Divider() }
                 .shadow(color: .black.opacity(player.drawerOpen ? 0.18 : 0), radius: 12, x: -4)
         }

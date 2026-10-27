@@ -105,7 +105,7 @@ struct SuggestionsBox: View {
                 }
             }
         }
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+        .themedBox()
         // Lyckohjulet: markeringen hoppar mellan förslagen, saktar in och landar på en
         // slumpad låt som öppnas i förhandsrutan. Spelade låtar finns aldrig med.
         .onChange(of: player.lotteryRuns) {

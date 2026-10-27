@@ -63,6 +63,7 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             SidebarView(selection: $selection)
+                .themedBackground()
                 .navigationSplitViewColumnWidth(min: 320, ideal: 380, max: 460)
         } detail: {
             SongDetailView(
@@ -81,6 +82,7 @@ struct ContentView: View {
                     selection = song
                 }
             )
+            .themedBackground()
             .overlay(alignment: .topLeading) {
                 // När sidospalten är dold visas klockan i låtvyn i stället.
                 if columnVisibility == .detailOnly {
@@ -129,9 +131,8 @@ struct ContentView: View {
                 SongTextEditor(song: found)
             }
         }
-        .grayTheme()
         .sheet(isPresented: $showsGuide) {
-            GuideView().grayTheme()
+            GuideView().themedBackground()
         }
         .preferredColorScheme(appearance.colorScheme)
         .environment(player)

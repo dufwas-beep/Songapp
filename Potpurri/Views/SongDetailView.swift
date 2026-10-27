@@ -137,7 +137,7 @@ struct SongDetailView: View {
                 focused = true
                 // Nästa och förra låten läses in i förväg så att bytet går direkt.
                 for neighbor in [next, previous].compactMap({ $0 }) {
-                    if neighbor.kind == .pdf { PDFCache.shared.preload(neighbor.fileURL) }
+                    if neighbor.kind == .pdf { PDFPageRenderer.shared.preload(neighbor.fileURL) }
                     if neighbor.kind == .image { ImageCache.shared.preload(neighbor.fileURL) }
                 }
                 // En låt räknas som spelad när den varit öppen i 30 sekunder.
@@ -418,7 +418,7 @@ struct SongSheetView: View {
             )
         } else if song.kind == .pdf {
             // Zoomen sparas per låt och återställs när låten öppnas igen.
-            PDFKitView(url: song.fileURL, zoom: song.pdfZoom, onZoom: { song.pdfZoom = $0 }, onScrollView: onScrollView)
+            PDFPagesView(url: song.fileURL, zoom: song.pdfZoom, onZoom: { song.pdfZoom = $0 }, onScrollView: onScrollView)
         } else {
             ImageSongView(url: song.fileURL, zoom: song.pdfZoom, onZoom: { song.pdfZoom = $0 }, onScrollView: onScrollView)
         }

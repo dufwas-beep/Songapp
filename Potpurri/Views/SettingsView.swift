@@ -17,7 +17,7 @@ struct SettingsButton: View {
         .buttonBorderShape(.circle)
         .accessibilityLabel("Inställningar")
         .sheet(isPresented: $showsSettings) {
-            SettingsView().grayTheme()
+            SettingsView()
         }
     }
 }
@@ -36,7 +36,7 @@ struct SettingsView: View {
     @State private var showsGuide = false
     @State private var confirmsRemoveTestSongs = false
     @AppStorage("appearance") private var appearance = Appearance.system
-    @AppStorage("grayTone") private var grayTone = 0.3
+    @AppStorage("grayTone") private var grayTone = Theme.defaultTone
     @Query private var songs: [Song]
 
     private var testSongs: [Song] { songs.filter(TestSongs.isTestSong) }
@@ -52,7 +52,7 @@ struct SettingsView: View {
                     if appearance == .gray {
                         HStack {
                             Text("Mörkare")
-                            Slider(value: $grayTone, in: 0.15...0.45)
+                            Slider(value: $grayTone, in: 0.18...0.42)
                             Text("Ljusare")
                         }
                         .font(.footnote)
@@ -113,6 +113,7 @@ struct SettingsView: View {
                 }
                 .disabled(player.isLocked)
             }
+            .themedBackground()
             .navigationTitle("Inställningar")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -122,7 +123,7 @@ struct SettingsView: View {
             }
         }
         .sheet(isPresented: $showsGuide) {
-            GuideView().grayTheme()
+            GuideView().themedBackground()
         }
         .confirmationDialog("Ta bort \(testSongs.count) testlåtar?", isPresented: $confirmsRemoveTestSongs, titleVisibility: .visible) {
             Button("Ta bort", role: .destructive) {
