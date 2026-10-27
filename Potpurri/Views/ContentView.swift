@@ -14,6 +14,9 @@ struct ContentView: View {
     @State private var renameDraft = ""
     @State private var doveStart: Date?
     @AppStorage("migratedSongNotes") private var migratedSongNotes = false
+    @AppStorage("appearance") private var appearance = Appearance.system
+    @AppStorage("hasSeenGuide") private var hasSeenGuide = false
+    @State private var showsGuide = false
     @Environment(\.scenePhase) private var scenePhase
 
     private func song(_ id: UUID?) -> Song? {
@@ -98,6 +101,10 @@ struct ContentView: View {
                 SongTextEditor(song: found)
             }
         }
+        .sheet(isPresented: $showsGuide) {
+            GuideView()
+        }
+        .preferredColorScheme(appearance.colorScheme)
         .environment(player)
         .environment(colorCodes)
         .environment(sounds)
@@ -115,6 +122,14 @@ struct ContentView: View {
             UIApplication.shared.isIdleTimerDisabled = true
             fixSongsImportedAsNotes()
             player.startNewGigIfStale()
+            // Guiden visas första gången, efter startanimationen.
+            if !hasSeenGuide {
+                hasSeenGuide = true
+                Task {
+                    try? await Task.sleep(for: .seconds(2.5))
+                    showsGuide = true
+                }
+            }
         }
     }
 

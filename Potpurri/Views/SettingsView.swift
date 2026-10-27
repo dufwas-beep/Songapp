@@ -33,10 +33,22 @@ struct SettingsView: View {
     @State private var importing = false
     @State private var pendingRestore: (content: Backup.Content, archive: ZipArchive)?
     @State private var message: String?
+    @State private var showsGuide = false
+    @State private var confirmsRemoveTestSongs = false
+    @AppStorage("appearance") private var appearance = Appearance.system
+    @Query private var songs: [Song]
+
+    private var testSongs: [Song] { songs.filter(TestSongs.isTestSong) }
 
     var body: some View {
         NavigationStack {
             Form {
+                Section("Utseende") {
+                    Picker("Läge", selection: $appearance) {
+                        ForEach(Appearance.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                }
                 Section("Spelningar") {
                     NavigationLink {
                         GigLogsList()
@@ -65,6 +77,31 @@ struct SettingsView: View {
                     Text("Sparar alla låtar, låtlistor, anteckningar och ljud i en fil som du lägger i Filer, t.ex. iCloud Drive.")
                 }
                 .disabled(backupProgress.isRunning)
+                Section("Hjälp") {
+                    Button {
+                        showsGuide = true
+                    } label: {
+                        Label("Visa guiden", systemImage: "questionmark.circle")
+                    }
+                }
+                Section {
+                    Button {
+                        TestSongs.add(200, to: context, existing: songs.count)
+                    } label: {
+                        Label("Lägg till 200 testlåtar", systemImage: "plus.square.on.square")
+                    }
+                    Button(role: .destructive) {
+                        confirmsRemoveTestSongs = true
+                    } label: {
+                        Label("Ta bort testlåtarna (\(testSongs.count))", systemImage: "trash")
+                    }
+                    .disabled(testSongs.isEmpty)
+                } header: {
+                    Text("Prestandatest")
+                } footer: {
+                    Text("Testlåtarna heter ”Testlåt …” och kan tas bort här när du har provat.")
+                }
+                .disabled(player.isLocked)
             }
             .navigationTitle("Inställningar")
             .navigationBarTitleDisplayMode(.inline)
@@ -72,6 +109,15 @@ struct SettingsView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Klar") { dismiss() }
                 }
+            }
+        }
+        .sheet(isPresented: $showsGuide) {
+            GuideView()
+        }
+        .confirmationDialog("Ta bort \(testSongs.count) testlåtar?", isPresented: $confirmsRemoveTestSongs, titleVisibility: .visible) {
+            Button("Ta bort", role: .destructive) {
+                for song in testSongs { context.delete(song) }
+                try? context.save()
             }
         }
         // Säkerhetskopian sparas där man väljer i Filer (t.ex. iCloud Drive eller Dropbox).
