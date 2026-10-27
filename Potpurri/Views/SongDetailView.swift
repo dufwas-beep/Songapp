@@ -406,10 +406,12 @@ private struct SongStepButtons: View {
 struct SongSheetView: View {
     let song: Song
     let onScrollView: (UIScrollView) -> Void
+    @Environment(Player.self) private var player
 
     var body: some View {
         if song.kind == .text || song.kind == .note {
             TextSongView(song: song, onScrollView: onScrollView)
+                .onAppear { player.finishSwitchTimer() }
         } else if !FileManager.default.fileExists(atPath: song.fileURL.path) {
             ContentUnavailableView(
                 "Filen saknas",

@@ -12,6 +12,7 @@ struct PDFPagesView: View {
     var onZoom: ((Double) -> Void)?
     var onScrollView: ((UIScrollView) -> Void)?
     @Environment(\.displayScale) private var displayScale
+    @Environment(Player.self) private var player
     @State private var pages: [Int: UIImage]
     @State private var liveZoom: CGFloat?
     @State private var zoomStart: CGFloat?
@@ -87,6 +88,7 @@ struct PDFPagesView: View {
                     if let page = await PDFPageRenderer.shared.page(url, index: index, pixelWidth: pixels) {
                         pages[index] = page
                     }
+                    if index == 0 { player.finishSwitchTimer() }
                 }
             }
         }

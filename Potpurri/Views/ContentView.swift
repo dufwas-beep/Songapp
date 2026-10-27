@@ -72,17 +72,22 @@ struct ContentView: View {
                 next: neighbor(1),
                 preview: song(player.previewID),
                 onSelect: { song in
+                    player.startSwitchTimer()
                     player.playingSuggestionID = nil
                     selection = song
                 },
                 onPlayPreview: { song in
                     // Låtlistan ändras inte när ett förslag spelas.
+                    player.startSwitchTimer()
                     player.previewID = nil
                     player.playingSuggestionID = song.id
                     selection = song
                 }
             )
             .themedBackground()
+            .overlay(alignment: .bottomLeading) {
+                SwitchTimerLabel().padding(24)
+            }
             .overlay(alignment: .topLeading) {
                 // När sidospalten är dold visas klockan i låtvyn i stället.
                 if columnVisibility == .detailOnly {
@@ -227,5 +232,22 @@ private struct ClockLabel: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
         .background(.regularMaterial, in: Capsule())
+    }
+}
+
+/// Tidtagaren (slås på under kugghjulet): hur lång tid det senaste låtbytet tog.
+private struct SwitchTimerLabel: View {
+    @Environment(Player.self) private var player
+    @AppStorage("showsSwitchTimer") private var showsSwitchTimer = false
+
+    var body: some View {
+        if showsSwitchTimer, let ms = player.lastSwitchMilliseconds {
+            Text("Låtbyte \(ms) ms")
+                .font(.footnote.monospacedDigit().weight(.semibold))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.regularMaterial, in: Capsule())
+                .allowsHitTesting(false)
+        }
     }
 }

@@ -377,8 +377,10 @@ struct LibraryView: View {
 
     /// Öppnar en låt. Nästa/förra låt följer sedan biblioteket.
     private func open(_ song: Song, in list: [Song]) {
+        player.startSwitchTimer()
         let ids = list.map(\.id)
         if player.queue != ids { player.queue = ids }
+        player.setlistSongIDs = nil
         player.requestedSongID = song.id
     }
 

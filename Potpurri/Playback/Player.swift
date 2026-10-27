@@ -1,4 +1,5 @@
 import Foundation
+import QuartzCore
 import Observation
 
 /// Det som gäller medan man spelar: kön för nästa/förra låt, scenlåset, kvällens
@@ -77,6 +78,25 @@ final class Player {
     var selectedSongID: UUID?
     /// Biblioteket ber ContentView att visa en låt.
     var requestedSongID: UUID?
+    /// Låtarna i den låtlista man senast valde en låt ur (nil = biblioteket).
+    /// Next kan visa bara dem.
+    var setlistSongIDs: [UUID]?
+    /// Tidtagaren: när låtbytet började och hur lång tid det senaste tog.
+    var switchStartedAt: CFTimeInterval?
+    var lastSwitchMilliseconds: Int?
+
+    func startSwitchTimer() {
+        switchStartedAt = CACurrentMediaTime()
+    }
+
+    /// Anropas när den nya låten syns. Mäts efter nästa ritning.
+    func finishSwitchTimer() {
+        guard let start = switchStartedAt else { return }
+        switchStartedAt = nil
+        DispatchQueue.main.async {
+            self.lastSwitchMilliseconds = Int((CACurrentMediaTime() - start) * 1000)
+        }
+    }
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.
     /// Efter 12 timmar börjar automatiskt en ny spelning.
     private(set) var gigStart: Date {

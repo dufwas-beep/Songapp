@@ -8,11 +8,26 @@ struct SuggestionsBox: View {
     @Query private var songs: [Song]
     @Environment(Player.self) private var player
     @Environment(ColorCodes.self) private var codes
+    /// Var förslagen hämtas: hela biblioteket eller bara låtlistan man spelar ur.
+    @AppStorage("nextScope") private var scope = NextScope.library
+
+    enum NextScope: String {
+        case library, setlist
+    }
 
     private var suggestions: [Song] {
         guard let current else { return [] }
         let colors = player.activeColors
-        let available = songs.filter { $0.id != current.id && $0.kind != .note && !player.isPlayedTonight($0) }
+        var available = songs.filter { $0.id != current.id && $0.kind != .note && !player.isPlayedTonight($0) }
+        if scope == .setlist, let ids = player.setlistSongIDs {
+            // Bara låtlistan, i listans ordning. Utan valda färger visas alla som är kvar.
+            let order = Dictionary(ids.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+            available = available.filter { order[$0.id] != nil }.sorted { order[$0.id]! < order[$1.id]! }
+            if colors.isEmpty {
+                return player.pinned.compactMap { id in available.first { $0.id == id } }
+                    + available.filter { !player.pinned.contains($0.id) }
+            }
+        }
         let pinned = player.pinned.compactMap { id in available.first { $0.id == id } }
         let matching = available
             .filter { !player.pinned.contains($0.id) && !colors.isDisjoint(with: $0.colorTags) }
@@ -35,6 +50,18 @@ struct SuggestionsBox: View {
                         .font(.system(size: 11, weight: .semibold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
+                    Menu {
+                        Picker("Visa", selection: $scope) {
+                            Label("Hela biblioteket", systemImage: "books.vertical").tag(NextScope.library)
+                            Label("Bara låtlistan", systemImage: "list.bullet").tag(NextScope.setlist)
+                        }
+                    } label: {
+                        HStack(spacing: 3) {
+                            Text(scope == .library ? "Hela biblioteket" : "Bara låtlistan")
+                            Image(systemName: "chevron.down")
+                        }
+                        .font(.caption.weight(.semibold))
+                    }
                     Text(current == nil ? "Välj en låt" : (current?.colorTags.isEmpty == true ? "Låten har inga färger" : "Tryck på färgerna"))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)

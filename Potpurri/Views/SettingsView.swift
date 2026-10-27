@@ -37,6 +37,7 @@ struct SettingsView: View {
     @State private var confirmsRemoveTestSongs = false
     @AppStorage("appearance") private var appearance = Appearance.system
     @AppStorage("grayTone") private var grayTone = Theme.defaultTone
+    @AppStorage("showsSwitchTimer") private var showsSwitchTimer = false
     @Query private var songs: [Song]
 
     private var testSongs: [Song] { songs.filter(TestSongs.isTestSong) }
@@ -95,6 +96,9 @@ struct SettingsView: View {
                     }
                 }
                 Section {
+                    Toggle(isOn: $showsSwitchTimer) {
+                        Label("Visa tid för låtbyte", systemImage: "stopwatch")
+                    }
                     Button {
                         TestSongs.add(200, to: context, existing: songs.count)
                     } label: {

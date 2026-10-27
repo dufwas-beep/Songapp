@@ -9,6 +9,7 @@ struct ImageSongView: View {
     var onZoom: ((Double) -> Void)?
     var onScrollView: ((UIScrollView) -> Void)?
     @State private var image: UIImage?
+    @Environment(Player.self) private var player
 
     init(url: URL, zoom: Double? = nil, onZoom: ((Double) -> Void)? = nil, onScrollView: ((UIScrollView) -> Void)? = nil) {
         self.url = url
@@ -60,6 +61,7 @@ struct ImageSongView: View {
         .task(id: url) {
             image = await ImageCache.shared.image(for: url)
             loaded = true
+            player.finishSwitchTimer()
         }
     }
 }
