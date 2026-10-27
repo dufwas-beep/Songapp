@@ -133,7 +133,6 @@ struct SettingsView: View {
                         Text("Välj en mapp i Filer, t.ex. samma som du sparat i förut. En kopia sparas när appen öppnas och det gått en vecka sedan sist. De fyra senaste sparas.")
                     }
                 }
-                }
                 .disabled(backupProgress.isRunning)
                 Section("Hjälp") {
                     Button {
