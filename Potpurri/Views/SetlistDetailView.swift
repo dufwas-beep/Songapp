@@ -120,6 +120,10 @@ struct SetlistDetailView: View {
         }
         // Nästa/förra låt följer den här listan när man valt en låt ur den.
         .onAppear {
+            // Låtlistans låtar ritas färdiga före resten av biblioteket.
+            let ids = Set(setlist.songIDs)
+            let byID = Dictionary(songs.filter { ids.contains($0.id) }.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            PDFPageRenderer.shared.prepare(setlist.songIDs.compactMap { byID[$0] }.filter { $0.kind == .pdf }.map(\.fileURL), first: true)
             if let song = selection, setlist.songIDs.contains(song.id) {
                 player.queue = setlist.songIDs
             }

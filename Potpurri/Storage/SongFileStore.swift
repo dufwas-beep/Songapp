@@ -3,14 +3,15 @@ import Foundation
 /// Låtfilerna sparas som kopior i appens egen mapp (Application Support/Songs),
 /// så att de finns kvar även om originalet i Filer flyttas eller tas bort.
 enum SongFileStore {
-    static var directory: URL {
+    // Räknas ut en gång – mappen behövs för varje låt som visas.
+    static let directory: URL = {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         let dir = base.appendingPathComponent("Songs", isDirectory: true)
         if !FileManager.default.fileExists(atPath: dir.path) {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
         return dir
-    }
+    }()
 
     static func url(for fileName: String) -> URL {
         directory.appendingPathComponent(fileName)
@@ -34,5 +35,6 @@ enum SongFileStore {
     static func delete(_ fileName: String) {
         guard !fileName.isEmpty else { return }
         try? FileManager.default.removeItem(at: url(for: fileName))
+        PDFPageRenderer.shared.removeCache(forFileNamed: fileName)
     }
 }

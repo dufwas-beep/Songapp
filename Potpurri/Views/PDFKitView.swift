@@ -1,10 +1,10 @@
-import PDFKit
+import ImageIO
 import SwiftUI
 import UIKit
 
 /// Visar en PDF som en lång vertikal vy där alla sidor följer på varandra.
-/// Sidorna ritas till bilder i bakgrunden i skärmens upplösning – nästa och förra låten
-/// ritas i förväg – så att låten syns direkt och skarp i stället för suddig först.
+/// Sidorna ritas till bilder i skärmens upplösning och sparas på iPaden, så att låten
+/// syns direkt och skarp i stället för suddig först.
 /// Zoomen (nyp) sparas i förhållande till "hela bredden" och återställs nästa gång.
 struct PDFPagesView: View {
     let url: URL
@@ -12,7 +12,7 @@ struct PDFPagesView: View {
     var onZoom: ((Double) -> Void)?
     var onScrollView: ((UIScrollView) -> Void)?
     @Environment(\.displayScale) private var displayScale
-    @State private var pages: [UIImage]
+    @State private var pages: [Int: UIImage]
     @State private var liveZoom: CGFloat?
     @State private var zoomStart: CGFloat?
     private let sizes: [CGSize]
@@ -26,9 +26,10 @@ struct PDFPagesView: View {
         self.zoom = zoom
         self.onZoom = onZoom
         self.onScrollView = onScrollView
-        sizes = PDFPageRenderer.pageSizes(url)
+        let sizes = PDFPageRenderer.pageSizes(url)
+        self.sizes = sizes
         // Redan ritad (förladdad): visa direkt.
-        _pages = State(initialValue: PDFPageRenderer.shared.cachedPages(url) ?? [])
+        _pages = State(initialValue: PDFPageRenderer.shared.cachedPages(url, count: sizes.count))
     }
 
     var body: some View {
@@ -43,8 +44,8 @@ struct PDFPagesView: View {
                         let height = pageWidth * size.height / max(size.width, 1)
                         ZStack {
                             Color.white
-                            if index < pages.count {
-                                Image(uiImage: pages[index])
+                            if let page = pages[index] {
+                                Image(uiImage: page)
                                     .resizable()
                                     .interpolation(.high)
                             }
@@ -80,40 +81,55 @@ struct PDFPagesView: View {
                 // Nästa låt ritas i förväg i samma storlek (utan zoom).
                 guard proxy.size.width > 10 else { return }
                 PDFPageRenderer.shared.preferredWidth = max(PDFPageRenderer.shared.preferredWidth, PDFPageRenderer.pixelWidth(proxy.size.width, scale: displayScale))
-                let rendered = await PDFPageRenderer.shared.pages(for: url, pixelWidth: pixels)
-                if !rendered.isEmpty { pages = rendered }
+                // Sida för sida, första sidan först – den syns direkt när den är klar.
+                for index in sizes.indices {
+                    guard !Task.isCancelled else { return }
+                    if let page = await PDFPageRenderer.shared.page(url, index: index, pixelWidth: pixels) {
+                        pages[index] = page
+                    }
+                }
             }
         }
     }
 }
 
-/// Ritar PDF-sidor till bilder i bakgrunden och håller de senaste låtarna i minnet.
+/// Ritar PDF-sidor till bilder och sparar dem på iPaden (Caches/Sidor) som JPEG.
+/// Hela biblioteket ritas en gång i bakgrunden; en låtlista som öppnas går före.
+/// De senast visade sidorna hålls dessutom färdiga i minnet.
 final class PDFPageRenderer: @unchecked Sendable {
     static let shared = PDFPageRenderer()
     private let lock = NSLock()
-    private let cache = NSCache<NSURL, Rendered>()
-    private var inFlight: [String: Task<[UIImage], Never>] = [:]
-    private var _preferredWidth: Int = 1536
+    private let memory = NSCache<NSString, Rendered>()
+    private var inFlight: [String: Task<UIImage?, Never>] = [:]
     private var sizes: [URL: [CGSize]] = [:]
+    private var queue: [URL] = []
+    private var working = false
+    private let folder: URL
 
     final class Rendered {
         let width: Int
-        let pages: [UIImage]
-        init(width: Int, pages: [UIImage]) {
+        let image: UIImage
+        init(width: Int, image: UIImage) {
             self.width = width
-            self.pages = pages
+            self.image = image
         }
     }
 
     init() {
-        // Ungefär sex låtar à två sidor i full upplösning.
-        cache.totalCostLimit = 400 * 1024 * 1024
+        // Ungefär åtta låtar à två sidor i full upplösning.
+        memory.totalCostLimit = 400 * 1024 * 1024
+        folder = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Sidor", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     }
 
-    /// Bredden (i pixlar) som låtvyn senast behövde – används när nästa låt ritas i förväg.
+    /// Bredden (i pixlar) som låtvyn behöver – sparas så att förberedelsen vet den direkt.
     var preferredWidth: Int {
-        get { lock.withLock { _preferredWidth } }
-        set { lock.withLock { _preferredWidth = newValue } }
+        get {
+            let stored = UserDefaults.standard.integer(forKey: "pdfPageWidth")
+            return stored > 0 ? stored : 2048
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "pdfPageWidth") }
     }
 
     /// Avrundas uppåt i steg om 256 pixlar så att små storleksändringar inte ritar om.
@@ -124,78 +140,146 @@ final class PDFPageRenderer: @unchecked Sendable {
 
     static func pageSizes(_ url: URL) -> [CGSize] {
         if let known = shared.lock.withLock({ shared.sizes[url] }) { return known }
-        guard let document = PDFCache.shared.document(for: url) else { return [] }
-        let found: [CGSize] = (0..<document.pageCount).compactMap { index in
-            guard let page = document.page(at: index) else { return nil }
-            let box = page.bounds(for: .cropBox)
-            return page.rotation % 180 == 0 ? box.size : CGSize(width: box.height, height: box.width)
+        guard let document = CGPDFDocument(url as CFURL) else { return [] }
+        let found: [CGSize] = (0..<document.numberOfPages).compactMap { index in
+            guard let page = document.page(at: index + 1) else { return nil }
+            let box = page.getBoxRect(.cropBox)
+            return page.rotationAngle % 180 == 0 ? box.size : CGSize(width: box.height, height: box.width)
         }
         shared.lock.withLock { shared.sizes[url] = found }
         return found
     }
 
-    func cachedPages(_ url: URL) -> [UIImage]? {
-        cache.object(forKey: url as NSURL)?.pages
+    func cachedPages(_ url: URL, count: Int) -> [Int: UIImage] {
+        var pages: [Int: UIImage] = [:]
+        for index in 0..<count {
+            if let rendered = memory.object(forKey: Self.key(url, index)) { pages[index] = rendered.image }
+        }
+        return pages
     }
 
-    func pages(for url: URL, pixelWidth: Int) async -> [UIImage] {
-        if let cached = cache.object(forKey: url as NSURL), cached.width >= pixelWidth { return cached.pages }
-        let key = "\(url.path)#\(pixelWidth)"
-        let task: Task<[UIImage], Never> = lock.withLock {
-            if let running = inFlight[key] { return running }
-            let task = Task.detached(priority: .userInitiated) { [self] () -> [UIImage] in
-                let pages = Self.render(url, pixelWidth: pixelWidth)
-                let cost = pages.reduce(0) { $0 + Int($1.size.width * $1.size.height * 4) }
-                if !pages.isEmpty {
-                    cache.setObject(Rendered(width: pixelWidth, pages: pages), forKey: url as NSURL, cost: cost)
+    /// En sida: ur minnet, från disken eller nyritad.
+    func page(_ url: URL, index: Int, pixelWidth: Int) async -> UIImage? {
+        let key = Self.key(url, index)
+        if let rendered = memory.object(forKey: key), rendered.width >= pixelWidth { return rendered.image }
+        let flightKey = "\(key)#\(pixelWidth)"
+        let task: Task<UIImage?, Never> = lock.withLock {
+            if let running = inFlight[flightKey] { return running }
+            let task = Task.detached(priority: .userInitiated) { [self] () -> UIImage? in
+                let file = diskURL(url, index)
+                var image = Self.load(file, minWidth: pixelWidth)
+                if image == nil, let rendered = Self.render(url, index: index, pixelWidth: pixelWidth) {
+                    Self.save(rendered, to: file)
+                    image = rendered
                 }
-                lock.withLock { inFlight[key] = nil }
-                return pages
+                if let image {
+                    let cost = Int(image.size.width * image.size.height * 4)
+                    memory.setObject(Rendered(width: Int(image.size.width), image: image), forKey: key, cost: cost)
+                }
+                lock.withLock { inFlight[flightKey] = nil }
+                return image
             }
-            inFlight[key] = task
+            inFlight[flightKey] = task
             return task
         }
         return await task.value
     }
 
-    /// Ritar nästa/förra låten i förväg.
+    /// Nästa/förra låten läggs färdig i minnet.
     func preload(_ url: URL) {
         let width = preferredWidth
-        if let cached = cache.object(forKey: url as NSURL), cached.width >= width { return }
         Task.detached(priority: .utility) { [self] in
-            _ = await pages(for: url, pixelWidth: width)
+            for index in Self.pageSizes(url).indices {
+                _ = await page(url, index: index, pixelWidth: width)
+            }
         }
     }
 
-    private static func render(_ url: URL, pixelWidth: Int) -> [UIImage] {
-        // Egen kopia av dokumentet: PDFKit ska inte användas från två trådar samtidigt.
-        guard let document = CGPDFDocument(url as CFURL) else { return [] }
-        var images: [UIImage] = []
-        for number in 1...max(document.numberOfPages, 1) {
-            guard let page = document.page(at: number) else { continue }
-            let box = page.getBoxRect(.cropBox)
-            let rotated = page.rotationAngle % 180 != 0
-            let pageSize = rotated ? CGSize(width: box.height, height: box.width) : box.size
-            guard pageSize.width > 0, pageSize.height > 0 else { continue }
-            let scale = CGFloat(pixelWidth) / pageSize.width
-            let size = CGSize(width: CGFloat(pixelWidth), height: (pageSize.height * scale).rounded())
-            let format = UIGraphicsImageRendererFormat()
-            format.scale = 1
-            format.opaque = true
-            let image = UIGraphicsImageRenderer(size: size, format: format).image { context in
-                UIColor.white.setFill()
-                context.fill(CGRect(origin: .zero, size: size))
-                let cg = context.cgContext
-                cg.translateBy(x: 0, y: size.height)
-                cg.scaleBy(x: scale, y: -scale)
-                // Vrider och flyttar sidan rätt (sidans storlek = målrutan, så ingen skalning här).
-                cg.concatenate(page.getDrawingTransform(.cropBox, rect: CGRect(origin: .zero, size: pageSize), rotate: 0, preserveAspectRatio: true))
-                cg.interpolationQuality = .high
-                cg.setRenderingIntent(.defaultIntent)
-                cg.drawPDFPage(page)
-            }
-            images.append(image)
+    /// Ritar låtarna till disken i bakgrunden. `first` = före allt annat (t.ex. en låtlista).
+    func prepare(_ urls: [URL], first: Bool = false) {
+        let start: Bool = lock.withLock {
+            let wanted = Set(urls)
+            queue.removeAll(where: wanted.contains)
+            if first { queue.insert(contentsOf: urls, at: 0) } else { queue.append(contentsOf: urls) }
+            guard !working else { return false }
+            working = true
+            return true
         }
-        return images
+        guard start else { return }
+        Task.detached(priority: .background) { [self] in
+            while let url = lock.withLock({ queue.isEmpty ? nil : queue.removeFirst() }) {
+                let width = preferredWidth
+                for index in Self.pageSizes(url).indices {
+                    let file = diskURL(url, index)
+                    if Self.storedWidth(file) >= width { continue }
+                    if let image = Self.render(url, index: index, pixelWidth: width) {
+                        Self.save(image, to: file)
+                    }
+                    // Lämna plats åt det man gör i appen under tiden.
+                    try? await Task.sleep(for: .milliseconds(40))
+                }
+            }
+            lock.withLock { working = false }
+        }
+    }
+
+    /// Tar bort de sparade sidorna när en låt tas bort.
+    func removeCache(forFileNamed name: String) {
+        let prefix = name + "-"
+        let files = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
+        for file in files where file.hasPrefix(prefix) {
+            try? FileManager.default.removeItem(at: folder.appendingPathComponent(file))
+        }
+    }
+
+    private static func key(_ url: URL, _ index: Int) -> NSString {
+        "\(url.lastPathComponent)-\(index)" as NSString
+    }
+
+    private func diskURL(_ url: URL, _ index: Int) -> URL {
+        folder.appendingPathComponent("\(url.lastPathComponent)-\(index).jpg")
+    }
+
+    private static func storedWidth(_ file: URL) -> Int {
+        guard let source = CGImageSourceCreateWithURL(file as CFURL, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else { return 0 }
+        return properties[kCGImagePropertyPixelWidth] as? Int ?? 0
+    }
+
+    /// Läser en sparad sida och packar upp den direkt (inte först när den visas).
+    private static func load(_ file: URL, minWidth: Int) -> UIImage? {
+        guard storedWidth(file) >= minWidth,
+              let source = CGImageSourceCreateWithURL(file as CFURL, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary)
+        else { return nil }
+        return UIImage(cgImage: image)
+    }
+
+    private static func save(_ image: UIImage, to file: URL) {
+        try? image.jpegData(compressionQuality: 0.85)?.write(to: file, options: .atomic)
+    }
+
+    private static func render(_ url: URL, index: Int, pixelWidth: Int) -> UIImage? {
+        guard let document = CGPDFDocument(url as CFURL), let page = document.page(at: index + 1) else { return nil }
+        let box = page.getBoxRect(.cropBox)
+        let rotated = page.rotationAngle % 180 != 0
+        let pageSize = rotated ? CGSize(width: box.height, height: box.width) : box.size
+        guard pageSize.width > 0, pageSize.height > 0 else { return nil }
+        let scale = CGFloat(pixelWidth) / pageSize.width
+        let size = CGSize(width: CGFloat(pixelWidth), height: (pageSize.height * scale).rounded())
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        return UIGraphicsImageRenderer(size: size, format: format).image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+            let cg = context.cgContext
+            cg.translateBy(x: 0, y: size.height)
+            cg.scaleBy(x: scale, y: -scale)
+            // Vrider och flyttar sidan rätt (sidans storlek = målrutan, så ingen skalning här).
+            cg.concatenate(page.getDrawingTransform(.cropBox, rect: CGRect(origin: .zero, size: pageSize), rotate: 0, preserveAspectRatio: true))
+            cg.interpolationQuality = .high
+            cg.drawPDFPage(page)
+        }
     }
 }

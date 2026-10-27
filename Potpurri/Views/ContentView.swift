@@ -111,6 +111,8 @@ struct ContentView: View {
         }
         // Låttexten i PDF:er och bilder läses ut i bakgrunden så att sökningen hittar den.
         .task(id: songs.count) {
+            // Alla PDF:er ritas en gång till färdiga sidor, så att varje låt öppnas direkt.
+            PDFPageRenderer.shared.prepare(songs.filter { $0.kind == .pdf }.map(\.fileURL))
             await SearchIndexer.run(songs: songs, progress: player.indexing)
         }
         .alert("Byt namn på låten", isPresented: Binding(get: { player.renamingSongID != nil }, set: { if !$0 { player.renamingSongID = nil } })) {
