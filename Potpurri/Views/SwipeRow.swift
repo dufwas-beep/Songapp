@@ -1,14 +1,17 @@
 import SwiftUI
 
 /// Svep på en rad: åt vänster visas Ta bort (svep hela vägen = ta bort direkt),
-/// åt höger visas knapparna i `leading`.
+/// åt höger visas knapparna i `leading` (svep hela vägen = `onFullSwipeRight`, t.ex. Lådan).
 struct SwipeRow<Leading: View>: ViewModifier {
     let canDelete: Bool
     let onDelete: () -> Void
+    var onFullSwipeRight: (() -> Void)? = nil
     @ViewBuilder let leading: (_ close: @escaping () -> Void) -> Leading
     @State private var offset: CGFloat = 0
     @State private var start: CGFloat?
     @State private var horizontal: Bool?
+    /// Raden flyger iväg åt höger (mot Lådan) och tonar sedan tillbaka.
+    @State private var flying = false
 
     private static var leadingWidth: CGFloat { SwipeButtonLabel.width }
     private static var deleteWidth: CGFloat { SwipeButtonLabel.width }
@@ -16,6 +19,7 @@ struct SwipeRow<Leading: View>: ViewModifier {
     func body(content: Content) -> some View {
         content
             .offset(x: offset)
+            .opacity(flying ? 0 : 1)
             // När raden är uppsvept stänger ett tryck den i stället för att öppna låten.
             .overlay {
                 if offset != 0 {
@@ -49,7 +53,8 @@ struct SwipeRow<Leading: View>: ViewModifier {
                         let begin = start ?? offset
                         start = begin
                         let maxLeft: CGFloat = canDelete ? -320 : 0
-                        offset = min(max(begin + value.translation.width, maxLeft), Self.leadingWidth + 40)
+                        let maxRight: CGFloat = onFullSwipeRight == nil ? Self.leadingWidth + 40 : 400
+                        offset = min(max(begin + value.translation.width, maxLeft), maxRight)
                     }
                     .onEnded { _ in
                         defer {
@@ -57,6 +62,10 @@ struct SwipeRow<Leading: View>: ViewModifier {
                             horizontal = nil
                         }
                         guard horizontal == true else { return }
+                        if let onFullSwipeRight, offset > 200 {
+                            flyAway(onFullSwipeRight)
+                            return
+                        }
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
                             if offset < -220 {
                                 offset = 0
@@ -71,6 +80,21 @@ struct SwipeRow<Leading: View>: ViewModifier {
                         }
                     }
             )
+    }
+
+    /// Raden glider ut åt höger och tonar bort, Lådan öppnas, och raden tonar tillbaka.
+    private func flyAway(_ action: @escaping () -> Void) {
+        withAnimation(.easeIn(duration: 0.22)) {
+            offset = 700
+            flying = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            action()
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) { offset = 0 }
+            withAnimation(.easeOut(duration: 0.35).delay(0.15)) { flying = false }
+        }
     }
 
     private func close() {

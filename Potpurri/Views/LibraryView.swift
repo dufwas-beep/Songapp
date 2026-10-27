@@ -359,6 +359,7 @@ struct LibraryView: View {
         .modifier(SwipeRow(
             canDelete: !player.isLocked,
             onDelete: { delete(song) },
+            onFullSwipeRight: { putInDrawer(song) },
             leading: { close in
                 SwipeButton(title: "Lådan", systemImage: "tray.and.arrow.down", color: .accentColor) {
                     close()

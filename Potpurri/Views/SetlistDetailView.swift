@@ -307,6 +307,12 @@ struct SetlistDetailView: View {
             .modifier(SwipeRow(
                 canDelete: !player.isLocked,
                 onDelete: { remove(at: row.id) },
+                onFullSwipeRight: songsByID[id].map { song in
+                    {
+                        player.drawerSongID = song.id
+                        withAnimation(.spring(response: 0.55, dampingFraction: 1)) { player.drawerOpen = true }
+                    }
+                },
                 leading: { close in
                     if let song = songsByID[id] {
                         SwipeButton(title: "Lådan", systemImage: "tray.and.arrow.down", color: .accentColor) {
