@@ -77,7 +77,8 @@ struct LibraryView: View {
     private var visibleSongs: [Song] {
         let q = query.trimmingCharacters(in: .whitespaces)
         // Sökningen träffar både titel och låttext (även utläst ur PDF:er och bilder).
-        var filtered = q.isEmpty ? songs : songs.filter { $0.matches(q) }
+        // Korta sökningar (1–2 tecken) gäller bara titeln, annars träffar allt.
+        var filtered = q.isEmpty ? songs : songs.filter { q.count < 3 ? $0.title.range(of: q, options: [.caseInsensitive, .diacriticInsensitive]) != nil : $0.matches(q) }
         if !colorFilter.isEmpty {
             filtered = filtered.filter { !colorFilter.isDisjoint(with: $0.colorTags) }
         }
@@ -91,6 +92,20 @@ struct LibraryView: View {
             sorted = filtered.sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
         case .mostPlayed:
             sorted = filtered.sorted { $0.playCount != $1.playCount ? $0.playCount > $1.playCount : Song.swedishOrder($0, $1) }
+        }
+        if !q.isEmpty {
+            // Bäst träff först: titeln börjar med sökningen, sedan ett ord i titeln,
+            // sedan någonstans i titeln och sist bara i låttexten.
+            let rank = { (song: Song) -> Int in
+                let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive, .anchored]
+                if song.title.range(of: q, options: options) != nil { return 0 }
+                if song.title.split(separator: " ").contains(where: { String($0).range(of: q, options: options) != nil }) { return 1 }
+                if song.title.range(of: q, options: [.caseInsensitive, .diacriticInsensitive]) != nil { return 2 }
+                return 3
+            }
+            return sorted.enumerated()
+                .sorted { rank($0.element) != rank($1.element) ? rank($0.element) < rank($1.element) : $0.offset < $1.offset }
+                .map(\.element)
         }
         guard !colorFilter.isEmpty else { return sorted }
         // Låtar med flest av de valda färgerna först, i övrigt vald sortering.
@@ -145,6 +160,16 @@ struct LibraryView: View {
                             .id(song.id)
                             .padding(.trailing, showsAlphabet ? 18 : 0)
                             .draggable("song:\(song.id.uuidString)")
+                            // Svep åt höger = lägg i Lådan.
+                            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                Button {
+                                    player.drawerSongID = song.id
+                                    withAnimation(.spring(response: 0.55, dampingFraction: 1)) { player.drawerOpen = true }
+                                } label: {
+                                    Label("Lådan", systemImage: "tray.and.arrow.down")
+                                }
+                                .tint(.accentColor)
+                            }
                             .contextMenu {
                                 Button {
                                     player.drawerSongID = song.id

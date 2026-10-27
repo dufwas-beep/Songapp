@@ -20,11 +20,21 @@ struct SoundboardColumn: View {
     var body: some View {
         VStack(spacing: 8) {
             if !player.isLocked {
-                Button(editing ? "Klar" : "Redigera") { editing.toggle() }
-                    .font(.footnote.weight(.semibold))
+                HStack(spacing: 6) {
+                    Button {
+                        importing = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.subheadline.weight(.bold))
+                            .frame(maxWidth: .infinity, minHeight: 30)
+                    }
                     .buttonStyle(.bordered)
-                    .tint(editing ? .accentColor : .secondary)
-                    .frame(maxWidth: .infinity)
+                    .accessibilityLabel("Lägg till ljud")
+                    Button(editing ? "Klar" : "Redigera") { editing.toggle() }
+                        .font(.footnote.weight(.semibold))
+                        .buttonStyle(.bordered)
+                        .tint(editing ? .accentColor : .secondary)
+                }
             }
             ScrollView {
                 VStack(spacing: 8) {
@@ -32,16 +42,32 @@ struct SoundboardColumn: View {
                         SoundButton(clip: clip, progress: engine.progress[clip.id], editing: editing) {
                             if editing { editingClip = clip } else { engine.toggle(clip) }
                         }
+                        // Håll in ett ljud: redigera eller ta bort direkt.
+                        .contextMenu {
+                            if !player.isLocked {
+                                Button {
+                                    editingClip = clip
+                                } label: {
+                                    Label("Redigera", systemImage: "slider.horizontal.3")
+                                }
+                                Button(role: .destructive) {
+                                    engine.stop(clip.id)
+                                    SongFileStore.delete(clip.fileName)
+                                    context.delete(clip)
+                                } label: {
+                                    Label("Ta bort ljudet", systemImage: "trash")
+                                }
+                            }
+                        }
+                    }
+                    if clips.isEmpty {
+                        Text("Tryck + för att lägga till ljud från Filer.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 8)
                     }
                     if editing {
-                        Button {
-                            importing = true
-                        } label: {
-                            Label("Ljud", systemImage: "plus")
-                                .font(.footnote.weight(.semibold))
-                                .frame(maxWidth: .infinity, minHeight: 44)
-                        }
-                        .buttonStyle(.bordered)
                         Button {
                             ordering = true
                         } label: {

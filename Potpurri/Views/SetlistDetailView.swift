@@ -283,8 +283,16 @@ struct SetlistDetailView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    // Håll in och dra till Lådan i låtvyn.
+                    // Håll in och dra till Lådan i låtvyn – eller svep åt höger.
                     .draggable("song:\(song.id.uuidString)")
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 30)
+                            .onEnded { value in
+                                guard value.translation.width > 90, abs(value.translation.height) < 40 else { return }
+                                player.drawerSongID = song.id
+                                withAnimation(.spring(response: 0.55, dampingFraction: 1)) { player.drawerOpen = true }
+                            }
+                    )
                     ColorDots(song: song, editable: colorMode, columns: columns)
                 } else {
                     Text("Låten finns inte längre i biblioteket")

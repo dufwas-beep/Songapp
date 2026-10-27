@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Vänsterspalten: LP-loggan, klockan och flikarna Låtlistor och Bibliotek.
 struct SidebarView: View {
@@ -6,6 +7,8 @@ struct SidebarView: View {
     @AppStorage("sidebarTab") private var tab = SidebarTab.setlists
     @AppStorage("suggestionsHeight") private var suggestionsHeight: Double = 260
     @State private var dragStartHeight: Double?
+    /// Medan tangentbordet är uppe (t.ex. vid sökning) döljs Next-rutan så att listan syns.
+    @State private var keyboardVisible = false
 
     enum SidebarTab: String {
         case setlists
@@ -24,6 +27,7 @@ struct SidebarView: View {
                 }
             }
             .frame(maxHeight: .infinity)
+            if !keyboardVisible {
             VStack(spacing: 10) {
                 // Dra i handtaget för att göra Next-rutan större eller mindre.
                 Capsule()
@@ -52,6 +56,13 @@ struct SidebarView: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 10)
             .background(.bar)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            withAnimation(.easeOut(duration: 0.2)) { keyboardVisible = true }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            withAnimation(.easeOut(duration: 0.2)) { keyboardVisible = false }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
             VStack(spacing: 12) {
