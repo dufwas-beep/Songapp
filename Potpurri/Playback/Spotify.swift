@@ -2,6 +2,7 @@ import AuthenticationServices
 import CryptoKit
 import Foundation
 import Observation
+import SwiftUI
 
 /// Spotify-knappen: ett tryck spelar, ett tryck pausar det Spotify redan spelar.
 /// Använder Spotifys Web API med inloggning en gång (PKCE, inget lösenord sparas i appen).
