@@ -147,32 +147,124 @@ struct PinButton: View {
     }
 }
 
-/// Längst ner i sidospalten: "Ny spelning" och hur många låtar som spelats ikväll.
+/// Längst ner i sidospalten: "Ny spelning", hur många låtar som spelats ikväll och en
+/// meny med kvällsloggar och säkerhetskopia.
 struct GigFooter: View {
     @Query private var songs: [Song]
     @Environment(Player.self) private var player
+    @Environment(ColorCodes.self) private var colorCodes
+    @Environment(\.modelContext) private var context
     @State private var confirming = false
+    @State private var showsLogs = false
+    @State private var backupProgress = TaskProgress()
+    @State private var exportedURL: URL?
+    @State private var importing = false
+    @State private var pendingRestore: (content: Backup.Content, archive: ZipArchive)?
+    @State private var message: String?
 
     var body: some View {
-        HStack(spacing: 12) {
-            Button {
-                confirming = true
-            } label: {
-                Text("Ny spelning")
-                    .frame(maxWidth: .infinity)
+        VStack(spacing: 8) {
+            if backupProgress.isRunning {
+                ProgressBanner(progress: backupProgress)
             }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.roundedRectangle(radius: 12))
-            .controlSize(.large)
-            let count = songs.filter(player.isPlayedTonight).count
-            Text(count == 1 ? "1 spelad" : "\(count) spelade")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            HStack(spacing: 12) {
+                Button {
+                    confirming = true
+                } label: {
+                    Text("Ny spelning")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.roundedRectangle(radius: 12))
+                .controlSize(.large)
+                let count = songs.filter(player.isPlayedTonight).count
+                Text(count == 1 ? "1 spelad" : "\(count) spelade")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Menu {
+                    Button {
+                        showsLogs = true
+                    } label: {
+                        Label("Kvällsloggar", systemImage: "music.note.list")
+                    }
+                    Divider()
+                    Button {
+                        Task { await export() }
+                    } label: {
+                        Label("Spara säkerhetskopia", systemImage: "externaldrive.badge.plus")
+                    }
+                    Button {
+                        importing = true
+                    } label: {
+                        Label("Läs in säkerhetskopia", systemImage: "externaldrive.badge.timemachine")
+                    }
+                    .disabled(player.isLocked)
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title3)
+                        .frame(width: 40, height: 40)
+                }
+                .disabled(backupProgress.isRunning)
+                .accessibilityLabel("Kvällsloggar och säkerhetskopia")
+            }
         }
         .confirmationDialog("Starta en ny spelning?", isPresented: $confirming, titleVisibility: .visible) {
             Button("Ny spelning") { player.newGig() }
         } message: {
-            Text("Gråmarkeringar och fästa förslag nollställs.")
+            Text("Gråmarkeringar och fästa förslag nollställs, och en ny kvällslogg börjar.")
+        }
+        .sheet(isPresented: $showsLogs) {
+            GigLogsView()
+        }
+        // Säkerhetskopian sparas där man väljer i Filer (t.ex. iCloud Drive eller Dropbox).
+        .fileMover(isPresented: Binding(get: { exportedURL != nil }, set: { if !$0 { exportedURL = nil } }), file: exportedURL) { result in
+            if case .success = result { message = "Säkerhetskopian är sparad." }
+        }
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.data]) { result in
+            guard case .success(let url) = result else { return }
+            Task {
+                do {
+                    pendingRestore = try await Task.detached { try Backup.read(url) }.value
+                } catch {
+                    message = "Filen kunde inte läsas som en säkerhetskopia från Potpurri."
+                }
+            }
+        }
+        .confirmationDialog(
+            "Ersätta allt med säkerhetskopian?",
+            isPresented: Binding(get: { pendingRestore != nil }, set: { if !$0 { pendingRestore = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Ersätt allt", role: .destructive) {
+                guard let pending = pendingRestore else { return }
+                Task {
+                    do {
+                        try await Backup.restore(pending.content, archive: pending.archive, context: context, colorCodes: colorCodes, progress: backupProgress)
+                        message = "Säkerhetskopian är inläst."
+                    } catch {
+                        message = "Det gick inte att läsa in säkerhetskopian: \(error.localizedDescription)"
+                    }
+                    pendingRestore = nil
+                }
+            }
+        } message: {
+            if let content = pendingRestore?.content {
+                Text("Kopian från \(content.created.formatted(date: .abbreviated, time: .shortened)) har \(content.songs.count) låtar och \(content.setlists.count) låtlistor. Allt som finns i appen nu ersätts.")
+            }
+        }
+        .alert("Säkerhetskopia", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(message ?? "")
+        }
+    }
+
+    private func export() async {
+        do {
+            try context.save()
+            exportedURL = try await Backup.export(context: context, colorNames: colorCodes.names, progress: backupProgress)
+        } catch {
+            message = "Säkerhetskopian kunde inte skapas: \(error.localizedDescription)"
         }
     }
 }

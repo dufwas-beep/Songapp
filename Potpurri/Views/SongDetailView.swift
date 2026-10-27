@@ -17,6 +17,7 @@ struct SongDetailView: View {
 
     @Environment(Player.self) private var player
     @Environment(SoundEngine.self) private var sounds
+    @Environment(\.undoManager) private var undoManager
     @State private var previewHeight: CGFloat = 320
     @State private var showsColors = false
     @State private var autoscroller = Autoscroller()
@@ -138,6 +139,7 @@ struct SongDetailView: View {
                 guard !Task.isCancelled else { return }
                 song.playCount += 1
                 song.lastPlayed = Date()
+                GigLogger.played(song, in: context, since: player.gigStart)
             }
         } else {
             // Ingen låt vald än: välkomstbild med loggan, men Spotify och ljudklippen
@@ -226,6 +228,18 @@ struct SongDetailView: View {
                 showsColors = true
             } label: {
                 Label("Färgkoder", systemImage: "paintpalette")
+            }
+            Divider()
+            // Ångra/gör om de senaste ändringarna (ackord, notes, markeringar, grupper …).
+            Button {
+                undoManager?.undo()
+            } label: {
+                Label("Ångra", systemImage: "arrow.uturn.backward")
+            }
+            Button {
+                undoManager?.redo()
+            } label: {
+                Label("Gör om", systemImage: "arrow.uturn.forward")
             }
             Divider()
             Button {
