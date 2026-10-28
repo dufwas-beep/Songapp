@@ -86,6 +86,12 @@ struct QuizPanel: View {
     @AppStorage("quizPanelOpen") private var open = true
     @Environment(Player.self) private var player
 
+    /// Ungefär så hög som listan är, men högst 340 punkter (sedan scrollar den).
+    private var listHeight: CGFloat {
+        let rows = CGFloat(max(quiz.quizSongIDs.count, 1)) * 37
+        return min(340, rows + (player.isLocked ? 8 : 46))
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
@@ -118,8 +124,7 @@ struct QuizPanel: View {
                     }
                     .padding(.horizontal, 14)
                 }
-                .frame(maxHeight: 340)
-                .fixedSize(horizontal: false, vertical: true)
+                .frame(height: listHeight)
             }
         }
         .frame(width: open ? 300 : 230)
