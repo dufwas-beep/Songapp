@@ -7,8 +7,13 @@ import UniformTypeIdentifiers
 struct RecordButton: View {
     @State private var recording = false
     @State private var message: String?
+    @AppStorage(Feature.record.key) private var enabled = true
 
     var body: some View {
+        if enabled { button }
+    }
+
+    private var button: some View {
         Button {
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                 recording = true

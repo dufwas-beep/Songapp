@@ -134,6 +134,15 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(backupProgress.isRunning)
+                Section {
+                    NavigationLink {
+                        FeaturesList()
+                    } label: {
+                        Label("Funktioner", systemImage: "switch.2")
+                    }
+                } footer: {
+                    Text("Stäng av delar du inte använder, så blir appen renare.")
+                }
                 Section("Hjälp") {
                     Button {
                         // Guiden visas ovanpå appen, så inställningarna stängs först.
@@ -255,6 +264,39 @@ struct SettingsView: View {
             exportedURL = try await Backup.export(context: context, colorNames: colorCodes.names, progress: backupProgress)
         } catch {
             message = "Säkerhetskopian kunde inte skapas: \(error.localizedDescription)"
+        }
+    }
+}
+
+/// Slå av och på delar av appen.
+private struct FeaturesList: View {
+    var body: some View {
+        Form {
+            Section {
+                ForEach(Feature.allCases) { feature in
+                    FeatureToggle(feature: feature)
+                }
+            } footer: {
+                Text("Det du stänger av döljs bara – inget tas bort, och allt kommer tillbaka när du slår på det igen.")
+            }
+        }
+        .navigationTitle("Funktioner")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct FeatureToggle: View {
+    let feature: Feature
+    @AppStorage private var isOn: Bool
+
+    init(feature: Feature) {
+        self.feature = feature
+        _isOn = AppStorage(wrappedValue: true, feature.key)
+    }
+
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            Label(feature.title, systemImage: feature.symbol)
         }
     }
 }

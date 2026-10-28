@@ -34,6 +34,13 @@ struct SongDetailView: View {
     @State private var shownSong: Song?
     @State private var restoredSongID: UUID?
     @State private var sharing: Set<UUID>?
+    // Funktioner som går att stänga av under kugghjulet.
+    @AppStorage(Feature.soundboard.key) private var soundboardOn = true
+    @AppStorage(Feature.drawer.key) private var drawerOn = true
+    @AppStorage(Feature.notes.key) private var notesFeature = true
+    @AppStorage(Feature.pen.key) private var penFeature = true
+    @AppStorage(Feature.markers.key) private var markersFeature = true
+    @AppStorage(Feature.chords.key) private var chordsFeature = true
 
     var body: some View {
         if let song {
@@ -66,7 +73,7 @@ struct SongDetailView: View {
                         .id(song.id)
                     HStack(alignment: .center, spacing: 12) {
                         SpotifyButton()
-                        soundboardButton
+                        if soundboardOn { soundboardButton }
                         if !player.isLocked {
                             moreMenu(for: song)
                         }
@@ -79,9 +86,11 @@ struct SongDetailView: View {
                 }
                 // Lådan i högerkanten (till vänster om soundboarden när den är öppen).
                 .overlay(alignment: .trailing) {
-                    GeometryReader { proxy in
-                        DrawerView(width: min(520, proxy.size.width * 0.48))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                    if drawerOn {
+                        GeometryReader { proxy in
+                            DrawerView(width: min(520, proxy.size.width * 0.48))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                        }
                     }
                 }
                 .clipped()
@@ -109,7 +118,7 @@ struct SongDetailView: View {
                     }
                 }
             }
-            if player.soundboardOpen {
+            if player.soundboardOpen && soundboardOn {
                 SoundboardColumn(engine: sounds)
                     .transition(.move(edge: .trailing))
             }
@@ -193,11 +202,11 @@ struct SongDetailView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     HStack(spacing: 12) {
                         SpotifyButton()
-                        soundboardButton
+                        if soundboardOn { soundboardButton }
                     }
                     .padding(24)
                 }
-                if player.soundboardOpen {
+                if player.soundboardOpen && soundboardOn {
                     SoundboardColumn(engine: sounds)
                         .transition(.move(edge: .trailing))
                 }
@@ -226,6 +235,7 @@ struct SongDetailView: View {
     /// Menyn ⋯ nere till höger (som i skissen): notes, hopplinjer, penna och färgkoder.
     private func moreMenu(for song: Song) -> some View {
         Menu {
+            if notesFeature {
             Button {
                 let note = SongNote(songID: song.id, text: "Ny note", x: 0.55, y: geometry.visibleTop + 0.06, width: 0.3, height: 0.1)
                 context.insert(note)
@@ -239,6 +249,8 @@ struct SongDetailView: View {
             } label: {
                 Label(player.notesHidden ? "Visa notes" : "Dölj notes", systemImage: player.notesHidden ? "eye" : "eye.slash")
             }
+            }
+            if markersFeature {
             Button {
                 player.showsMarkers = true
                 player.editingMarkers = true
@@ -246,18 +258,23 @@ struct SongDetailView: View {
             } label: {
                 Label("Hopplinjer", systemImage: "arrow.down.to.line")
             }
+            }
+            if penFeature {
             Button {
                 player.pen = .color(NoteColors.pens[0])
                 player.chordsOn = false
             } label: {
                 Label("Markeringspenna", systemImage: "highlighter")
             }
+            }
+            if chordsFeature {
             Button {
                 player.chordsOn = true
                 player.pen = .off
                 player.editingMarkers = false
             } label: {
                 Label("Ackord", systemImage: "music.note")
+            }
             }
             if song.autoscrollSeconds == nil {
                 Button {

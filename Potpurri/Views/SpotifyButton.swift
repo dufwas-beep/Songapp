@@ -9,7 +9,14 @@ struct SpotifyButton: View {
     @State private var showsSetup = false
     @Environment(\.scenePhase) private var scenePhase
 
+    @AppStorage(Feature.spotify.key) private var enabled = true
+
     var body: some View {
+        // Går att stänga av under kugghjulet → Funktioner.
+        if enabled { controls }
+    }
+
+    private var controls: some View {
         HStack(spacing: 2) {
             skipButton(-1)
             Button {

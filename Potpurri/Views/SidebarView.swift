@@ -7,6 +7,8 @@ struct SidebarView: View {
     @AppStorage("sidebarTab") private var tab = SidebarTab.setlists
     /// Medan tangentbordet är uppe (t.ex. vid sökning) döljs Next-rutan så att listan syns.
     @State private var keyboardVisible = false
+    @AppStorage(Feature.next.key) private var nextOn = true
+    @AppStorage(Feature.quiz.key) private var quizOn = true
 
     enum SidebarTab: String {
         case setlists
@@ -24,12 +26,20 @@ struct SidebarView: View {
                 case .library:
                     LibraryView()
                 case .quiz:
-                    LibraryView(quizOnly: true)
+                    LibraryView(quizOnly: quizOn)
                 }
             }
             .frame(maxHeight: .infinity)
             if !keyboardVisible {
-                NextPanel(selection: selection)
+                if nextOn {
+                    NextPanel(selection: selection)
+                } else {
+                    // Utan Next finns ändå Ny spelning, paus och idélådan kvar.
+                    GigFooter()
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(.bar)
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
@@ -44,7 +54,9 @@ struct SidebarView: View {
                 Picker("Visa", selection: $tab) {
                     Text("Låtlistor").tag(SidebarTab.setlists)
                     Text("Bibliotek").tag(SidebarTab.library)
-                    Text("Quiz").tag(SidebarTab.quiz)
+                    if quizOn {
+                        Text("Quiz").tag(SidebarTab.quiz)
+                    }
                 }
                 .pickerStyle(.segmented)
                 .guideSpot(.tabs)
@@ -55,6 +67,8 @@ struct SidebarView: View {
             .background(.bar)
         }
         .toolbar(.hidden, for: .navigationBar)
+        .onAppear { if tab == .quiz && !quizOn { tab = .library } }
+        .onChange(of: quizOn) { _, on in if !on && tab == .quiz { tab = .library } }
     }
 }
 
@@ -136,8 +150,13 @@ private struct SidebarHeader: View {
 struct SetTimerButton: View {
     @Environment(Player.self) private var player
     @State private var showsPicker = false
+    @AppStorage(Feature.timer.key) private var enabled = true
 
     var body: some View {
+        if enabled { button }
+    }
+
+    private var button: some View {
         Button {
             showsPicker = true
         } label: {

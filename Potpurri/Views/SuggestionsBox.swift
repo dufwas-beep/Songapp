@@ -186,6 +186,8 @@ struct GigFooter: View {
     @Environment(Player.self) private var player
     @State private var confirming = false
     @State private var showsIdeas = false
+    @AppStorage(Feature.pause.key) private var pauseOn = true
+    @AppStorage(Feature.ideas.key) private var ideasOn = true
 
     var body: some View {
         HStack(spacing: 12) {
@@ -203,30 +205,34 @@ struct GigFooter: View {
             Text(count == 1 ? "1 spelad" : "\(count) spelade")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-            // Paus: skärmsläckaren med skivspelaren.
-            Button {
-                withAnimation(.easeIn(duration: 0.4)) { player.screensaverOn = true }
-            } label: {
-                Image(systemName: "cup.and.saucer")
-                    .font(.system(size: 17, weight: .semibold))
-                    .frame(width: 44, height: 44)
+            // Paus: skärmsläckaren med skivan.
+            if pauseOn {
+                Button {
+                    withAnimation(.easeIn(duration: 0.4)) { player.screensaverOn = true }
+                } label: {
+                    Image(systemName: "cup.and.saucer")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.circle)
+                .guideSpot(.pause)
+                .accessibilityLabel("Paus – skärmsläckare")
             }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.circle)
-            .guideSpot(.pause)
-            .accessibilityLabel("Paus – skärmsläckare")
             // Idélådan: låtförslag, saker att köpa, testa …
-            Button {
-                showsIdeas = true
-            } label: {
-                Image(systemName: "lightbulb")
-                    .font(.system(size: 17, weight: .semibold))
-                    .frame(width: 44, height: 44)
+            if ideasOn {
+                Button {
+                    showsIdeas = true
+                } label: {
+                    Image(systemName: "lightbulb")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.circle)
+                .guideSpot(.ideas)
+                .accessibilityLabel("Idélådan")
             }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.circle)
-            .guideSpot(.ideas)
-            .accessibilityLabel("Idélådan")
         }
         .sheet(isPresented: $showsIdeas) {
             IdeaBoxView()
