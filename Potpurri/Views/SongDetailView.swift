@@ -160,10 +160,7 @@ struct SongDetailView: View {
             HStack(spacing: 0) {
                 ZStack(alignment: .bottomTrailing) {
                     VStack(spacing: 18) {
-                        Image("LPLogo")
-                            .resizable()
-                            .frame(width: 180, height: 180)
-                            .shadow(color: .black.opacity(0.25), radius: 14, y: 8)
+                        ScratchRecord()
                         Text("Hej!")
                             .font(.system(size: 44, weight: .semibold))
                         Text("Välj en låt så kör vi!")

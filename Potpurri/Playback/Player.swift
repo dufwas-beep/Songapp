@@ -67,6 +67,8 @@ final class Player {
     var lotteryHighlight: UUID?
     /// Ökar vid dubbeltryck på LP:n – duvan flyger.
     var doveFlights = 0
+    /// Skärmsläckaren (pausen) visas.
+    var screensaverOn = false
     /// Snabb snurr på LP:n (t.ex. vid "Ny spelning").
     var spinBurst = 0
     /// Noten som redigeras just nu.

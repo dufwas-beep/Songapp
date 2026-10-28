@@ -114,6 +114,12 @@ struct ContentView: View {
             LaunchAnimation()
         }
         .overlay {
+            if player.screensaverOn {
+                ScreensaverView { player.screensaverOn = false }
+                    .transition(.opacity)
+            }
+        }
+        .overlay {
             if let doveStart {
                 DoveFlight(start: doveStart)
                     .id(doveStart)

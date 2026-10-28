@@ -201,6 +201,17 @@ struct GigFooter: View {
             Text(count == 1 ? "1 spelad" : "\(count) spelade")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+            // Paus: skärmsläckaren med skivspelaren.
+            Button {
+                withAnimation(.easeIn(duration: 0.4)) { player.screensaverOn = true }
+            } label: {
+                Image(systemName: "cup.and.saucer")
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
+            .accessibilityLabel("Paus – skärmsläckare")
         }
         .confirmationDialog("Starta en ny spelning?", isPresented: $confirming, titleVisibility: .visible) {
             Button("Ny spelning") { player.newGig() }

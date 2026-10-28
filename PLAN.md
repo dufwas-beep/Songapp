@@ -489,16 +489,17 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 - Dela från Apples Anteckningar direkt till Potpurri (delningstillägg). Väntar på det betalda utvecklarkontot: tillägget och appen behöver en gemensam App Group, och det stöds inte med ett gratiskonto. Tills dess: Kopiera i Anteckningar → Ny låt → Klistra in.
 
 **Paket 4 – kul och snyggt**
-- Realistisk duva som flyger snyggt inom bilden.
-- Scratcha på LP:n på välkomstsidan, med ljud.
-- Skärmsläckare: loggan snurrar på en LP-spelare, tryck = snurrar in till loggans plats.
-- Guiden i två varianter: kort (det unika: Next, hopplinjer, soundboard, ackord, kategorier, Lådan) och lång.
+- ✅ Duvan ritas som vektorgrafik (grå duva med skimrande hals, svartbandad stjärt, vingband) med mjuka vingslag, glid och broms före landning. Flyger en mjuk slinga som alltid håller sig innanför skärmen.
+- ✅ Scratcha på LP:n på välkomstsidan: dra runt skivan, ljudet följer fart och riktning (framåt/bakåt).
+- ✅ Skärmsläckare (koppen bredvid Ny spelning): loggan snurrar på en skivspelare med klockan under. Tryck = snurrar fort, krymper och lägger sig på loggans plats.
+- ✅ Guiden börjar med ett val: Snabbintro (Next, hopplinjer, soundboard, ackord, kategorier, Lådan) eller Hela guiden.
 
 **Paket 5 – större funktioner**
 - Webbsökningen i större ruta (helskärm).
 - Flytande appfönster ovanpå (t.ex. Spotify) – styrs av iPadOS; kontrollera att Potpurri tillåter det.
 - Dela låtar via AirDrop till någon annans Potpurri, med kategorier, ackord och lappar.
 - Rec-knapp: spela in film med främre eller bakre kameran.
+- Quiz-meny: i varje quiz/HLS (t.ex. HLS 45) en meny med låtarna som ska vara med i quizet; man lägger till låtar under quizet. Går att minimera.
 
 **Extra**
 - ✅ Fliken Quiz bredvid Låtlistor och Bibliotek: alla låtar/anteckningar som heter något med "Quiz" eller "HLS" (sök, sortering och kategorier fungerar som i biblioteket).
