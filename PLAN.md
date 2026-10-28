@@ -476,12 +476,12 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 - ✅ Ny spelning börjar av sig själv nästa dag efter kl. 06.
 
 **Paket 2 – bibliotek och låtblad**
-- Sidospalten går att göra bredare/smalare.
-- Markerade låtar (kryssrutorna): meny för att färga, ta bort, lägga i låtlista.
-- Filtrera bibliotek och låtlistor på färg som i Next, tydlig "Visa alla".
-- Färger byter namn till **Kategorier**. Upp till 7 kategorier (5 rekommenderat).
-- Svart bakgrund på låtbladet i mörkt läge (PDF:er inverteras, bilder inte).
-- Halvera utrymmet ovanför låten och lägg Nästa-menyn där.
+- ✅ Sidospalten går att göra bredare/smalare (liggande: dra i handtaget vid kanten, 300–640 punkter).
+- ✅ Markerade låtar (kryssrutorna i kategoriläget): "Markera alla" och menyn Gör → Kategori, Lägg i låtlista, Ta bort (ur listan).
+- ✅ Filtrera bibliotek och låtlistor: tryck på en kategorirubrik (som i Next). En rosa rad visar filtret och har "Visa alla". Färgknapparna ovanför biblioteket är borttagna.
+- ✅ Färger heter **Kategorier**. Upp till 7 (5 rekommenderas) – antal och namn ändras med pennan i kategoriläget. Nya färger: röd och turkos.
+- ✅ Mörkt låtblad i mörkt/grått läge: PDF-sidor inverteras (färger behåller ungefär sin ton), bilder visas som de är.
+- ✅ Lägre rad överst i låtvyn (egen i stället för iPadens): knapp för listorna, låtens namn, scenlås, förra/nästa och kugghjulet. Klockan visas där när listorna är dolda.
 
 **Paket 3 – text**
 - Ny låt från grunden (klistra in text, spara, kategorier).

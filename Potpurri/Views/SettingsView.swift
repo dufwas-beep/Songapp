@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 
 /// Kugghjulet uppe till höger – öppnar inställningarna.
 struct SettingsButton: View {
+    var size: CGFloat = 44
     @State private var showsSettings = false
 
     var body: some View {
@@ -11,11 +12,11 @@ struct SettingsButton: View {
             showsSettings = true
         } label: {
             Image(systemName: "gearshape")
-                .font(.system(size: 20, weight: .semibold))
-                .frame(width: 44, height: 44)
+                .font(.system(size: size * 0.42, weight: .semibold))
+                .frame(width: size, height: size)
+                .background(.regularMaterial, in: Circle())
         }
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.circle)
+        .buttonStyle(.plain)
         .accessibilityLabel("Inställningar")
         .sheet(isPresented: $showsSettings) {
             SettingsView()

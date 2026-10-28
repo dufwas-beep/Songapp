@@ -115,7 +115,7 @@ enum Backup {
             progress.done += 1
         }
 
-        if content.colorNames.count == ColorCodes.count { colorCodes.names = content.colorNames }
+        if !content.colorNames.isEmpty { colorCodes.names = ColorCodes.filled(content.colorNames) }
         for item in content.songs {
             let song = Song(title: item.title, kind: SongKind(rawValue: item.kindRaw) ?? .pdf, fileName: item.fileName, text: item.text, key: item.key, importedNote: item.importedNote)
             song.id = item.id; song.kindRaw = item.kindRaw; song.dateAdded = item.dateAdded

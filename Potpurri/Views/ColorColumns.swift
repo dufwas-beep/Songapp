@@ -1,15 +1,18 @@
 import SwiftData
 import SwiftUI
 
-/// Rubriken ovanför färgkolumnerna: knappen "Färger" (färgläge) och färgernas namn.
-/// I färgläget: tryck på en rubrik = ge alla ikryssade låtar färgen (eller ta bort den
-/// om alla redan har den). Håll in en rubrik för att byta namn på färgen.
+/// Rubriken ovanför kategorikolumnerna: knappen "Kategorier" (kategoriläget) och namnen.
+/// Vanligt läge: tryck på en rubrik = visa bara låtar i den kategorin (som i Next).
+/// Kategoriläget: tryck på en rubrik = ge alla ikryssade låtar kategorin (eller ta bort
+/// den om alla redan har den). Håll in en rubrik för att byta namn.
 struct ColorColumnsHeader: View {
     @Binding var colorMode: Bool
     /// Kolumnerna som visas (se `visibleColorColumns`).
     let columns: [Int]
     /// Avståndet till högerkanten – samma som raderna under, så att kolumnerna linjerar.
     var trailing: CGFloat = 20
+    /// Kategorierna man filtrerar på (tom = alla låtar).
+    @Binding var filter: Set<Int>
     let onColumnTap: (Int) -> Void
 
     @Environment(ColorCodes.self) private var codes
@@ -25,7 +28,7 @@ struct ColorColumnsHeader: View {
             Button {
                 withAnimation { colorMode.toggle() }
             } label: {
-                Label(colorMode ? "Klar" : "Färger", systemImage: colorMode ? "checkmark" : "paintpalette")
+                Label(colorMode ? "Klar" : "Kategorier", systemImage: colorMode ? "checkmark" : "tag")
                     .font(.footnote.weight(.medium))
             }
             .buttonStyle(.bordered)
@@ -38,31 +41,34 @@ struct ColorColumnsHeader: View {
                 Button {
                     showsNames = true
                 } label: {
-                    Label("Byt namn", systemImage: "pencil")
-                        .font(.footnote.weight(.medium))
+                    Image(systemName: "pencil")
+                        .font(.footnote.weight(.semibold))
                 }
                 .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
+                .buttonBorderShape(.circle)
                 .controlSize(.small)
                 .padding(.leading, 6)
                 .padding(.bottom, 4)
+                .accessibilityLabel("Kategoriernas namn och antal")
                 Button(role: .destructive) {
                     confirmsClear = true
                 } label: {
-                    Label("Rensa", systemImage: "eraser")
-                        .font(.footnote.weight(.medium))
+                    Image(systemName: "eraser")
+                        .font(.footnote.weight(.semibold))
                 }
                 .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
+                .buttonBorderShape(.circle)
                 .controlSize(.small)
                 .padding(.leading, 6)
                 .padding(.bottom, 4)
+                .accessibilityLabel("Rensa alla kategorier")
             }
             Spacer()
             ForEach(columns, id: \.self) { index in
+                let isOn = filter.contains(index)
                 VStack(spacing: 4) {
                     Text(codes.names[index])
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 10, weight: isOn ? .bold : .semibold))
                         .lineLimit(1)
                         .fixedSize()
                         .rotationEffect(.degrees(-90))
@@ -71,18 +77,27 @@ struct ColorColumnsHeader: View {
                         .fill(ColorCodes.colors[index])
                         .frame(width: 16, height: 3)
                 }
+                .background(isOn && !colorMode ? ColorCodes.colors[index].opacity(0.3) : .clear, in: RoundedRectangle(cornerRadius: 6))
+                .opacity(filter.isEmpty || isOn || colorMode ? 1 : 0.4)
                 .overlay(alignment: .leading) { ColumnLine() }
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    if colorMode { onColumnTap(index) }
+                    if colorMode {
+                        onColumnTap(index)
+                    } else if isOn {
+                        filter.remove(index)
+                    } else {
+                        filter.insert(index)
+                    }
                 }
                 .onLongPressGesture {
                     guard !player.isLocked else { return }
                     draft = codes.names[index]
                     renaming = index
                 }
-                .accessibilityLabel("Färgkod \(codes.names[index])")
-                .accessibilityHint("Håll in för att byta namn")
+                .accessibilityLabel("Kategori \(codes.names[index])")
+                .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
+                .accessibilityHint(colorMode ? "Ger de markerade låtarna kategorin" : "Visar bara låtar i kategorin. Håll in för att byta namn")
             }
         }
         .padding(.leading, 16)
@@ -90,12 +105,12 @@ struct ColorColumnsHeader: View {
         .sheet(isPresented: $showsNames) {
             ColorNamesSheet()
         }
-        .confirmationDialog("Ta bort alla färgmarkeringar?", isPresented: $confirmsClear, titleVisibility: .visible) {
-            Button("Rensa alla färgmarkeringar", role: .destructive) { clearAllColors() }
+        .confirmationDialog("Ta bort alla kategorimarkeringar?", isPresented: $confirmsClear, titleVisibility: .visible) {
+            Button("Rensa alla kategorier", role: .destructive) { clearAllColors() }
         } message: {
-            Text("Alla låtar i hela biblioteket blir utan färger. Det går inte att ångra.")
+            Text("Alla låtar i hela biblioteket blir utan kategorier. Det går inte att ångra.")
         }
-        .alert("Byt namn på färgen", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+        .alert("Byt namn på kategorin", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Namn", text: $draft)
             Button("Avbryt", role: .cancel) {}
             Button("Spara") {
@@ -108,7 +123,7 @@ struct ColorColumnsHeader: View {
 }
 
 extension ColorColumnsHeader {
-    /// Tar bort alla färgmarkeringar från alla låtar.
+    /// Tar bort alla kategorimarkeringar från alla låtar.
     private func clearAllColors() {
         let all = (try? context.fetch(FetchDescriptor<Song>())) ?? []
         for song in all where !song.colorTags.isEmpty {
@@ -116,30 +131,150 @@ extension ColorColumnsHeader {
         }
         try? context.save()
         player.activeColors = []
+        filter = []
     }
 }
 
-/// Byt namn på alla fem färgerna på ett ställe.
+/// Visas när listan är filtrerad på kategorier: tydligt att alla låtar inte syns, och
+/// en knapp som tar tillbaka hela listan.
+struct CategoryFilterBar: View {
+    let filter: Set<Int>
+    let shown: Int
+    let total: Int
+    let onClear: () -> Void
+    @Environment(ColorCodes.self) private var codes
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                .foregroundStyle(Color.accentColor)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Bara " + filter.sorted().map { codes.names[$0] }.joined(separator: ", "))
+                    .font(.footnote.weight(.semibold))
+                    .lineLimit(1)
+                Text("\(shown) av \(total) låtar")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 4)
+            Button("Visa alla", action: onClear)
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(.small)
+                .foregroundStyle(.black)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 6)
+        .background(Color.accentColor.opacity(0.18))
+    }
+}
+
+/// I kategoriläget: vad som ska göras med de ikryssade låtarna.
+struct CheckedActionsBar: View {
+    let checkedCount: Int
+    let totalCount: Int
+    let onSelectAll: () -> Void
+    let onSelectNone: () -> Void
+    let onCategory: (Int) -> Void
+    let onAddToSetlist: (Setlist) -> Void
+    /// T.ex. "Ta bort" (biblioteket) eller "Ta bort ur listan" (en låtlista).
+    let deleteTitle: String
+    let onDelete: () -> Void
+
+    @Environment(ColorCodes.self) private var codes
+    @Query private var setlists: [Setlist]
+    @State private var confirmsDelete = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(checkedCount == 0 ? "Kryssa i låtar" : "\(checkedCount) markerade")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(checkedCount == 0 ? .secondary : .primary)
+            Spacer(minLength: 4)
+            Button(checkedCount == totalCount && totalCount > 0 ? "Avmarkera" : "Markera alla") {
+                if checkedCount == totalCount && totalCount > 0 { onSelectNone() } else { onSelectAll() }
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .controlSize(.small)
+            Menu {
+                Menu {
+                    ForEach(0..<codes.count, id: \.self) { index in
+                        Button {
+                            onCategory(index)
+                        } label: {
+                            Label(codes.names[index], systemImage: "circle.fill")
+                        }
+                    }
+                } label: {
+                    Label("Kategori", systemImage: "tag")
+                }
+                Menu {
+                    ForEach(setlists.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }) { list in
+                        Button(list.name) { onAddToSetlist(list) }
+                    }
+                } label: {
+                    Label("Lägg i låtlista", systemImage: "text.badge.plus")
+                }
+                .disabled(setlists.isEmpty)
+                Divider()
+                Button(role: .destructive) {
+                    confirmsDelete = true
+                } label: {
+                    Label(deleteTitle, systemImage: "trash")
+                }
+            } label: {
+                Label("Gör", systemImage: "ellipsis.circle")
+                    .font(.footnote.weight(.semibold))
+            }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .controlSize(.small)
+            .foregroundStyle(.black)
+            .disabled(checkedCount == 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 6)
+        .background(Color.accentColor.opacity(0.12))
+        .confirmationDialog(
+            checkedCount == 1 ? "\(deleteTitle): 1 låt?" : "\(deleteTitle): \(checkedCount) låtar?",
+            isPresented: $confirmsDelete,
+            titleVisibility: .visible
+        ) {
+            Button(deleteTitle, role: .destructive, action: onDelete)
+        }
+    }
+}
+
+/// Kategoriernas namn och hur många som används (upp till sju, fem rekommenderas).
 struct ColorNamesSheet: View {
     @Environment(ColorCodes.self) private var codes
     @Environment(\.dismiss) private var dismiss
     @State private var drafts: [String] = []
+    @State private var count = ColorCodes.recommendedCount
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    ForEach(drafts.indices, id: \.self) { index in
+                    Stepper(value: $count, in: 1...ColorCodes.maxCount) {
+                        Text("Antal kategorier: \(count)")
+                    }
+                } footer: {
+                    Text("Upp till \(ColorCodes.maxCount). \(ColorCodes.recommendedCount) rekommenderas – då får kolumnerna plats bredvid låtnamnen.")
+                }
+                Section {
+                    ForEach(0..<min(count, drafts.count), id: \.self) { index in
                         HStack(spacing: 12) {
                             Circle().fill(ColorCodes.colors[index]).frame(width: 18, height: 18)
                             TextField("Namn", text: $drafts[index])
                         }
                     }
                 } footer: {
-                    Text("Namnen visas överst i färgkolumnerna och i förslagsrutan.")
+                    Text("Namnen visas överst i kolumnerna och i Next.")
                 }
             }
-            .navigationTitle("Färgernas namn")
+            .navigationTitle("Kategorier")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -147,20 +282,26 @@ struct ColorNamesSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Spara") {
-                        for (index, draft) in drafts.enumerated() {
+                        var names = codes.names
+                        for (index, draft) in drafts.enumerated() where index < names.count {
                             let name = draft.trimmingCharacters(in: .whitespaces)
-                            if !name.isEmpty { codes.names[index] = name }
+                            if !name.isEmpty { names[index] = name }
                         }
+                        codes.names = names
+                        codes.count = count
                         dismiss()
                     }
                 }
             }
-            .onAppear { drafts = codes.names }
+            .onAppear {
+                drafts = codes.names
+                count = codes.count
+            }
         }
     }
 }
 
-/// En låts prickar i färgkolumnerna. I färgläget tänder/släcker ett tryck färgen.
+/// En låts prickar i kategorikolumnerna. I kategoriläget tänder/släcker ett tryck kategorin.
 struct ColorDots: View {
     static let columnWidth: CGFloat = 22
     let song: Song
@@ -188,7 +329,7 @@ struct ColorDots: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(song.colorTags.isEmpty ? "Inga färgkoder" : "\(song.colorTags.count) färgkoder")
+        .accessibilityLabel(song.colorTags.isEmpty ? "Inga kategorier" : "\(song.colorTags.count) kategorier")
     }
 }
 
@@ -202,7 +343,7 @@ private struct ColumnLine: View {
     }
 }
 
-/// Kryssruta framför låten i färgläget.
+/// Kryssruta framför låten i kategoriläget.
 struct ColorModeCheckbox: View {
     let isChecked: Bool
     let onToggle: () -> Void
@@ -218,14 +359,14 @@ struct ColorModeCheckbox: View {
     }
 }
 
-/// Bara färger som någon låt har får en kolumn. I färgläget visas alla fem,
-/// så att man kan börja använda en ny färg.
-func visibleColorColumns(_ songs: [Song], colorMode: Bool) -> [Int] {
-    if colorMode { return Array(0..<ColorCodes.count) }
-    return Set(songs.flatMap(\.colorTags)).sorted()
+/// Bara kategorier som någon låt har får en kolumn. I kategoriläget visas alla som
+/// används (`count`), så att man kan börja använda en ny.
+func visibleColorColumns(_ songs: [Song], colorMode: Bool, count: Int) -> [Int] {
+    if colorMode { return Array(0..<count) }
+    return Set(songs.flatMap(\.colorTags)).filter { $0 < count }.sorted()
 }
 
-/// Ge alla markerade låtar färgen – eller ta bort den om alla redan har den.
+/// Ge alla markerade låtar kategorin – eller ta bort den om alla redan har den.
 @MainActor
 func applyColor(_ index: Int, to songs: [Song]) {
     guard !songs.isEmpty else { return }

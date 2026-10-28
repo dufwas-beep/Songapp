@@ -19,6 +19,10 @@ struct ContentView: View {
     @AppStorage("appearance") private var appearance = Appearance.system
     @AppStorage("hasSeenGuide") private var hasSeenGuide = false
     @State private var showsGuide = false
+    /// Sidospaltens bredd – dras i handtaget mellan spalten och låten.
+    @AppStorage("sidebarWidth") private var sidebarWidth: Double = 380
+    @State private var sidebarDrag: CGFloat?
+    @State private var windowSize: CGSize = .zero
     @State private var order = LibraryOrder()
     /// Ökas när en låt byter namn, så att bokstavsordningen räknas om.
     @State private var titleVersion = 0
@@ -64,7 +68,7 @@ struct ContentView: View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             SidebarView(selection: $selection)
                 .themedBackground()
-                .navigationSplitViewColumnWidth(min: 320, ideal: 380, max: 460)
+                .navigationSplitViewColumnWidth(CGFloat(sidebarWidth))
         } detail: {
             SongDetailView(
                 song: selection,
@@ -82,20 +86,29 @@ struct ContentView: View {
                     player.previewID = nil
                     player.playingSuggestionID = song.id
                     selection = song
+                },
+                sidebarHidden: columnVisibility == .detailOnly,
+                onToggleSidebar: {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        columnVisibility = columnVisibility == .detailOnly ? .all : .detailOnly
+                    }
                 }
             )
             .themedBackground()
             .overlay(alignment: .bottomLeading) {
                 SwitchTimerLabel().padding(24)
             }
-            .overlay(alignment: .topLeading) {
-                // När sidospalten är dold visas klockan i låtvyn i stället.
-                if columnVisibility == .detailOnly {
-                    ClockLabel()
-                        .padding(.leading, 70)
-                        .padding(.top, 6)
+            .overlay(alignment: .leading) {
+                // Liggande: dra i handtaget vid kanten för att göra listorna bredare/smalare.
+                if columnVisibility != .detailOnly && windowSize.width > windowSize.height {
+                    SidebarResizeHandle(width: $sidebarWidth, drag: $sidebarDrag)
                 }
             }
+        }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { size in
+            windowSize = size
         }
         .overlay {
             LaunchAnimation()
@@ -234,8 +247,47 @@ struct ContentView: View {
     }
 }
 
+/// Handtaget mellan sidospalten och låten. En rosa linje visar den nya kanten medan
+/// man drar; bredden ändras när man släpper (så att listorna inte ritas om hela tiden).
+private struct SidebarResizeHandle: View {
+    @Binding var width: Double
+    @Binding var drag: CGFloat?
+    static let range: ClosedRange<Double> = 300...640
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            if let drag {
+                Rectangle()
+                    .fill(Color.accentColor)
+                    .frame(width: 3)
+                    .frame(maxHeight: .infinity)
+                    .offset(x: drag)
+                    .allowsHitTesting(false)
+            }
+            Capsule()
+                .fill(drag == nil ? Color.secondary.opacity(0.4) : Color.accentColor)
+                .frame(width: 5, height: 48)
+                .padding(.leading, 5)
+                .frame(width: 26, height: 120, alignment: .leading)
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 2, coordinateSpace: .global)
+                        .onChanged { value in
+                            let target = min(max(width + value.translation.width, Self.range.lowerBound), Self.range.upperBound)
+                            drag = CGFloat(target - width)
+                        }
+                        .onEnded { _ in
+                            if let drag { width += Double(drag) }
+                            drag = nil
+                        }
+                )
+                .accessibilityLabel("Ändra bredden på listorna")
+        }
+    }
+}
+
 /// Liten klocka (TT:MM) när sidospalten är dold.
-private struct ClockLabel: View {
+struct ClockLabel: View {
     var body: some View {
         HStack(spacing: 8) {
             TimelineView(.everyMinute) { context in

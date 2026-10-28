@@ -12,6 +12,7 @@ struct PDFPagesView: View {
     var onZoom: ((Double) -> Void)?
     var onScrollView: ((UIScrollView) -> Void)?
     @Environment(\.displayScale) private var displayScale
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(Player.self) private var player
     @State private var pages: [Int: UIImage]
     @State private var liveZoom: CGFloat?
@@ -52,6 +53,7 @@ struct PDFPagesView: View {
                             }
                         }
                         .frame(width: pageWidth, height: height)
+                        .darkSheet(colorScheme == .dark)
                         .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
                     }
                 }
@@ -93,6 +95,19 @@ struct PDFPagesView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+extension View {
+    /// Mörkt läge: PDF-sidan visas med svart bakgrund och ljus text. Färgerna (t.ex.
+    /// röda ackord) behåller ungefär sin ton. Bilder visas som de är.
+    @ViewBuilder
+    func darkSheet(_ isOn: Bool) -> some View {
+        if isOn {
+            colorInvert().hueRotation(.degrees(180))
+        } else {
+            self
         }
     }
 }

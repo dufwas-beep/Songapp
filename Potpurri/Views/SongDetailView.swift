@@ -14,6 +14,9 @@ struct SongDetailView: View {
     let preview: Song?
     let onSelect: (Song) -> Void
     let onPlayPreview: (Song) -> Void
+    /// Sidospalten (listorna) är dold – då visas klockan i raden överst.
+    var sidebarHidden = false
+    var onToggleSidebar: () -> Void = {}
 
     @Environment(Player.self) private var player
     @Environment(SoundEngine.self) private var sounds
@@ -29,6 +32,15 @@ struct SongDetailView: View {
 
     var body: some View {
         if let song {
+            VStack(spacing: 0) {
+            SongTopBar(
+                title: song.title,
+                previous: previous,
+                next: next,
+                sidebarHidden: sidebarHidden,
+                onToggleSidebar: onToggleSidebar,
+                onSelect: onSelect
+            )
             HStack(spacing: 0) {
             VStack(spacing: 0) {
                 ZStack(alignment: .bottomTrailing) {
@@ -67,33 +79,13 @@ struct SongDetailView: View {
                     }
                 }
                 .clipped()
-                .overlay(alignment: .topTrailing) {
-                    HStack(spacing: 10) {
-                        if player.isLocked {
-                            // Scenlåset visas bredvid Nästa så att det aldrig ligger över den.
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 18, weight: .semibold))
-                                .frame(width: 44, height: 44)
-                                .background(Color.accentColor, in: Circle())
-                                .foregroundStyle(.black)
-                                .accessibilityLabel("Scenlåset är på")
-                        }
-                        SongStepButtons(previous: previous, next: next, onSelect: onSelect)
-                        SettingsButton()
-                    }
-                    .padding(16)
-                    // Ur vägen medan Lådan är öppen.
-                    .opacity(player.drawerOpen ? 0 : 1)
-                    .allowsHitTesting(!player.drawerOpen)
-                    .animation(.easeInOut(duration: 0.2), value: player.drawerOpen)
-                }
                 .overlay(alignment: .top) {
                     if player.pen != .off && !player.isLocked {
                         PenBar()
-                            .padding(.top, 90)
+                            .padding(.top, 12)
                     } else if player.editingMarkers && !player.isLocked {
                         MarkerBar(song: song, geometry: geometry)
-                            .padding(.top, 90)
+                            .padding(.top, 12)
                     }
                 }
                 if let preview {
@@ -109,6 +101,8 @@ struct SongDetailView: View {
                     .transition(.move(edge: .trailing))
             }
             }
+            }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: Binding(get: { player.editingNoteID != nil }, set: { if !$0 { player.editingNoteID = nil } })) {
                 if let id = player.editingNoteID {
                     NoteEditorLoader(id: id, unit: geometry.unit)
@@ -154,6 +148,15 @@ struct SongDetailView: View {
         } else {
             // Ingen låt vald än: välkomstbild med loggan, men Spotify och ljudklippen
             // finns redan – det kan behövas innan första låten.
+            VStack(spacing: 0) {
+            SongTopBar(
+                title: nil,
+                previous: nil,
+                next: nil,
+                sidebarHidden: sidebarHidden,
+                onToggleSidebar: onToggleSidebar,
+                onSelect: nil
+            )
             HStack(spacing: 0) {
                 ZStack(alignment: .bottomTrailing) {
                     VStack(spacing: 18) {
@@ -174,14 +177,13 @@ struct SongDetailView: View {
                     }
                     .padding(24)
                 }
-                .overlay(alignment: .topTrailing) {
-                    SettingsButton().padding(16)
-                }
                 if player.soundboardOpen {
                     SoundboardColumn(engine: sounds)
                         .transition(.move(edge: .trailing))
                 }
             }
+            }
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
@@ -255,7 +257,7 @@ struct SongDetailView: View {
             Button {
                 showsColors = true
             } label: {
-                Label("Färgkoder", systemImage: "paintpalette")
+                Label("Kategorier", systemImage: "tag")
             }
             Divider()
             Button {
@@ -375,7 +377,56 @@ struct SongDetailView: View {
     }
 }
 
-/// Förra och nästa låt, nere till höger bredvid autoscrollknappen. Nästa visar låtens namn.
+/// Raden överst i låtvyn: knappen för listorna, låtens namn, scenlåset, förra/nästa låt
+/// och kugghjulet. Låg, så att låten får så mycket plats som möjligt.
+private struct SongTopBar: View {
+    let title: String?
+    let previous: Song?
+    let next: Song?
+    let sidebarHidden: Bool
+    let onToggleSidebar: () -> Void
+    /// nil = ingen låt vald (då visas inte förra/nästa).
+    let onSelect: ((Song) -> Void)?
+    @Environment(Player.self) private var player
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Button(action: onToggleSidebar) {
+                Image(systemName: "sidebar.left")
+                    .font(.system(size: 18, weight: .semibold))
+                    .frame(width: 40, height: 40)
+            }
+            .accessibilityLabel(sidebarHidden ? "Visa listorna" : "Dölj listorna")
+            if sidebarHidden {
+                ClockLabel()
+            }
+            if let title {
+                Text(title)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .padding(.leading, 4)
+            }
+            Spacer(minLength: 8)
+            if player.isLocked {
+                // Scenlåset visas bredvid Nästa så att det aldrig ligger över den.
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .frame(width: 36, height: 36)
+                    .background(Color.accentColor, in: Circle())
+                    .foregroundStyle(.black)
+                    .accessibilityLabel("Scenlåset är på")
+            }
+            if let onSelect {
+                SongStepButtons(previous: previous, next: next, onSelect: onSelect)
+            }
+            SettingsButton(size: 36)
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 50)
+    }
+}
+
+/// Förra och nästa låt i raden överst. Nästa visar låtens namn.
 private struct SongStepButtons: View {
     let previous: Song?
     let next: Song?
@@ -387,14 +438,14 @@ private struct SongStepButtons: View {
                 if let previous { onSelect(previous) }
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .frame(width: 52, height: 56)
+                    .font(.system(size: 16, weight: .semibold))
+                    .frame(width: 44, height: 40)
             }
             .disabled(previous == nil)
             .accessibilityLabel(previous.map { "Förra låten: \($0.title)" } ?? "Ingen förra låt")
 
             Divider()
-                .frame(height: 30)
+                .frame(height: 24)
 
             Button {
                 if let next { onSelect(next) }
@@ -402,27 +453,26 @@ private struct SongStepButtons: View {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("NÄSTA")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.system(size: 10, weight: .semibold))
                             .tracking(1)
                             .foregroundStyle(.secondary)
                         Text(next?.title ?? "Slut på listan")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 15, weight: .medium))
                             .lineLimit(1)
                     }
                     .frame(maxWidth: 240, alignment: .leading)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold))
                 }
-                .padding(.leading, 14)
-                .padding(.trailing, 16)
-                .frame(height: 56)
+                .padding(.leading, 12)
+                .padding(.trailing, 14)
+                .frame(height: 40)
             }
             .disabled(next == nil)
             .accessibilityLabel(next.map { "Nästa låt: \($0.title)" } ?? "Ingen nästa låt")
         }
         .foregroundStyle(.primary)
         .background(.regularMaterial, in: Capsule())
-        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
     }
 }
 
@@ -524,7 +574,7 @@ private struct PreviewPane: View {
     }
 }
 
-/// Inne i låten: fem stora knappar för låtens färgkoder.
+/// Inne i låten: stora knappar för låtens kategorier.
 private struct SongColorsPanel: View {
     let song: Song
     @Environment(ColorCodes.self) private var codes
@@ -532,10 +582,10 @@ private struct SongColorsPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Färgkoder för \(song.title)")
+            Text("Kategorier för \(song.title)")
                 .font(.headline)
                 .lineLimit(1)
-            ForEach(0..<ColorCodes.count, id: \.self) { index in
+            ForEach(0..<codes.count, id: \.self) { index in
                 let isOn = song.colorTags.contains(index)
                 Button {
                     song.toggleColor(index)
@@ -563,7 +613,7 @@ private struct SongColorsPanel: View {
             Button {
                 showsNames = true
             } label: {
-                Label("Byt namn på färgerna", systemImage: "pencil")
+                Label("Namn och antal", systemImage: "pencil")
             }
             .padding(.bottom, 16)
         }

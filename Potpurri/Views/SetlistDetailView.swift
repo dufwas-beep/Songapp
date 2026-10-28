@@ -22,6 +22,9 @@ struct SetlistDetailView: View {
     @State private var dropTarget: Int?
     @State private var colorMode = false
     @State private var checked: Set<UUID> = []
+    /// Kategorierna listan filtreras på (tom = alla låtar).
+    @State private var categoryFilter: Set<Int> = []
+    @Environment(ColorCodes.self) private var codes
 
     /// En rad i listan med uppgift om vilket set den hör till.
     private struct Row: Identifiable {
@@ -53,7 +56,7 @@ struct SetlistDetailView: View {
     /// Färgkolumnerna – bara färger som någon låt i just den här listan har (alla i färgläget).
     private var columns: [Int] {
         let ids = Set(setlist.songIDs)
-        return visibleColorColumns(songs.filter { ids.contains($0.id) }, colorMode: colorMode)
+        return visibleColorColumns(songs.filter { ids.contains($0.id) }, colorMode: colorMode, count: codes.count)
     }
 
     private var hasSets: Bool {
@@ -67,11 +70,44 @@ struct SetlistDetailView: View {
 
         VStack(spacing: 0) {
             header
-            ColorColumnsHeader(colorMode: $colorMode, columns: columns, trailing: 16) { index in
+            ColorColumnsHeader(colorMode: $colorMode, columns: columns, trailing: 16, filter: $categoryFilter) { index in
                 applyColor(index, to: songs.filter { checked.contains($0.id) })
             }
             .onChange(of: colorMode) { _, on in
                 if !on { checked = [] }
+            }
+            let shownRows = visibleRows(allRows, songsByID: songsByID)
+            if !categoryFilter.isEmpty {
+                CategoryFilterBar(
+                    filter: categoryFilter,
+                    shown: shownRows.filter { $0.item != .setBreak }.count,
+                    total: setlist.songIDs.count
+                ) {
+                    withAnimation { categoryFilter = [] }
+                }
+            }
+            if colorMode {
+                let listIDs = Set(setlist.songIDs)
+                CheckedActionsBar(
+                    checkedCount: checked.count,
+                    totalCount: listIDs.count,
+                    onSelectAll: { checked = listIDs },
+                    onSelectNone: { checked = [] },
+                    onCategory: { index in applyColor(index, to: songs.filter { checked.contains($0.id) }) },
+                    onAddToSetlist: { other in
+                        other.songIDs.append(contentsOf: setlist.songIDs.filter(checked.contains))
+                        try? context.save()
+                    },
+                    deleteTitle: "Ta bort ur listan",
+                    onDelete: {
+                        setlist.items = setlist.items.filter { item in
+                            if case .song(let id) = item { return !checked.contains(id) }
+                            return true
+                        }
+                        try? context.save()
+                        checked = []
+                    }
+                )
             }
             Divider()
             // Egen lista (i stället för iPadens): håll in en rad och dra – en rosa linje
@@ -84,7 +120,7 @@ struct SetlistDetailView: View {
                             .padding(.horizontal, 16)
                             .background(Self.tint(for: 1))
                     }
-                    ForEach(allRows) { row in
+                    ForEach(shownRows) { row in
                         rowView(row, songsByID: songsByID, counts: counts)
                             .overlay(alignment: .top) {
                                 if dropTarget == row.id { DropLine() }
@@ -202,6 +238,16 @@ struct SetlistDetailView: View {
 
     private func showsFirstHeader(_ rows: [Row]) -> Bool {
         hasSets && (rows.first.map { $0.item != .setBreak } ?? false)
+    }
+
+    /// Raderna som syns: alla, eller (med kategorifilter) bara låtar i de kategorierna.
+    /// Setgränserna ligger kvar så att man ser vilket set låtarna hör till.
+    private func visibleRows(_ rows: [Row], songsByID: [UUID: Song]) -> [Row] {
+        guard !categoryFilter.isEmpty else { return rows }
+        return rows.filter { row in
+            guard case .song(let id) = row.item else { return true }
+            return !categoryFilter.isDisjoint(with: songsByID[id]?.colorTags ?? [])
+        }
     }
 
     /// Ett drag börjar: kom ihåg vilken rad som dras.

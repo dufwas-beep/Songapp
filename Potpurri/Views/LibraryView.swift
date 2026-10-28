@@ -22,6 +22,7 @@ enum LibrarySort: String, CaseIterable {
 struct LibraryView: View {
     @Environment(\.modelContext) private var context
     @Environment(Player.self) private var player
+    @Environment(ColorCodes.self) private var codes
     @Query private var songs: [Song]
     @Query private var setlists: [Setlist]
 
@@ -136,19 +137,38 @@ struct LibraryView: View {
             .padding(.horizontal, 16)
             .padding(.top, 10)
 
-            let columns = visibleColorColumns(songs, colorMode: colorMode)
-            if !columns.isEmpty && !colorMode {
-                ColorFilterChips(selected: $colorFilter, columns: columns)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-            }
-
+            let columns = visibleColorColumns(songs, colorMode: colorMode, count: codes.count)
             let list = cachedSongs
-            ColorColumnsHeader(colorMode: $colorMode, columns: columns, trailing: rowTrailing) { index in
+            ColorColumnsHeader(colorMode: $colorMode, columns: columns, trailing: rowTrailing, filter: $colorFilter) { index in
                 applyColor(index, to: list.filter { checked.contains($0.id) })
             }
+            .padding(.top, 4)
             .onChange(of: colorMode) { _, on in
                 if !on { checked = [] }
+            }
+            if !colorFilter.isEmpty {
+                CategoryFilterBar(filter: colorFilter, shown: list.count, total: songs.count) {
+                    withAnimation { colorFilter = [] }
+                }
+            }
+            if colorMode {
+                CheckedActionsBar(
+                    checkedCount: checked.count,
+                    totalCount: list.count,
+                    onSelectAll: { checked = Set(list.map(\.id)) },
+                    onSelectNone: { checked = [] },
+                    onCategory: { index in applyColor(index, to: list.filter { checked.contains($0.id) }) },
+                    onAddToSetlist: { setlist in
+                        // I listans ordning, som de syns i biblioteket.
+                        setlist.songIDs.append(contentsOf: list.map(\.id).filter(checked.contains))
+                        try? context.save()
+                    },
+                    deleteTitle: "Ta bort",
+                    onDelete: {
+                        player.songsToDelete = checked
+                        checked = []
+                    }
+                )
             }
             Divider()
             ScrollViewReader { proxy in
@@ -446,39 +466,6 @@ struct SongRow: View {
                 Text(key)
                     .font(.callout)
                     .foregroundStyle(.secondary)
-            }
-        }
-    }
-}
-
-/// Färgfiltret: tryck på en eller flera färger. Låtar med någon av dem visas,
-/// och de som har flest av färgerna hamnar först.
-struct ColorFilterChips: View {
-    @Binding var selected: Set<Int>
-    let columns: [Int]
-    @Environment(ColorCodes.self) private var codes
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                ForEach(columns, id: \.self) { index in
-                    let isOn = selected.contains(index)
-                    Button {
-                        if isOn { selected.remove(index) } else { selected.insert(index) }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Circle().fill(ColorCodes.colors[index]).frame(width: 10, height: 10)
-                            Text(codes.names[index])
-                                .font(.footnote.weight(isOn ? .semibold : .regular))
-                        }
-                        .padding(.horizontal, 10)
-                        .frame(height: 30)
-                        .background(isOn ? ColorCodes.colors[index].opacity(0.25) : Color(.tertiarySystemFill), in: Capsule())
-                        .overlay(Capsule().stroke(isOn ? ColorCodes.colors[index] : .clear, lineWidth: 1.5))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(isOn ? .isSelected : [])
-                }
             }
         }
     }

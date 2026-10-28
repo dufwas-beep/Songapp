@@ -40,6 +40,11 @@ struct SuggestionsBox: View {
         return pinned + matching.prefix(40)
     }
 
+    /// Låtens kategorier (bara de som används).
+    private var columns: [Int] {
+        (current?.colorTags ?? []).filter { $0 < codes.count }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Samma färgrubriker som i låtlistan. Tryck på en rubrik för att välja om
@@ -62,13 +67,13 @@ struct SuggestionsBox: View {
                         }
                         .font(.caption.weight(.semibold))
                     }
-                    Text(current == nil ? "Välj en låt" : (current?.colorTags.isEmpty == true ? "Låten har inga färger" : "Tryck på färgerna"))
+                    Text(current == nil ? "Välj en låt" : (current?.colorTags.isEmpty == true ? "Låten har inga kategorier" : "Tryck på kategorierna"))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
                 .padding(.bottom, 4)
                 Spacer()
-                ForEach(current?.colorTags ?? [], id: \.self) { index in
+                ForEach(columns, id: \.self) { index in
                     let isOn = player.activeColors.contains(index)
                     VStack(spacing: 4) {
                         Text(codes.names[index])
@@ -97,8 +102,6 @@ struct SuggestionsBox: View {
             .padding(.vertical, 8)
             Divider()
             let list = suggestions
-            // Samma kolumner som rubrikerna ovanför.
-            let columns = current?.colorTags ?? []
             List {
                 ForEach(list) { song in
                     Button {
@@ -126,7 +129,7 @@ struct SuggestionsBox: View {
             .listStyle(.plain)
             .overlay {
                 if list.isEmpty, current != nil, !player.activeColors.isEmpty {
-                    Text("Inga fler låtar med de färgerna ikväll.")
+                    Text("Inga fler låtar i de kategorierna ikväll.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
