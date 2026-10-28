@@ -73,7 +73,7 @@ struct TextSongView: View {
         ForEach(Array(ChordProText.parse(song.text ?? "", title: song.title).enumerated()), id: \.offset) { _, line in
             switch line {
             case .heading(let heading):
-                Text(heading.uppercased())
+                Text(InlineStyle.plain(heading).uppercased())
                     .font(.system(size: 16 * scale, weight: .semibold))
                     .tracking(1.5)
                     .foregroundStyle(.secondary)
@@ -113,16 +113,27 @@ private struct LyricLineView: View {
         }
     }
 
+    /// Orden med fet/kursiv text (**fet**, *kursiv*). En markering kan gå över flera ord.
+    private var styledWords: [AttributedString] {
+        var bold = false
+        var italic = false
+        return words.map { word in
+            InlineStyle.attributed(Self.keepSpaces(word.text.isEmpty ? " " : word.text), size: 24 * scale, bold: &bold, italic: &italic)
+        }
+    }
+
     var body: some View {
+        let styled = styledWords
         FlowLayout {
-            ForEach(Array(words.enumerated()), id: \.offset) { _, word in
+            ForEach(Array(words.enumerated()), id: \.offset) { index, word in
                 VStack(alignment: .leading, spacing: 0) {
                     if hasChords {
                         // Ett mellanslag efter ackordet så att två ackord i rad inte krockar.
                         Text(Self.keepSpaces(word.chord.map { $0 + " " } ?? " "))
                             .font(.system(size: 22 * scale, weight: .bold))
                     }
-                    Text(Self.keepSpaces(word.text.isEmpty ? " " : word.text))
+                    // Ett ord som bara var stjärnor får ändå en rad, så att höjden stämmer.
+                    Text(styled[index].characters.isEmpty ? AttributedString("\u{00A0}") : styled[index])
                         .font(.system(size: 24 * scale))
                 }
                 .fixedSize()
@@ -181,26 +192,23 @@ private struct NoteLineView: View {
     var body: some View {
         switch line.style {
         case .heading:
-            Text(line.text)
-                .font(.system(size: 26 * scale, weight: .bold))
+            Text(InlineStyle.attributed(line.text, size: 26 * scale, weight: .bold))
                 .padding(.top, 18)
                 .padding(.bottom, 4)
         case .question, .normal:
-            Text(line.text)
-                .font(.system(size: 22 * scale))
+            Text(InlineStyle.attributed(line.text, size: 22 * scale))
                 .padding(.vertical, 2)
         case .answer:
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Image(systemName: "checkmark.circle.fill")
-                Text(line.text)
+                Text(InlineStyle.attributed(line.text, size: 22 * scale, weight: .bold))
             }
             .font(.system(size: 22 * scale, weight: .bold))
             .foregroundStyle(Color.accentColor)
             .padding(.leading, 24)
             .padding(.vertical, 2)
         case .muted:
-            Text(line.text)
-                .font(.system(size: 18 * scale))
+            Text(InlineStyle.attributed(line.text, size: 18 * scale))
                 .foregroundStyle(.secondary)
         case .blank:
             Color.clear.frame(height: 12 * scale)

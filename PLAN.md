@@ -484,9 +484,9 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 - ✅ Lägre rad överst i låtvyn (egen i stället för iPadens): knapp för listorna, låtens namn, scenlås, förra/nästa och kugghjulet. Klockan visas där när listorna är dolda.
 
 **Paket 3 – text**
-- Ny låt från grunden (klistra in text, spara, kategorier).
-- Fet och kursiv text.
-- Dela från Apples Anteckningar direkt till Potpurri (delningstillägg).
+- ✅ Ny låt från grunden: + i biblioteket → "Ny låt (skriv eller klistra in)" med namn, kategorier och text (knappen Klistra in). Utan namn blir första raden namnet.
+- ✅ Fet och kursiv text: **fet** och *kursiv* (som Markdown). Markera och tryck B eller I i redigeringen; stjärnorna syns inte i låten.
+- Dela från Apples Anteckningar direkt till Potpurri (delningstillägg). Väntar på det betalda utvecklarkontot: tillägget och appen behöver en gemensam App Group, och det stöds inte med ett gratiskonto. Tills dess: Kopiera i Anteckningar → Ny låt → Klistra in.
 
 **Paket 4 – kul och snyggt**
 - Realistisk duva som flyger snyggt inom bilden.

@@ -43,6 +43,7 @@ struct LibraryView: View {
     /// av hundratals låtar är för långsam att göra om vid varje tryck (t.ex. i färgläget).
     @State private var cache = ListCache()
     @State private var webQuery: String?
+    @State private var showsNewSong = false
 
     final class ListCache {
         var key: Int?
@@ -247,6 +248,13 @@ struct LibraryView: View {
                 player.requestedSongID = song.id
             }
         }
+        .sheet(isPresented: $showsNewSong) {
+            NewSongSheet { song in
+                typedQuery = ""
+                query = ""
+                player.requestedSongID = song.id
+            }
+        }
         .fileImporter(
             isPresented: $showImporter,
             allowedContentTypes: importsOnSong ? [.data] : SongImporter.allowedTypes,
@@ -305,6 +313,12 @@ struct LibraryView: View {
 
     private var importMenu: some View {
         Menu {
+            Button {
+                showsNewSong = true
+            } label: {
+                Label("Ny låt (skriv eller klistra in)", systemImage: "square.and.pencil")
+            }
+            Divider()
             Button {
                 importsOnSong = false
                 showImporter = true

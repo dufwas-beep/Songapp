@@ -9,15 +9,13 @@ struct SongTextEditor: View {
 
     var body: some View {
         NavigationStack {
-            TextEditor(text: $draft)
-                .font(.system(size: 19, design: .monospaced))
-                .padding(.horizontal, 12)
+            StyledTextEditor(text: $draft)
                 .navigationTitle(song.title)
                 .navigationBarTitleDisplayMode(.inline)
                 .safeAreaInset(edge: .top) {
                     Text(song.kind == .note
                          ? "Skriv anteckningen. Frågor (A), B)) och svar (C …) formateras automatiskt."
-                         : "Ackord skrivs i hakparenteser, t.ex. Jag [G]går hem – eller på en egen rad ovanför texten. Rader som \"Vers 1:\" blir rubriker.")
+                         : "Ackord skrivs i hakparenteser, t.ex. Jag [G]går hem – eller på en egen rad ovanför texten. Rader som \"Vers 1:\" blir rubriker. Markera text och tryck B (fet) eller I (kursiv).")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 16)
