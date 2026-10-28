@@ -84,6 +84,13 @@ struct SongDetailView: View {
                     }
                 }
                 .clipped()
+                // Ett quiz (t.ex. HLS 45) har sina låtar i en ruta uppe till vänster.
+                .overlay(alignment: .topLeading) {
+                    if LibraryView.isQuiz(song) && player.pen == .off && !player.editingMarkers {
+                        QuizPanel(quiz: song)
+                            .padding(12)
+                    }
+                }
                 .overlay(alignment: .top) {
                     if player.pen != .off && !player.isLocked {
                         PenBar()

@@ -1,12 +1,27 @@
 import SwiftData
 import SwiftUI
 
-/// Lägg till låtar i en låtlista: sök, kryssa i och tryck "Lägg till".
+/// Lägg till låtar i en låtlista (eller ett quiz): sök, kryssa i och tryck "Lägg till".
 struct AddSongsSheet: View {
-    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Bindable var setlist: Setlist
+    let title: String
+    /// Låtar som redan finns (visas gråa men går ändå att välja).
+    let existing: [UUID]
+    let onAdd: ([UUID]) -> Void
     @Query private var songs: [Song]
+
+    init(title: String, existing: [UUID], onAdd: @escaping ([UUID]) -> Void) {
+        self.title = title
+        self.existing = existing
+        self.onAdd = onAdd
+    }
+
+    init(setlist: Setlist) {
+        self.init(title: "Lägg till i \(setlist.name)", existing: setlist.songIDs) { ids in
+            setlist.songIDs.append(contentsOf: ids)
+            try? setlist.modelContext?.save()
+        }
+    }
 
     @State private var query = ""
     @State private var selected: Set<UUID> = []
@@ -33,7 +48,7 @@ struct AddSongsSheet: View {
                                 .font(.title2)
                                 .foregroundStyle(selected.contains(song.id) ? Color.accentColor : Color.secondary)
                             // Låtar som redan finns i listan är gråa men går ändå att välja.
-                            let alreadyIn = setlist.songIDs.contains(song.id)
+                            let alreadyIn = existing.contains(song.id)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(song.title)
                                     .lineLimit(1)
@@ -52,7 +67,7 @@ struct AddSongsSheet: View {
                 }
             }
             .searchable(text: $query, prompt: "Sök låt")
-            .navigationTitle("Lägg till i \(setlist.name)")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -61,8 +76,7 @@ struct AddSongsSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Lägg till \(selected.count)") {
                         // I bokstavsordning, oavsett i vilken ordning de kryssades i.
-                        setlist.songIDs.append(contentsOf: songs.sorted(by: Song.swedishOrder).map(\.id).filter(selected.contains))
-                        try? context.save()
+                        onAdd(songs.sorted(by: Song.swedishOrder).map(\.id).filter(selected.contains))
                         dismiss()
                     }
                     .disabled(selected.isEmpty)

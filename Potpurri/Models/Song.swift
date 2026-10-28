@@ -50,6 +50,8 @@ final class Song {
     /// en inzoomad låt öppnas där man hade den.
     var scrollX: Double?
     var scrollY: Double?
+    /// Quiz (t.ex. "HLS 45"): låtarna som ska vara med i quizet, i ordning.
+    var quizSongIDs: [UUID] = []
 
     init(title: String, kind: SongKind, fileName: String = "", text: String? = nil, key: String? = nil, importedNote: String? = nil) {
         self.id = UUID()

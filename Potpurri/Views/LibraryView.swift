@@ -56,6 +56,8 @@ struct LibraryView: View {
     @State private var cache = ListCache()
     @State private var webQuery: String?
     @State private var showsNewSong = false
+    /// Quiz-fliken: quiz vars låtar visas under raden.
+    @State private var expandedQuizzes: Set<UUID> = []
 
     final class ListCache {
         var key: Int?
@@ -192,6 +194,15 @@ struct LibraryView: View {
                         ForEach(list) { song in
                             libraryRow(song, in: list, columns: columns)
                                 .id(song.id)
+                            if quizOnly && expandedQuizzes.contains(song.id) {
+                                QuizSongsList(quiz: song) { child in
+                                    player.startSwitchTimer()
+                                    player.requestedSongID = child.id
+                                }
+                                .padding(.leading, 40)
+                                .padding(.trailing, 16)
+                                .background(Color.accentColor.opacity(0.06))
+                            }
                         }
                         // Hittar man inte låten: sök på webben.
                         if !query.trimmingCharacters(in: .whitespaces).isEmpty && !player.isLocked {
@@ -418,6 +429,30 @@ struct LibraryView: View {
                 }
             }
             SongRow(song: song, isPlayed: player.isPlayedTonight(song))
+            if quizOnly {
+                // Quizets låtar: tryck för att visa eller dölja dem under raden.
+                let expanded = expandedQuizzes.contains(song.id)
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if expanded { expandedQuizzes.remove(song.id) } else { expandedQuizzes.insert(song.id) }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "music.note.list")
+                        Text("\(song.quizSongIDs.count)")
+                            .monospacedDigit()
+                        Image(systemName: expanded ? "chevron.up" : "chevron.down")
+                            .font(.caption2.weight(.bold))
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(expanded ? Color.accentColor : Color.secondary)
+                    .padding(.horizontal, 8)
+                    .frame(height: 30)
+                    .background(Color(.tertiarySystemFill), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(expanded ? "Dölj låtarna i quizet" : "Visa låtarna i quizet")
+            }
             ColorDots(song: song, editable: colorMode, columns: columns)
         }
         .padding(.leading, 16)

@@ -24,6 +24,7 @@ enum Backup {
         var lastPlayed: Date?, playCount: Int, text: String?, key: String?, importedNote: String?
         var autoscrollSeconds: Int?, colorTags: [Int], pdfZoom: Double?, chordSize: Double?
         var startKey: String?, searchText: String?, drawerNote: String?
+        var quizSongIDs: [UUID]?
     }
 
     struct SetlistData: Codable { var id: UUID, name: String, created: Date, songIDs: [UUID], setBreaks: [Int] }
@@ -46,7 +47,8 @@ enum Backup {
             SongData(id: $0.id, title: $0.title, kindRaw: $0.kindRaw, fileName: $0.fileName, dateAdded: $0.dateAdded,
                      lastPlayed: $0.lastPlayed, playCount: $0.playCount, text: $0.text, key: $0.key, importedNote: $0.importedNote,
                      autoscrollSeconds: $0.autoscrollSeconds, colorTags: $0.colorTags, pdfZoom: $0.pdfZoom, chordSize: $0.chordSize,
-                     startKey: $0.startKey, searchText: $0.searchText, drawerNote: $0.drawerNote)
+                     startKey: $0.startKey, searchText: $0.searchText, drawerNote: $0.drawerNote,
+                     quizSongIDs: $0.quizSongIDs.isEmpty ? nil : $0.quizSongIDs)
         }
         content.setlists = try context.fetch(FetchDescriptor<Setlist>()).map { SetlistData(id: $0.id, name: $0.name, created: $0.created, songIDs: $0.songIDs, setBreaks: $0.setBreaks) }
         content.notes = try context.fetch(FetchDescriptor<SongNote>()).map { NoteData(id: $0.id, songID: $0.songID, text: $0.text, colorHex: $0.colorHex, x: $0.x, y: $0.y, width: $0.width, height: $0.height, pinned: $0.pinned, fixedFontSize: $0.fixedFontSize, created: $0.created) }
@@ -123,6 +125,7 @@ enum Backup {
             song.autoscrollSeconds = item.autoscrollSeconds; song.colorTags = item.colorTags
             song.pdfZoom = item.pdfZoom; song.chordSize = item.chordSize; song.startKey = item.startKey
             song.searchText = item.searchText; song.drawerNote = item.drawerNote
+            song.quizSongIDs = item.quizSongIDs ?? []
             context.insert(song)
         }
         for item in content.setlists {
