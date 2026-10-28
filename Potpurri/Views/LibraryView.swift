@@ -259,7 +259,8 @@ struct LibraryView: View {
                 ProgressBanner(progress: player.indexing)
             }
         }
-        .sheet(isPresented: Binding(get: { webQuery != nil }, set: { if !$0 { webQuery = nil } })) {
+        // Helskärm – låttextsidorna är fulla av reklam och behöver plats.
+        .fullScreenCover(isPresented: Binding(get: { webQuery != nil }, set: { if !$0 { webQuery = nil } })) {
             WebSearchSheet(initialQuery: webQuery ?? "") { song in
                 typedQuery = ""
                 query = ""

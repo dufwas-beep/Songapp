@@ -181,8 +181,8 @@ struct WebSearchSheet: View {
     private func search() {
         let q = query.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return }
-        web.loadAll(q)
         searching = true
+        Task { await web.loadAll(q) }
         Task {
             do {
                 results = try await source.search(q)
@@ -233,9 +233,18 @@ final class WebController {
         current = site
         if let view = views[site] { return view }
         let view = WKWebView()
+        blockAds(in: view)
         view.allowsBackForwardNavigationGestures = true
         views[site] = view
         return view
+    }
+
+    private var blocking: Set<ObjectIdentifier> = []
+
+    private func blockAds(in view: WKWebView) {
+        guard let rules = AdBlock.rules, !blocking.contains(ObjectIdentifier(view)) else { return }
+        view.configuration.userContentController.add(rules)
+        blocking.insert(ObjectIdentifier(view))
     }
 
     /// Fliken som visas just nu.
@@ -274,8 +283,10 @@ final class WebController {
         }
     }
 
-    /// Sökningen laddas på alla sajter samtidigt (i bakgrunden).
-    func loadAll(_ query: String) {
+    /// Sökningen laddas på alla sajter samtidigt (i bakgrunden). Reklamspärren förbereds först.
+    func loadAll(_ query: String) async {
+        await AdBlock.prepare()
+        for view in views.values { blockAds(in: view) }
         let showing = current
         for site in Site.allCases {
             if let url = site.url(for: query) { view(for: site).load(URLRequest(url: url)) }
@@ -322,4 +333,32 @@ private struct WebView: UIViewRepresentable {
     }
 
     func updateUIView(_ view: WKWebView, context: Context) {}
+}
+
+/// Enkel reklamspärr för webbläsaren: stoppar de vanligaste annonsnätverken, så att
+/// låttextsidorna blir lättare att läsa.
+@MainActor
+enum AdBlock {
+    private(set) static var rules: WKContentRuleList?
+    private static var tried = false
+
+    private static let domains = [
+        "doubleclick.net", "googlesyndication.com", "googleadservices.com", "adservice.google.com",
+        "google-analytics.com", "googletagmanager.com", "googletagservices.com", "amazon-adsystem.com",
+        "adnxs.com", "taboola.com", "outbrain.com", "criteo.com", "criteo.net", "pubmatic.com",
+        "rubiconproject.com", "openx.net", "casalemedia.com", "moatads.com", "scorecardresearch.com",
+        "quantserve.com", "advertising.com", "adsrvr.org", "smartadserver.com", "teads.tv",
+        "media.net", "yieldmo.com", "sharethrough.com", "33across.com", "indexww.com", "primis.tech",
+        "connatix.com", "ex.co", "vidazoo.com", "adform.net", "3lift.com", "triplelift.com"
+    ]
+
+    static func prepare() async {
+        guard !tried else { return }
+        tried = true
+        // Blockera förfrågningar *till* annonsnätverken (inte sidor på dem).
+        let json = "[" + domains.map { domain in
+            "{\"trigger\":{\"url-filter\":\"^https?://([^/]+\\\\.)?\(domain.replacingOccurrences(of: ".", with: "\\\\."))[:/]\"},\"action\":{\"type\":\"block\"}}"
+        }.joined(separator: ",") + "]"
+        rules = try? await WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "PotpurriAdBlock", encodedContentRuleList: json)
+    }
 }
