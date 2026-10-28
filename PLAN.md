@@ -491,23 +491,23 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 **Paket 4 – kul och snyggt**
 - ✅ Duvan ritas som vektorgrafik (grå duva med skimrande hals, svartbandad stjärt, vingband) med mjuka vingslag, glid och broms före landning. Flyger en mjuk slinga som alltid håller sig innanför skärmen.
 - ✅ Scratcha på LP:n på välkomstsidan: dra runt skivan, ljudet följer fart och riktning (framåt/bakåt).
-- ✅ Skärmsläckare (koppen bredvid Ny spelning): skivan (ritad som vektorgrafik, skarp) snurrar sakta på en skivspelare med tonarmen ovanpå och klockan under. Tryck = snurrar fort, krymper och lägger sig på loggans plats. Välkomstsidans och startens skiva är också vektorgrafik.
+- ✅ Skärmsläckare (koppen bredvid Ny spelning): skivan (ritad som vektorgrafik, skarp) snurrar sakta på svart botten med klockan under (skivspelaren borttagen på begäran). Tryck = snurrar fort, krymper och lägger sig på loggans plats. Välkomstsidans och startens skiva är också vektorgrafik.
 - ✅ Guiden börjar med ett val: Snabbintro (Next, hopplinjer, soundboard, ackord, kategorier, Lådan) eller Hela guiden. Rundturen visas ovanpå appen: allt tonas ner utom stället den pratar om, som ramas in i rosa (byter flik vid behov).
 
 **Paket 5 – större funktioner**
-- Webbsökningen i större ruta (helskärm).
-- Flytande appfönster ovanpå (t.ex. Spotify) – styrs av iPadOS; kontrollera att Potpurri tillåter det.
-- Dela låtar via AirDrop till någon annans Potpurri, med kategorier, ackord och lappar.
-- Rec-knapp: spela in film med främre eller bakre kameran.
-- Zoom och position per låt kommer inte ihåg sig längre – ska sparas och återställas när låten öppnas igen.
-- Quiz-meny: i varje quiz/HLS (t.ex. HLS 45) en meny med låtarna som ska vara med i quizet; man lägger till låtar under quizet. Går att minimera.
+- ✅ Webbsökningen i helskärm, med en enkel reklamspärr (de vanligaste annonsnätverken blockeras).
+- Flytande appfönster ovanpå (t.ex. Spotify): styrs av iPadOS (Inställningar → Multitasking). Potpurri spärrar inget (inget krav på helskärm).
+- ✅ Dela låtar via AirDrop: ⋯ → Dela låten, håll in en låt i listan → Dela, eller Gör → Dela för markerade låtar. En .potpurri-fil med kategorier, notes, markeringar, hopplinjer och ackord. Mottagarens Potpurri lägger till låtarna (befintliga hoppas över, inget ersätts). Filtypen registreras i Potpurri-Info.plist.
+- ✅ Rec-knapp (röd, i raden överst): iPadens kamera i filmläge (fram/bak väljs i kameran), filmen sparas i Bilder.
+- ✅ Zoom sparas direkt (gick förlorad om appen stängdes innan den hann spara). Läget i låten sparas när man byter låt: i sidled alltid, i höjdled bara om man var kvar i början (annars börjar låten överst).
+- ✅ Quiz-meny: i ett quiz (t.ex. HLS 45) en ruta uppe till vänster med quizets låtar (fälls ihop med rubriken). Tryck = låten i förhandsrutan, håll in = ta bort, "Lägg till låtar". I Quiz-fliken visas låtarna under quizet (knappen med antal).
 
 **Extra**
 - ✅ Fliken Quiz bredvid Låtlistor och Bibliotek: alla låtar/anteckningar som heter något med "Quiz" eller "HLS" (sök, sortering och kategorier fungerar som i biblioteket).
 
 **Senare – Idélådan och val av funktioner**
-- Under kugghjulet: en avdelning där man stänger av funktioner man inte använder (t.ex. soundboard, Spotify, Lådan, ackord, hopplinjer, timer), så att appen blir så ren man vill.
-- Egen idélåda: skriv fritt (låtförslag man fått, saker att köpa som kablar, något att testa, förbättringar för appen). Varje rad sorteras automatiskt i kategorier: Att köpa, Att repa in, Att testa, Att komma ihåg, Appen. Läggs in när det passar.
+- ✅ Under kugghjulet: en avdelning där man stänger av funktioner man inte använder (t.ex. soundboard, Spotify, Lådan, ackord, hopplinjer, timer), så att appen blir så ren man vill.
+- ✅ Egen idélåda (glödlampan bredvid Ny spelning): skriv fritt (låtförslag man fått, saker att köpa som kablar, något att testa, förbättringar för appen). Varje rad sorteras automatiskt i kategorier: Att köpa, Att repa in, Att testa, Att komma ihåg, Appen. Läggs in när det passar.
 
 ## Sparas per låt
 Allt som läggs på eller ställs in för en låt följer med låten och finns kvar nästa gång
