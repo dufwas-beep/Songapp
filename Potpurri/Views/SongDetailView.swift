@@ -473,6 +473,7 @@ private struct SongTopBar: View {
                 SongStepButtons(previous: previous, next: next, onSelect: onSelect)
                     .guideSpot(.stepButtons)
             }
+            RecordButton()
             SettingsButton(size: 36)
                 .guideSpot(.settings)
         }
