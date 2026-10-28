@@ -57,7 +57,7 @@ enum IdeaCategory: String, CaseIterable, Identifiable {
             (.rehearse, ["repa", "öva", "lära", "lär in", "låtförslag", "önskelåt", "önskad", "önskemål", "spela ", "ny låt", "tips på låt", "cover"]),
             (.test, ["testa", "prova", "försök", "experiment", "kolla om", "pröva"]),
         ]
-        for (category, keys) in rules where keys.contains(where: words.contains) {
+        for (category, keys) in rules where keys.contains(where: { words.contains($0) }) {
             return category
         }
         return .remember
