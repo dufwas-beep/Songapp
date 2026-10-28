@@ -139,16 +139,18 @@ struct SuggestionsBox: View {
             let list = suggestions
             guard !list.isEmpty else { return }
             let target = Int.random(in: 0..<list.count)
-            let hops = list.count * 2 + target
+            // Ett kort snurr (ungefär en sekund) som slutar på den slumpade låten.
+            let hops = 14
             Task {
-                var delay = 0.04
+                var delay = 0.03
                 for hop in 0...hops {
-                    player.lotteryHighlight = list[hop % list.count].id
+                    let index = ((target - hops + hop) % list.count + list.count) % list.count
+                    player.lotteryHighlight = list[index].id
                     try? await Task.sleep(for: .seconds(delay))
-                    delay = min(delay * 1.12, 0.35)
+                    delay = min(delay * 1.15, 0.15)
                 }
                 player.previewID = list[target].id
-                try? await Task.sleep(for: .seconds(0.6))
+                try? await Task.sleep(for: .seconds(0.4))
                 player.lotteryHighlight = nil
             }
         }

@@ -459,6 +459,47 @@ ChordPro-redigering, bandsynk, MIDI, metronom, backing tracks, Apple Pencil-ritn
 
 Varje milstolpe ska gå att köra och testa på iPad innan nästa påbörjas.
 
+## Genomgång 2026-10-28 – önskelista
+Användarens lista från genomgången, i paket. ✅ = klart.
+
+**Paket 1 – fel och småsaker**
+- ✅ Spotify tappar anslutningen: förnyelsen av inloggningen kunde krocka och logga ut, tillfälliga fel loggade ut. Somnad Spotify väcks genom att Spotify-appen öppnas en kort stund; musiken startar när man kommer tillbaka.
+- Färgkoderna slutar fungera med scenlåset på (väntar på svar: vilken del?).
+- ✅ Scenlåset lägger sig inte längre över Nästa (låset visas som en ikon bredvid).
+- ✅ Färgkolumnerna linjerar med rubrikraden även i färgläget.
+- ✅ Sökning i låttext: sökningen väntar en kort stund efter sista tangenten och jämför mot förenklad text i minnet.
+- ✅ Slumplåten (tryck på loggan) tar ungefär en sekund.
+- ✅ Inga ≡-handtag: håll in en rad i låtlistan och dra (rosa linje visar var). Låtar kan också dras in från biblioteket.
+- ✅ "Rensa" i färgläget tar bort alla färgmarkeringar (med varning).
+- ✅ Autoscrollknappen visas bara när låten har en längd (⋯ → Autoscroll / Ta bort autoscroll).
+- ✅ Timern blinkar vid 3, 2 och 1 minut kvar.
+- ✅ Ny spelning börjar av sig själv nästa dag efter kl. 06.
+
+**Paket 2 – bibliotek och låtblad**
+- Sidospalten går att göra bredare/smalare.
+- Markerade låtar (kryssrutorna): meny för att färga, ta bort, lägga i låtlista.
+- Filtrera bibliotek och låtlistor på färg som i Next, tydlig "Visa alla".
+- Färger byter namn till **Kategorier**. Upp till 7 kategorier (5 rekommenderat).
+- Svart bakgrund på låtbladet i mörkt läge (PDF:er inverteras, bilder inte).
+- Halvera utrymmet ovanför låten och lägg Nästa-menyn där.
+
+**Paket 3 – text**
+- Ny låt från grunden (klistra in text, spara, kategorier).
+- Fet och kursiv text.
+- Dela från Apples Anteckningar direkt till Potpurri (delningstillägg).
+
+**Paket 4 – kul och snyggt**
+- Realistisk duva som flyger snyggt inom bilden.
+- Scratcha på LP:n på välkomstsidan, med ljud.
+- Skärmsläckare: loggan snurrar på en LP-spelare, tryck = snurrar in till loggans plats.
+- Guiden i två varianter: kort (det unika: Next, hopplinjer, soundboard, ackord, kategorier, Lådan) och lång.
+
+**Paket 5 – större funktioner**
+- Webbsökningen i större ruta (helskärm).
+- Flytande appfönster ovanpå (t.ex. Spotify) – styrs av iPadOS; kontrollera att Potpurri tillåter det.
+- Dela låtar via AirDrop till någon annans Potpurri, med kategorier, ackord och lappar.
+- Rec-knapp: spela in film med främre eller bakre kameran.
+
 ## Sparas per låt
 Allt som läggs på eller ställs in för en låt följer med låten och finns kvar nästa gång
 den öppnas: notes, markeringar, ackord och grupper, tonart, zoom (huvudvy och

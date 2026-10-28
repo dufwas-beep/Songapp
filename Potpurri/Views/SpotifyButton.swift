@@ -44,7 +44,7 @@ struct SpotifyButton: View {
         }
         .task { await spotify.refreshState() }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await spotify.refreshState() } }
+            if phase == .active { Task { await spotify.appBecameActive() } }
         }
         .sheet(isPresented: $showsSetup) {
             SpotifySetup()

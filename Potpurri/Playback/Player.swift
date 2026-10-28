@@ -115,7 +115,7 @@ final class Player {
         }
     }
     /// När kvällen började ("Ny spelning"). Låtar spelade sedan dess är gråa.
-    /// Efter 12 timmar börjar automatiskt en ny spelning.
+    /// Nästa dag (efter kl. 06) börjar automatiskt en ny spelning.
     private(set) var gigStart: Date {
         didSet { UserDefaults.standard.set(gigStart, forKey: "gigStart") }
     }
@@ -129,9 +129,14 @@ final class Player {
         return played >= gigStart
     }
 
-    /// Har det gått mer än 12 timmar sedan spelningen började blir det automatiskt en ny.
+    /// En ny dag (efter kl. 06) börjar automatiskt en ny spelning. Spelar man efter
+    /// midnatt räknas det fortfarande som samma kväll.
     func startNewGigIfStale() {
-        if Date().timeIntervalSince(gigStart) > 12 * 3600 { newGig() }
+        let now = Date()
+        let calendar = Calendar.current
+        var dayStart = calendar.date(bySettingHour: 6, minute: 0, second: 0, of: now) ?? now
+        if dayStart > now { dayStart = calendar.date(byAdding: .day, value: -1, to: dayStart) ?? dayStart }
+        if gigStart < dayStart { newGig() }
     }
 
     /// Ny spelning: nollställer gråmarkeringarna och de fästa förslagen.

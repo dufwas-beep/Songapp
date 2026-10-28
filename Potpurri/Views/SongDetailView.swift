@@ -52,7 +52,10 @@ struct SongDetailView: View {
                         if !player.isLocked {
                             moreMenu(for: song)
                         }
-                        AutoscrollButton(autoscroller: autoscroller, seconds: secondsBinding(for: song))
+                        // Autoscroll visas bara när låten har en längd (läggs till under ⋯).
+                        if song.autoscrollSeconds != nil {
+                            AutoscrollButton(autoscroller: autoscroller, seconds: secondsBinding(for: song))
+                        }
                     }
                     .padding(24)
                 }
@@ -66,6 +69,15 @@ struct SongDetailView: View {
                 .clipped()
                 .overlay(alignment: .topTrailing) {
                     HStack(spacing: 10) {
+                        if player.isLocked {
+                            // Scenlåset visas bredvid Nästa så att det aldrig ligger över den.
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                                .frame(width: 44, height: 44)
+                                .background(Color.accentColor, in: Circle())
+                                .foregroundStyle(.black)
+                                .accessibilityLabel("Scenlåset är på")
+                        }
                         SongStepButtons(previous: previous, next: next, onSelect: onSelect)
                         SettingsButton()
                     }
@@ -96,18 +108,6 @@ struct SongDetailView: View {
                 SoundboardColumn(engine: sounds)
                     .transition(.move(edge: .trailing))
             }
-            }
-            .overlay(alignment: .top) {
-                if player.isLocked {
-                    Label("Scenlås", systemImage: "lock.fill")
-                        .font(.footnote.weight(.semibold))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.accentColor, in: Capsule())
-                        .foregroundStyle(.black)
-                        .padding(.top, 8)
-                        .accessibilityLabel("Scenlåset är på")
-                }
             }
             .sheet(isPresented: Binding(get: { player.editingNoteID != nil }, set: { if !$0 { player.editingNoteID = nil } })) {
                 if let id = player.editingNoteID {
@@ -235,6 +235,21 @@ struct SongDetailView: View {
                 player.editingMarkers = false
             } label: {
                 Label("Ackord", systemImage: "music.note")
+            }
+            if song.autoscrollSeconds == nil {
+                Button {
+                    song.autoscrollSeconds = 180
+                    autoscroller.duration = 180
+                } label: {
+                    Label("Autoscroll", systemImage: "arrow.down.circle")
+                }
+            } else {
+                Button {
+                    autoscroller.stop()
+                    song.autoscrollSeconds = nil
+                } label: {
+                    Label("Ta bort autoscroll", systemImage: "arrow.down.circle.dotted")
+                }
             }
             Divider()
             Button {

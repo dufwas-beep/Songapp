@@ -26,6 +26,9 @@ struct LibraryView: View {
     @Query private var setlists: [Setlist]
 
     @AppStorage("librarySort") private var sort = LibrarySort.name
+    /// Det som står i sökrutan, och sökningen som används (en kort stund efter sista
+    /// tangenttrycket, så att skrivandet aldrig hackar).
+    @State private var typedQuery = ""
     @State private var query = ""
     @State private var showImporter = false
     @State private var importsOnSong = false
@@ -57,7 +60,7 @@ struct LibraryView: View {
             if sort == .lastPlayed { hasher.combine(song.lastPlayed) }
             if sort == .mostPlayed { hasher.combine(song.playCount) }
             if !colorFilter.isEmpty { hasher.combine(song.colorTags) }
-            if !query.isEmpty { hasher.combine(song.searchText?.count) }
+            if !query.isEmpty { hasher.combine(song.searchText == nil) }
         }
         return hasher.finalize()
     }
@@ -118,10 +121,15 @@ struct LibraryView: View {
         sort == .name && query.isEmpty && colorFilter.isEmpty && !colorMode && songs.count > 20
     }
 
+    /// Avstånd till högerkanten för raderna och färgrubrikerna (plats för alfabetet).
+    private var rowTrailing: CGFloat {
+        showsAlphabet ? 28 : 16
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                SearchField(text: $query, prompt: "Sök titel eller låttext")
+                SearchField(text: $typedQuery, prompt: "Sök titel eller låttext")
                 sortMenu
                 importMenu
             }
@@ -136,7 +144,7 @@ struct LibraryView: View {
             }
 
             let list = cachedSongs
-            ColorColumnsHeader(colorMode: $colorMode, columns: columns) { index in
+            ColorColumnsHeader(colorMode: $colorMode, columns: columns, trailing: rowTrailing) { index in
                 applyColor(index, to: list.filter { checked.contains($0.id) })
             }
             .onChange(of: colorMode) { _, on in
@@ -197,6 +205,14 @@ struct LibraryView: View {
                 }
             }
         }
+        .task(id: typedQuery) {
+            let typed = typedQuery
+            if !typed.isEmpty {
+                try? await Task.sleep(for: .milliseconds(typed.count < 3 ? 120 : 300))
+                guard !Task.isCancelled else { return }
+            }
+            query = typed
+        }
         .safeAreaInset(edge: .bottom) {
             if progress.isRunning {
                 ProgressBanner(progress: progress)
@@ -206,6 +222,7 @@ struct LibraryView: View {
         }
         .sheet(isPresented: Binding(get: { webQuery != nil }, set: { if !$0 { webQuery = nil } })) {
             WebSearchSheet(initialQuery: webQuery ?? "") { song in
+                typedQuery = ""
                 query = ""
                 player.requestedSongID = song.id
             }
@@ -350,7 +367,7 @@ struct LibraryView: View {
             ColorDots(song: song, editable: colorMode, columns: columns)
         }
         .padding(.leading, 16)
-        .padding(.trailing, showsAlphabet ? 18 : 0)
+        .padding(.trailing, rowTrailing)
         .frame(minHeight: 44)
         .padding(.vertical, 4)
         .contentShape(Rectangle())

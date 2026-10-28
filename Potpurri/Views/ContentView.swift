@@ -146,7 +146,7 @@ struct ContentView: View {
         .environment(colorCodes)
         .environment(sounds)
         .environment(spotify)
-        // Efter 12 timmar börjar en ny spelning av sig själv (t.ex. nästa dag).
+        // Nästa dag (efter kl. 06) börjar en ny spelning av sig själv.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 player.startNewGigIfStale()
@@ -172,6 +172,8 @@ struct ContentView: View {
         }
         .onChange(of: selection) { _, song in
             player.markSwitchSelected()
+            // Har appen stått öppen över natten börjar en ny spelning vid första låten.
+            player.startNewGigIfStale()
             player.selectedSongID = song?.id
             player.updateColors(for: song)
             if player.previewID == song?.id { player.previewID = nil }

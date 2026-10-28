@@ -138,13 +138,18 @@ struct SetTimerButton: View {
             if let end = player.timerEnd {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let left = max(0, Int(end.timeIntervalSince(context.date).rounded(.up)))
+                    // Vid 3, 2 och 1 minut kvar blinkar timern i sex sekunder – dags att avrunda.
+                    let warning = [180, 120, 60].contains { left <= $0 && left > $0 - 6 }
+                    let flash = left == 0 || (warning && left % 2 == 0)
                     Text(String(format: "%d:%02d", left / 60, left % 60))
                         .font(.system(size: 17, weight: .semibold))
                         .monospacedDigit()
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
-                        .background(left == 0 ? Color.accentColor : Color.accentColor.opacity(0.2), in: Capsule())
-                        .foregroundStyle(left == 0 ? Color.black : Color.primary)
+                        .background(flash ? Color.accentColor : Color.accentColor.opacity(left <= 60 ? 0.45 : 0.2), in: Capsule())
+                        .foregroundStyle(flash ? Color.black : Color.primary)
+                        .scaleEffect(warning && flash ? 1.25 : 1)
+                        .animation(.easeInOut(duration: 0.25), value: flash)
                         .accessibilityLabel(left == 0 ? "Timern är slut" : "Timer, \(left / 60) minuter och \(left % 60) sekunder kvar")
                 }
             } else {

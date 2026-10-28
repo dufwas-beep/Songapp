@@ -81,10 +81,13 @@ final class Song {
     }
 
     /// Matchar sökningen titeln eller låttexten?
+    /// Sökningen jämförs mot förenklad text (små bokstäver, utan accenter) som sparas
+    /// i minnet – att jämföra med accentlös sökning i hela låttexten varje gång var segt.
     func matches(_ query: String) -> Bool {
         if title.localizedCaseInsensitiveContains(query) { return true }
-        let text = (kind == .text || kind == .note) ? (self.text ?? "") : (searchText ?? "")
-        return text.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        let raw = (kind == .text || kind == .note) ? (self.text ?? "") : (searchText ?? "")
+        guard !raw.isEmpty else { return false }
+        return SearchCache.shared.folded(raw, for: id).contains(SearchCache.fold(query))
     }
 
     /// Har låten en egen fil (PDF eller bild)?
@@ -145,5 +148,26 @@ private final class TitleOrder: @unchecked Sendable {
         ranks.removeAll(keepingCapacity: true)
         for (index, known) in sorted.enumerated() { ranks[known] = index }
         return low
+    }
+}
+
+/// Låttexterna i förenklad form för sökningen, en per låt. Görs om bara när texten ändras.
+final class SearchCache: @unchecked Sendable {
+    static let shared = SearchCache()
+    private let lock = NSLock()
+    private var texts: [UUID: (length: Int, text: String)] = [:]
+
+    func folded(_ raw: String, for id: UUID) -> String {
+        let length = raw.utf16.count
+        lock.lock()
+        defer { lock.unlock() }
+        if let hit = texts[id], hit.length == length { return hit.text }
+        let text = Self.fold(raw)
+        texts[id] = (length, text)
+        return text
+    }
+
+    static func fold(_ text: String) -> String {
+        text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
     }
 }

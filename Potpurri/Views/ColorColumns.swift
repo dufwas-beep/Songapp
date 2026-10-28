@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// Rubriken ovanför färgkolumnerna: knappen "Färger" (färgläge) och färgernas namn.
@@ -7,6 +8,8 @@ struct ColorColumnsHeader: View {
     @Binding var colorMode: Bool
     /// Kolumnerna som visas (se `visibleColorColumns`).
     let columns: [Int]
+    /// Avståndet till högerkanten – samma som raderna under, så att kolumnerna linjerar.
+    var trailing: CGFloat = 20
     let onColumnTap: (Int) -> Void
 
     @Environment(ColorCodes.self) private var codes
@@ -14,6 +17,8 @@ struct ColorColumnsHeader: View {
     @State private var renaming: Int?
     @State private var draft = ""
     @State private var showsNames = false
+    @State private var confirmsClear = false
+    @Environment(\.modelContext) private var context
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 0) {
@@ -34,6 +39,17 @@ struct ColorColumnsHeader: View {
                     showsNames = true
                 } label: {
                     Label("Byt namn", systemImage: "pencil")
+                        .font(.footnote.weight(.medium))
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .controlSize(.small)
+                .padding(.leading, 6)
+                .padding(.bottom, 4)
+                Button(role: .destructive) {
+                    confirmsClear = true
+                } label: {
+                    Label("Rensa", systemImage: "eraser")
                         .font(.footnote.weight(.medium))
                 }
                 .buttonStyle(.bordered)
@@ -70,9 +86,14 @@ struct ColorColumnsHeader: View {
             }
         }
         .padding(.leading, 16)
-        .padding(.trailing, 20)
+        .padding(.trailing, trailing)
         .sheet(isPresented: $showsNames) {
             ColorNamesSheet()
+        }
+        .confirmationDialog("Ta bort alla färgmarkeringar?", isPresented: $confirmsClear, titleVisibility: .visible) {
+            Button("Rensa alla färgmarkeringar", role: .destructive) { clearAllColors() }
+        } message: {
+            Text("Alla låtar i hela biblioteket blir utan färger. Det går inte att ångra.")
         }
         .alert("Byt namn på färgen", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Namn", text: $draft)
@@ -83,6 +104,18 @@ struct ColorColumnsHeader: View {
                 renaming = nil
             }
         }
+    }
+}
+
+extension ColorColumnsHeader {
+    /// Tar bort alla färgmarkeringar från alla låtar.
+    private func clearAllColors() {
+        let all = (try? context.fetch(FetchDescriptor<Song>())) ?? []
+        for song in all where !song.colorTags.isEmpty {
+            song.colorTags = []
+        }
+        try? context.save()
+        player.activeColors = []
     }
 }
 
