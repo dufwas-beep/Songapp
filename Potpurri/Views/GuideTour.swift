@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Ställen på skärmen som guiden kan peka på.
 enum GuideSpot: String {
-    case logo, tabs, addSong, categories, next, newGig, pause
+    case logo, tabs, addSong, categories, next, newGig, pause, ideas
     case songMenu, soundboard, spotify, stepButtons, settings, sidebarToggle, drawer
 }
 

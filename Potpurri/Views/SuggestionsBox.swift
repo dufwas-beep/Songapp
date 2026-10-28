@@ -185,6 +185,7 @@ struct GigFooter: View {
     @Query private var songs: [Song]
     @Environment(Player.self) private var player
     @State private var confirming = false
+    @State private var showsIdeas = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -214,6 +215,21 @@ struct GigFooter: View {
             .buttonBorderShape(.circle)
             .guideSpot(.pause)
             .accessibilityLabel("Paus – skärmsläckare")
+            // Idélådan: låtförslag, saker att köpa, testa …
+            Button {
+                showsIdeas = true
+            } label: {
+                Image(systemName: "lightbulb")
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
+            .guideSpot(.ideas)
+            .accessibilityLabel("Idélådan")
+        }
+        .sheet(isPresented: $showsIdeas) {
+            IdeaBoxView()
         }
         .confirmationDialog("Starta en ny spelning?", isPresented: $confirming, titleVisibility: .visible) {
             Button("Ny spelning") { player.newGig() }
