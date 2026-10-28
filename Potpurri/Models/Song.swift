@@ -46,6 +46,10 @@ final class Song {
     var chordSize: Double?
     /// Låtens färgkoder (0–4, se `ColorCodes`).
     var colorTags: [Int] = []
+    /// Var man senast hade flyttat låtbladet (i förhållande till bladets bredd), så att
+    /// en inzoomad låt öppnas där man hade den.
+    var scrollX: Double?
+    var scrollY: Double?
 
     init(title: String, kind: SongKind, fileName: String = "", text: String? = nil, key: String? = nil, importedNote: String? = nil) {
         self.id = UUID()

@@ -28,7 +28,11 @@ struct SongDetailView: View {
     /// Senaste hopplinjen man hoppat till (index i nummerordning).
     @State private var markerIndex: Int?
     @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase
     @FocusState private var focused: Bool
+    /// Låten som visas (för att spara var man hade den när man byter).
+    @State private var shownSong: Song?
+    @State private var restoredSongID: UUID?
 
     var body: some View {
         if let song {
@@ -49,6 +53,7 @@ struct SongDetailView: View {
                         overlay.attach(to: scrollView)
                         geometry.attach(scrollView)
                         ClosureTap.attach(to: scrollView, name: "potpurri.jump") { jumpOnTap() }
+                        restorePosition(of: song, in: scrollView)
                     }
                     .id(song.id)
                     .background { AnnotationSync(song: song, overlay: overlay).id(song.id) }
@@ -124,6 +129,16 @@ struct SongDetailView: View {
             .onChange(of: autoscroller.isRunning) { _, running in
                 player.isAutoscrolling = running
             }
+            // Var man hade låten sparas när man byter låt, lämnar appen eller stänger vyn.
+            .onChange(of: song.id) {
+                if let shownSong { rememberPosition(of: shownSong) }
+                shownSong = song
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase != .active { rememberPosition(of: song) }
+            }
+            .onAppear { shownSong = song }
+            .onDisappear { rememberPosition(of: song) }
             .task(id: song.id) {
                 autoscroller.stop()
                 markerIndex = nil
@@ -307,6 +322,37 @@ struct SongDetailView: View {
         player.editingTextSongID = song.id
     }
 
+    /// Sparar var låtbladet står (sidled och höjdled), i förhållande till bladets bredd.
+    private func rememberPosition(of song: Song) {
+        guard let scrollView = geometry.scrollView, scrollView.contentSize.width > 1 else { return }
+        let inset = scrollView.adjustedContentInset
+        let width = scrollView.contentSize.width
+        song.scrollX = Double(max(0, scrollView.contentOffset.x + inset.left) / width)
+        song.scrollY = Double(max(0, scrollView.contentOffset.y + inset.top) / width)
+        try? context.save()
+    }
+
+    /// Öppnar låten där man hade den: i sidled alltid (en inzoomad låt), i höjdled bara
+    /// om man var kvar i början av låten (t.ex. förbi en tom marginal) – annars överst.
+    private func restorePosition(of song: Song, in scrollView: UIScrollView) {
+        guard restoredSongID != song.id else { return }
+        restoredSongID = song.id
+        guard song.scrollX != nil || song.scrollY != nil else { return }
+        Task {
+            // Vänta tills bladet har fått sin storlek.
+            try? await Task.sleep(for: .milliseconds(80))
+            let inset = scrollView.adjustedContentInset
+            let width = scrollView.contentSize.width
+            guard width > 1 else { return }
+            let maxX = max(-inset.left, width + inset.right - scrollView.bounds.width)
+            let maxY = max(-inset.top, scrollView.contentSize.height + inset.bottom - scrollView.bounds.height)
+            let x = CGFloat(song.scrollX ?? 0) * width - inset.left
+            var y = CGFloat(song.scrollY ?? 0) * width - inset.top
+            if y > scrollView.bounds.height * 0.6 { y = -inset.top }
+            scrollView.setContentOffset(CGPoint(x: min(max(x, -inset.left), maxX), y: min(max(y, -inset.top), maxY)), animated: false)
+        }
+    }
+
     private func secondsBinding(for song: Song) -> Binding<Int> {
         Binding(
             get: { song.autoscrollSeconds ?? 180 },
@@ -483,6 +529,13 @@ struct SongSheetView: View {
     let song: Song
     let onScrollView: (UIScrollView) -> Void
     @Environment(Player.self) private var player
+    @Environment(\.modelContext) private var context
+
+    /// Zoomen sparas direkt, så att den finns kvar även om appen stängs strax efter.
+    private func saveZoom(_ zoom: Double) {
+        song.pdfZoom = zoom
+        try? context.save()
+    }
 
     var body: some View {
         if song.kind == .text || song.kind == .note {
@@ -499,10 +552,10 @@ struct SongSheetView: View {
             )
         } else if song.kind == .pdf {
             // Zoomen sparas per låt och återställs när låten öppnas igen.
-            PDFPagesView(url: song.fileURL, zoom: song.pdfZoom, onZoom: { song.pdfZoom = $0 }, onScrollView: onScrollView)
+            PDFPagesView(url: song.fileURL, zoom: song.pdfZoom, onZoom: saveZoom, onScrollView: onScrollView)
                 .onAppear { player.markSwitchViewBuilt() }
         } else {
-            ImageSongView(url: song.fileURL, zoom: song.pdfZoom, onZoom: { song.pdfZoom = $0 }, onScrollView: onScrollView)
+            ImageSongView(url: song.fileURL, zoom: song.pdfZoom, onZoom: saveZoom, onScrollView: onScrollView)
                 .onAppear { player.markSwitchViewBuilt() }
         }
     }

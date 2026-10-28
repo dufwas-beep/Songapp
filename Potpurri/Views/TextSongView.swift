@@ -9,6 +9,7 @@ struct TextSongView: View {
     /// Zoomen medan man nyper; sparas på låten när man släpper.
     @State private var liveZoom: CGFloat?
     @State private var zoomStart: CGFloat?
+    @Environment(\.modelContext) private var context
 
     private var zoom: CGFloat {
         liveZoom ?? CGFloat(song.pdfZoom ?? 1)
@@ -50,7 +51,10 @@ struct TextSongView: View {
                         liveZoom = min(max(start * value.magnification, 0.5), 2.5)
                     }
                     .onEnded { _ in
-                        if let liveZoom { song.pdfZoom = Double(liveZoom) }
+                        if let liveZoom {
+                            song.pdfZoom = Double(liveZoom)
+                            try? context.save()
+                        }
                         liveZoom = nil
                         zoomStart = nil
                     }
