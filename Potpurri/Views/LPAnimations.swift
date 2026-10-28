@@ -332,7 +332,7 @@ struct ScratchRecord: View {
     }
 }
 
-/// Skärmsläckaren i pauserna: loggan snurrar sakta på en skivspelare. Tryck var som
+/// Skärmsläckaren i pauserna: skivan snurrar sakta mitt på svart botten. Tryck var som
 /// helst – skivan snurrar fort, krymper och lägger sig på loggans plats uppe till vänster.
 struct ScreensaverView: View {
     let onClose: () -> Void
@@ -353,13 +353,9 @@ struct ScreensaverView: View {
                 let recordSize = min(proxy.size.width, proxy.size.height) * 0.5
                 let home = CGPoint(x: 39, y: 52)
                 let spin = now.timeIntervalSince(started) * Self.speed + exit * 1080
-                let fade = 1 - min(1, exit * 2)
                 ZStack {
                     Color.black
                         .opacity(1 - exit)
-                    TurntableBase(recordSize: recordSize)
-                        .position(center)
-                        .opacity(fade)
                     VectorRecord(angle: spin)
                         .frame(width: recordSize, height: recordSize)
                         .shadow(color: .black.opacity(0.5), radius: 10, y: 4)
@@ -368,9 +364,6 @@ struct ScreensaverView: View {
                             x: center.x + (home.x - center.x) * exit,
                             y: center.y + (home.y - center.y) * exit
                         )
-                    // Tonarmen ligger ovanpå skivan.
-                    Tonearm(center: center, radius: recordSize / 2)
-                        .opacity(fade)
                     Text(now, format: Date.FormatStyle(locale: Locale(identifier: "sv_SE")).hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
                         .font(.system(size: 54, weight: .light))
                         .monospacedDigit()
@@ -392,68 +385,6 @@ struct ScreensaverView: View {
         }
         .accessibilityAddTraits(.isButton)
         .accessibilityLabel("Skärmsläckare. Tryck för att fortsätta.")
-    }
-}
-
-/// Skivspelarens chassi och tallrik (under skivan).
-private struct TurntableBase: View {
-    let recordSize: CGFloat
-
-    var body: some View {
-        let width = recordSize * 1.6
-        let height = recordSize * 1.28
-        ZStack {
-            RoundedRectangle(cornerRadius: recordSize * 0.06)
-                .fill(LinearGradient(colors: [Color(white: 0.22), Color(white: 0.1)], startPoint: .top, endPoint: .bottom))
-                .overlay(RoundedRectangle(cornerRadius: recordSize * 0.06).stroke(Color.white.opacity(0.08), lineWidth: 1))
-                .frame(width: width, height: height)
-                .offset(x: recordSize * 0.2)
-            Circle()
-                .fill(Color(white: 0.05))
-                .frame(width: recordSize * 1.05, height: recordSize * 1.05)
-        }
-    }
-}
-
-/// Tonarmen: fästet uppe till höger, armen in över skivan och pickupen på skivans
-/// yttre spår. Ritas ovanpå skivan.
-private struct Tonearm: View {
-    let center: CGPoint
-    let radius: CGFloat
-
-    var body: some View {
-        Canvas { context, _ in
-            let pivot = CGPoint(x: center.x + radius * 1.22, y: center.y - radius * 0.78)
-            let needle = CGPoint(x: center.x + radius * 0.62, y: center.y + radius * 0.32)
-            let elbow = CGPoint(x: needle.x + radius * 0.12, y: needle.y - radius * 0.3)
-            // Motvikten bakom fästet.
-            let back = CGPoint(x: pivot.x + (pivot.x - elbow.x) * 0.22, y: pivot.y + (pivot.y - elbow.y) * 0.22)
-            var counterweight = Path()
-            counterweight.move(to: pivot)
-            counterweight.addLine(to: back)
-            context.stroke(counterweight, with: .color(Color(white: 0.4)), style: StrokeStyle(lineWidth: radius * 0.11, lineCap: .round))
-
-            context.fill(Path(ellipseIn: CGRect(x: pivot.x - radius * 0.14, y: pivot.y - radius * 0.14, width: radius * 0.28, height: radius * 0.28)), with: .color(Color(white: 0.3)))
-            context.fill(Path(ellipseIn: CGRect(x: pivot.x - radius * 0.07, y: pivot.y - radius * 0.07, width: radius * 0.14, height: radius * 0.14)), with: .color(Color(white: 0.6)))
-
-            var arm = Path()
-            arm.move(to: pivot)
-            arm.addLine(to: elbow)
-            arm.addLine(to: needle)
-            context.stroke(arm, with: .color(.black.opacity(0.4)), style: StrokeStyle(lineWidth: radius * 0.05, lineCap: .round, lineJoin: .round))
-            context.stroke(arm, with: .linearGradient(Gradient(colors: [Color(white: 0.9), Color(white: 0.6)]), startPoint: pivot, endPoint: needle), style: StrokeStyle(lineWidth: radius * 0.035, lineCap: .round, lineJoin: .round))
-
-            // Pickupen i armens riktning.
-            let dx = needle.x - elbow.x
-            let dy = needle.y - elbow.y
-            let length = max(hypot(dx, dy), 1)
-            let unit = CGPoint(x: dx / length, y: dy / length)
-            var head = Path()
-            head.move(to: CGPoint(x: needle.x - unit.x * radius * 0.1, y: needle.y - unit.y * radius * 0.1))
-            head.addLine(to: CGPoint(x: needle.x + unit.x * radius * 0.04, y: needle.y + unit.y * radius * 0.04))
-            context.stroke(head, with: .color(Color(white: 0.8)), style: StrokeStyle(lineWidth: radius * 0.09, lineCap: .butt))
-        }
-        .allowsHitTesting(false)
     }
 }
 
