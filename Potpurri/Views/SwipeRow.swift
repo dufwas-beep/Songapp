@@ -9,7 +9,6 @@ struct SwipeRow<Leading: View>: ViewModifier {
     @ViewBuilder let leading: (_ close: @escaping () -> Void) -> Leading
     @State private var offset: CGFloat = 0
     @State private var start: CGFloat?
-    @State private var horizontal: Bool?
     /// Raden flyger iväg åt höger (mot Lådan) och tonar sedan tillbaka.
     @State private var flying = false
 
@@ -43,45 +42,36 @@ struct SwipeRow<Leading: View>: ViewModifier {
                 .clipped()
             }
             .clipped()
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 16)
-                    .onChanged { value in
-                        if horizontal == nil {
-                            horizontal = abs(value.translation.width) > abs(value.translation.height)
-                        }
-                        guard horizontal == true else { return }
-                        let begin = start ?? offset
-                        start = begin
-                        let maxLeft: CGFloat = canDelete ? -320 : 0
-                        let maxRight: CGFloat = onFullSwipeRight == nil ? Self.leadingWidth + 40 : 400
-                        offset = min(max(begin + value.translation.width, maxLeft), maxRight)
+            // Bara sidledes svep fångas här – lodräta drag går alltid till listans scrollning.
+            .gesture(HorizontalPan(
+                onChanged: { translation in
+                    let begin = start ?? offset
+                    start = begin
+                    let maxLeft: CGFloat = canDelete ? -320 : 0
+                    let maxRight: CGFloat = onFullSwipeRight == nil ? Self.leadingWidth + 40 : 400
+                    offset = min(max(begin + translation, maxLeft), maxRight)
+                },
+                onEnded: { _, velocity in
+                    start = nil
+                    // Hela vägen: långt svep, eller ett snabbt svep åt höger.
+                    if let onFullSwipeRight, offset > 150 || (velocity > 900 && offset > 60) {
+                        flyAway(onFullSwipeRight)
+                        return
                     }
-                    .onEnded { value in
-                        defer {
-                            start = nil
-                            horizontal = nil
-                        }
-                        guard horizontal == true else { return }
-                        // Hela vägen: långt svep, eller ett snabbt svep som skulle ha nått långt.
-                        let flung = (start ?? 0) + value.predictedEndTranslation.width > 320
-                        if let onFullSwipeRight, offset > 150 || (flung && offset > 60) {
-                            flyAway(onFullSwipeRight)
-                            return
-                        }
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
-                            if offset < -220 {
-                                offset = 0
-                                onDelete()
-                            } else if offset < -40 {
-                                offset = -Self.deleteWidth
-                            } else if offset > 50 {
-                                offset = Self.leadingWidth
-                            } else {
-                                offset = 0
-                            }
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
+                        if offset < -220 {
+                            offset = 0
+                            onDelete()
+                        } else if offset < -40 {
+                            offset = -Self.deleteWidth
+                        } else if offset > 50 {
+                            offset = Self.leadingWidth
+                        } else {
+                            offset = 0
                         }
                     }
-            )
+                }
+            ))
     }
 
     /// Raden glider ut åt höger och tonar bort, Lådan öppnas, och raden tonar tillbaka.

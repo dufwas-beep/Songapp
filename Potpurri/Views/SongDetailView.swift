@@ -332,7 +332,12 @@ struct SongDetailView: View {
     /// Ett tryck i låten hoppar till nästa hopplinje (när låten har sådana).
     private func jumpOnTap() {
         guard !player.editingMarkers, !player.chordsOn, player.pen == .off else { return }
-        _ = jump(forward: true)
+        if jump(forward: true) { return }
+        // Alla linjer är använda: börja om högst upp, nästa tryck går till linje 1 igen.
+        if !markers().isEmpty {
+            markerIndex = nil
+            geometry.scroll(toTop: 0)
+        }
     }
 
     private func forward() {
