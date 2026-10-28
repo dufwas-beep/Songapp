@@ -500,6 +500,9 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 - Dela låtar via AirDrop till någon annans Potpurri, med kategorier, ackord och lappar.
 - Rec-knapp: spela in film med främre eller bakre kameran.
 
+**Senare – Idélådan**
+- Egen idélåda: skriv fritt (låtförslag man fått, saker att köpa som kablar, något att testa, förbättringar för appen). Varje rad sorteras automatiskt i kategorier: Att köpa, Att repa in, Att testa, Att komma ihåg, Appen. Läggs in när det passar.
+
 ## Sparas per låt
 Allt som läggs på eller ställs in för en låt följer med låten och finns kvar nästa gång
 den öppnas: notes, markeringar, ackord och grupper, tonart, zoom (huvudvy och
