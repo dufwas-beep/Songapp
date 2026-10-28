@@ -181,6 +181,8 @@ struct CheckedActionsBar: View {
     /// T.ex. "Ta bort" (biblioteket) eller "Ta bort ur listan" (en låtlista).
     let deleteTitle: String
     let onDelete: () -> Void
+    /// Dela de markerade låtarna (AirDrop m.m.).
+    var onShare: (() -> Void)?
 
     @Environment(ColorCodes.self) private var codes
     @Query private var setlists: [Setlist]
@@ -218,6 +220,11 @@ struct CheckedActionsBar: View {
                     Label("Lägg i låtlista", systemImage: "text.badge.plus")
                 }
                 .disabled(setlists.isEmpty)
+                if let onShare {
+                    Button(action: onShare) {
+                        Label("Dela (AirDrop …)", systemImage: "square.and.arrow.up")
+                    }
+                }
                 Divider()
                 Button(role: .destructive) {
                     confirmsDelete = true

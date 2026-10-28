@@ -24,6 +24,7 @@ struct SetlistDetailView: View {
     @State private var checked: Set<UUID> = []
     /// Kategorierna listan filtreras på (tom = alla låtar).
     @State private var categoryFilter: Set<Int> = []
+    @State private var sharing: Set<UUID>?
     @Environment(ColorCodes.self) private var codes
 
     /// En rad i listan med uppgift om vilket set den hör till.
@@ -106,7 +107,8 @@ struct SetlistDetailView: View {
                         }
                         try? context.save()
                         checked = []
-                    }
+                    },
+                    onShare: { sharing = checked }
                 )
             }
             Divider()
@@ -159,6 +161,7 @@ struct SetlistDetailView: View {
         .sheet(isPresented: $showAddSongs) {
             AddSongsSheet(setlist: setlist)
         }
+        .shareSongs($sharing)
         // Nästa/förra låt följer den här listan när man valt en låt ur den.
         .onAppear {
             // Låtlistans låtar ritas färdiga före resten av biblioteket.

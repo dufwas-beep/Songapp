@@ -22,6 +22,8 @@ struct ContentView: View {
     @AppStorage("sidebarWidth") private var sidebarWidth: Double = 380
     @State private var sidebarDrag: CGFloat?
     @State private var windowSize: CGSize = .zero
+    /// Svar när delade låtar (t.ex. via AirDrop) har tagits emot.
+    @State private var receivedMessage: String?
     @State private var order = LibraryOrder()
     /// Ökas när en låt byter namn, så att bokstavsordningen räknas om.
     @State private var titleVersion = 0
@@ -172,6 +174,16 @@ struct ContentView: View {
                 }
             }
             .themedBackground()
+        }
+        // Låtar som delats från någon annans Potpurri (AirDrop, Filer, Mail).
+        .onOpenURL { url in
+            guard url.pathExtension.lowercased() == "potpurri" else { return }
+            Task { receivedMessage = await SharedSongsReceiver.receive(url, context: context) }
+        }
+        .alert("Delade låtar", isPresented: Binding(get: { receivedMessage != nil }, set: { if !$0 { receivedMessage = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(receivedMessage ?? "")
         }
         .preferredColorScheme(appearance.colorScheme)
         .environment(player)

@@ -56,6 +56,7 @@ struct LibraryView: View {
     @State private var cache = ListCache()
     @State private var webQuery: String?
     @State private var showsNewSong = false
+    @State private var sharing: Set<UUID>?
     /// Quiz-fliken: quiz vars låtar visas under raden.
     @State private var expandedQuizzes: Set<UUID> = []
 
@@ -182,7 +183,8 @@ struct LibraryView: View {
                     onDelete: {
                         player.songsToDelete = checked
                         checked = []
-                    }
+                    },
+                    onShare: { sharing = checked }
                 )
             }
             Divider()
@@ -263,6 +265,7 @@ struct LibraryView: View {
             }
             query = typed
         }
+        .shareSongs($sharing)
         .safeAreaInset(edge: .bottom) {
             if progress.isRunning {
                 ProgressBanner(progress: progress)
@@ -484,6 +487,11 @@ struct LibraryView: View {
                 Label("Lägg i lådan", systemImage: "tray.and.arrow.down")
             }
             PinButton(songID: song.id)
+            Button {
+                sharing = [song.id]
+            } label: {
+                Label("Dela (AirDrop …)", systemImage: "square.and.arrow.up")
+            }
             if !player.isLocked { rowMenu(for: song) }
         }
     }

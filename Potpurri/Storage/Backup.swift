@@ -38,10 +38,17 @@ enum Backup {
     // MARK: Spara
 
     /// Samlar allt och skriver arkivet till en tillfällig fil, som sedan sparas i Filer.
+    /// `only`: bara de här låtarna (med sina notes, markeringar, hopplinjer och ackord) –
+    /// för att dela låtar med någon annan, t.ex. via AirDrop.
     @MainActor
-    static func export(context: ModelContext, colorNames: [String], progress: TaskProgress) async throws -> URL {
-        let songs = try context.fetch(FetchDescriptor<Song>())
-        let sounds = try context.fetch(FetchDescriptor<SoundClip>())
+    static func export(context: ModelContext, colorNames: [String], progress: TaskProgress, only: Set<UUID>? = nil) async throws -> URL {
+        var songs = try context.fetch(FetchDescriptor<Song>())
+        var sounds = try context.fetch(FetchDescriptor<SoundClip>())
+        if let only {
+            songs = songs.filter { only.contains($0.id) }
+            sounds = []
+        }
+        let belongs = { (songID: UUID) in only?.contains(songID) ?? true }
         var content = Content(colorNames: colorNames)
         content.songs = songs.map {
             SongData(id: $0.id, title: $0.title, kindRaw: $0.kindRaw, fileName: $0.fileName, dateAdded: $0.dateAdded,
@@ -50,21 +57,27 @@ enum Backup {
                      startKey: $0.startKey, searchText: $0.searchText, drawerNote: $0.drawerNote,
                      quizSongIDs: $0.quizSongIDs.isEmpty ? nil : $0.quizSongIDs)
         }
-        content.setlists = try context.fetch(FetchDescriptor<Setlist>()).map { SetlistData(id: $0.id, name: $0.name, created: $0.created, songIDs: $0.songIDs, setBreaks: $0.setBreaks) }
-        content.notes = try context.fetch(FetchDescriptor<SongNote>()).map { NoteData(id: $0.id, songID: $0.songID, text: $0.text, colorHex: $0.colorHex, x: $0.x, y: $0.y, width: $0.width, height: $0.height, pinned: $0.pinned, fixedFontSize: $0.fixedFontSize, created: $0.created) }
-        content.highlights = try context.fetch(FetchDescriptor<Highlight>()).map { HighlightData(id: $0.id, songID: $0.songID, colorHex: $0.colorHex, x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
-        content.markers = try context.fetch(FetchDescriptor<JumpMarker>()).map { MarkerData(id: $0.id, songID: $0.songID, y: $0.y, number: $0.number) }
-        content.chords = try context.fetch(FetchDescriptor<ChordStamp>()).map { ChordData(id: $0.id, songID: $0.songID, root: $0.root, quality: $0.quality, bass: $0.bass, x: $0.x, y: $0.y, groupID: $0.groupID, flats: $0.flats) }
+        if only == nil { content.setlists = try context.fetch(FetchDescriptor<Setlist>()).map { SetlistData(id: $0.id, name: $0.name, created: $0.created, songIDs: $0.songIDs, setBreaks: $0.setBreaks) } }
+        content.notes = try context.fetch(FetchDescriptor<SongNote>()).filter { belongs($0.songID) }.map { NoteData(id: $0.id, songID: $0.songID, text: $0.text, colorHex: $0.colorHex, x: $0.x, y: $0.y, width: $0.width, height: $0.height, pinned: $0.pinned, fixedFontSize: $0.fixedFontSize, created: $0.created) }
+        content.highlights = try context.fetch(FetchDescriptor<Highlight>()).filter { belongs($0.songID) }.map { HighlightData(id: $0.id, songID: $0.songID, colorHex: $0.colorHex, x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
+        content.markers = try context.fetch(FetchDescriptor<JumpMarker>()).filter { belongs($0.songID) }.map { MarkerData(id: $0.id, songID: $0.songID, y: $0.y, number: $0.number) }
+        content.chords = try context.fetch(FetchDescriptor<ChordStamp>()).filter { belongs($0.songID) }.map { ChordData(id: $0.id, songID: $0.songID, root: $0.root, quality: $0.quality, bass: $0.bass, x: $0.x, y: $0.y, groupID: $0.groupID, flats: $0.flats) }
         content.sounds = sounds.map { SoundData(id: $0.id, name: $0.name, colorHex: $0.colorHex, fileName: $0.fileName, order: $0.order, trimStart: $0.trimStart, trimEnd: $0.trimEnd, volumeDB: $0.volumeDB) }
-        content.logs = try context.fetch(FetchDescriptor<GigLog>()).map { LogData(id: $0.id, name: $0.name, started: $0.started, entries: $0.entries) }
+        if only == nil { content.logs = try context.fetch(FetchDescriptor<GigLog>()).map { LogData(id: $0.id, name: $0.name, started: $0.started, entries: $0.entries) } }
 
         let files = Set(songs.map(\.fileName) + sounds.map(\.fileName)).filter { !$0.isEmpty }.sorted()
         let json = try JSONEncoder().encode(content)
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH.mm"
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Potpurri \(formatter.string(from: Date())).potpurri")
+        var name = "Potpurri \(formatter.string(from: Date()))"
+        if only != nil {
+            // Delade låtar heter som låten (eller "3 låtar från Potpurri").
+            name = songs.count == 1 ? songs[0].title.replacingOccurrences(of: "/", with: "-") : "\(songs.count) låtar från Potpurri"
+        }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(name + ".potpurri")
+        try? FileManager.default.removeItem(at: url)
 
-        progress.start("Sparar säkerhetskopia", total: files.count)
+        progress.start(only == nil ? "Sparar säkerhetskopia" : "Förbereder delning", total: files.count)
         defer { progress.finish() }
         let writer = try ZipWriter(url: url)
         try writer.add(name: "backup.json", data: json)
@@ -89,6 +102,52 @@ enum Backup {
         guard let entry = archive.entry(named: "backup.json") else { throw ZipError.notAZip }
         let content = try JSONDecoder().decode(Content.self, from: archive.data(for: entry))
         return (content, archive)
+    }
+
+    /// Lägger till låtarna i filen (t.ex. delade via AirDrop) utan att ta bort något.
+    /// Låtar som redan finns (samma låt, t.ex. delad två gånger) hoppas över.
+    /// Svarar med hur många låtar som lades till.
+    @MainActor
+    static func merge(_ content: Content, archive: ZipArchive, context: ModelContext) async throws -> Int {
+        let existing = Set(try context.fetch(FetchDescriptor<Song>()).map(\.id))
+        let added = content.songs.filter { !existing.contains($0.id) }
+        let addedIDs = Set(added.map(\.id))
+        for item in added where !item.fileName.isEmpty {
+            let target = SongFileStore.url(for: item.fileName)
+            guard !FileManager.default.fileExists(atPath: target.path) else { continue }
+            let name = item.fileName
+            _ = await Task.detached(priority: .userInitiated) { () -> Bool in
+                guard let entry = archive.entry(named: "files/" + name), let data = try? archive.data(for: entry) else { return false }
+                return (try? data.write(to: target, options: .atomic)) != nil
+            }.value
+        }
+        for item in added {
+            let song = Song(title: item.title, kind: SongKind(rawValue: item.kindRaw) ?? .pdf, fileName: item.fileName, text: item.text, key: item.key, importedNote: item.importedNote)
+            song.id = item.id; song.kindRaw = item.kindRaw; song.dateAdded = Date()
+            song.autoscrollSeconds = item.autoscrollSeconds; song.colorTags = item.colorTags
+            song.pdfZoom = item.pdfZoom; song.chordSize = item.chordSize; song.startKey = item.startKey
+            song.searchText = item.searchText; song.drawerNote = item.drawerNote
+            song.quizSongIDs = item.quizSongIDs ?? []
+            context.insert(song)
+        }
+        for item in content.notes where addedIDs.contains(item.songID) {
+            let note = SongNote(songID: item.songID, text: item.text, x: item.x, y: item.y, width: item.width, height: item.height, pinned: item.pinned, colorHex: item.colorHex)
+            note.fixedFontSize = item.fixedFontSize; note.created = item.created
+            context.insert(note)
+        }
+        for item in content.highlights where addedIDs.contains(item.songID) {
+            context.insert(Highlight(songID: item.songID, colorHex: item.colorHex, x: item.x, y: item.y, width: item.width, height: item.height))
+        }
+        for item in content.markers where addedIDs.contains(item.songID) {
+            context.insert(JumpMarker(songID: item.songID, y: item.y, number: item.number))
+        }
+        for item in content.chords where addedIDs.contains(item.songID) {
+            let chord = ChordStamp(songID: item.songID, root: item.root, quality: item.quality, bass: item.bass, x: item.x, y: item.y, groupID: item.groupID)
+            chord.flats = item.flats
+            context.insert(chord)
+        }
+        try context.save()
+        return added.count
     }
 
     /// Ersätter hela biblioteket med säkerhetskopian.

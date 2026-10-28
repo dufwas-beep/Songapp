@@ -33,6 +33,7 @@ struct SongDetailView: View {
     /// Låten som visas (för att spara var man hade den när man byter).
     @State private var shownSong: Song?
     @State private var restoredSongID: UUID?
+    @State private var sharing: Set<UUID>?
 
     var body: some View {
         if let song {
@@ -281,6 +282,11 @@ struct SongDetailView: View {
             }
             Divider()
             Button {
+                sharing = [song.id]
+            } label: {
+                Label("Dela låten (AirDrop …)", systemImage: "square.and.arrow.up")
+            }
+            Button {
                 player.renamingSongID = song.id
             } label: {
                 Label("Byt namn", systemImage: "pencil")
@@ -315,6 +321,7 @@ struct SongDetailView: View {
         }
         .guideSpot(.songMenu)
         .accessibilityLabel("Fler funktioner")
+        .shareSongs($sharing)
         .popover(isPresented: $showsColors) {
             SongColorsPanel(song: song)
         }
