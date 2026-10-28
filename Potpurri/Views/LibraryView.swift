@@ -23,7 +23,19 @@ struct LibraryView: View {
     @Environment(\.modelContext) private var context
     @Environment(Player.self) private var player
     @Environment(ColorCodes.self) private var codes
-    @Query private var songs: [Song]
+    @Query private var allSongs: [Song]
+    /// Quiz-fliken: bara låtar som heter något med "Quiz" eller "HLS".
+    var quizOnly = false
+
+    /// Låtarna fliken visar (hela biblioteket eller bara quizen).
+    private var songs: [Song] {
+        quizOnly ? allSongs.filter(Self.isQuiz) : allSongs
+    }
+
+    static func isQuiz(_ song: Song) -> Bool {
+        song.title.range(of: "quiz", options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            || song.title.range(of: "hls", options: .caseInsensitive) != nil
+    }
     @Query private var setlists: [Setlist]
 
     @AppStorage("librarySort") private var sort = LibrarySort.name
@@ -208,7 +220,13 @@ struct LibraryView: View {
                 }
             }
             .overlay {
-                if songs.isEmpty {
+                if songs.isEmpty && quizOnly {
+                    ContentUnavailableView(
+                        "Inga quiz ännu",
+                        systemImage: "questionmark.bubble",
+                        description: Text("Låtar och anteckningar som heter något med \"Quiz\" eller \"HLS\" visas här.")
+                    )
+                } else if songs.isEmpty {
                     ContentUnavailableView(
                         "Inga låtar ännu",
                         systemImage: "music.note.list",
@@ -277,7 +295,7 @@ struct LibraryView: View {
             OnSongImportSheet(backup: backup) { selectedIDs in
                 onSongBackup = nil
                 Task {
-                    importMessage = await OnSongImporter.importSongs(selectedIDs, from: backup, existing: songs, into: context, progress: progress)
+                    importMessage = await OnSongImporter.importSongs(selectedIDs, from: backup, existing: allSongs, into: context, progress: progress)
                 }
             } onCancel: {
                 onSongBackup = nil
@@ -373,7 +391,7 @@ struct LibraryView: View {
     }
 
     private func readOnSong(_ url: URL) {
-        let titles = Set(songs.map { $0.title.lowercased() })
+        let titles = Set(allSongs.map { $0.title.lowercased() })
         Task {
             do {
                 let backup = try await OnSongImporter.read(url, existingTitles: titles, progress: progress)

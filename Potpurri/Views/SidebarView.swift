@@ -11,6 +11,7 @@ struct SidebarView: View {
     enum SidebarTab: String {
         case setlists
         case library
+        case quiz
     }
 
     var body: some View {
@@ -22,6 +23,8 @@ struct SidebarView: View {
                     SetlistsView(selection: $selection)
                 case .library:
                     LibraryView()
+                case .quiz:
+                    LibraryView(quizOnly: true)
                 }
             }
             .frame(maxHeight: .infinity)
@@ -41,6 +44,7 @@ struct SidebarView: View {
                 Picker("Visa", selection: $tab) {
                     Text("Låtlistor").tag(SidebarTab.setlists)
                     Text("Bibliotek").tag(SidebarTab.library)
+                    Text("Quiz").tag(SidebarTab.quiz)
                 }
                 .pickerStyle(.segmented)
             }
