@@ -491,14 +491,15 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 **Paket 4 – kul och snyggt**
 - ✅ Duvan ritas som vektorgrafik (grå duva med skimrande hals, svartbandad stjärt, vingband) med mjuka vingslag, glid och broms före landning. Flyger en mjuk slinga som alltid håller sig innanför skärmen.
 - ✅ Scratcha på LP:n på välkomstsidan: dra runt skivan, ljudet följer fart och riktning (framåt/bakåt).
-- ✅ Skärmsläckare (koppen bredvid Ny spelning): loggan snurrar på en skivspelare med klockan under. Tryck = snurrar fort, krymper och lägger sig på loggans plats.
-- ✅ Guiden börjar med ett val: Snabbintro (Next, hopplinjer, soundboard, ackord, kategorier, Lådan) eller Hela guiden.
+- ✅ Skärmsläckare (koppen bredvid Ny spelning): skivan (ritad som vektorgrafik, skarp) snurrar sakta på en skivspelare med tonarmen ovanpå och klockan under. Tryck = snurrar fort, krymper och lägger sig på loggans plats. Välkomstsidans och startens skiva är också vektorgrafik.
+- ✅ Guiden börjar med ett val: Snabbintro (Next, hopplinjer, soundboard, ackord, kategorier, Lådan) eller Hela guiden. Rundturen visas ovanpå appen: allt tonas ner utom stället den pratar om, som ramas in i rosa (byter flik vid behov).
 
 **Paket 5 – större funktioner**
 - Webbsökningen i större ruta (helskärm).
 - Flytande appfönster ovanpå (t.ex. Spotify) – styrs av iPadOS; kontrollera att Potpurri tillåter det.
 - Dela låtar via AirDrop till någon annans Potpurri, med kategorier, ackord och lappar.
 - Rec-knapp: spela in film med främre eller bakre kameran.
+- Zoom och position per låt kommer inte ihåg sig längre – ska sparas och återställas när låten öppnas igen.
 - Quiz-meny: i varje quiz/HLS (t.ex. HLS 45) en meny med låtarna som ska vara med i quizet; man lägger till låtar under quizet. Går att minimera.
 
 **Extra**

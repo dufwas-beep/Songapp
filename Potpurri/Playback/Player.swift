@@ -69,6 +69,9 @@ final class Player {
     var doveFlights = 0
     /// Skärmsläckaren (pausen) visas.
     var screensaverOn = false
+    /// Guidens val (kort/lång) visas, och rundturen som pågår.
+    var guideChooserOpen = false
+    var guidePages: [GuidePage]?
     /// Snabb snurr på LP:n (t.ex. vid "Ny spelning").
     var spinBurst = 0
     /// Noten som redigeras just nu.

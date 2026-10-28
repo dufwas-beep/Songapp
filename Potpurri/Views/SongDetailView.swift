@@ -196,6 +196,7 @@ struct SongDetailView: View {
                 .foregroundStyle(player.soundboardOpen ? Color.black : Color.primary)
                 .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
         }
+        .guideSpot(.soundboard)
         .accessibilityLabel(player.soundboardOpen ? "Stäng ljudklippen" : "Ljudklipp")
     }
 
@@ -290,6 +291,7 @@ struct SongDetailView: View {
                 .background(.regularMaterial, in: Circle())
                 .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
         }
+        .guideSpot(.songMenu)
         .accessibilityLabel("Fler funktioner")
         .popover(isPresented: $showsColors) {
             SongColorsPanel(song: song)
@@ -393,6 +395,7 @@ private struct SongTopBar: View {
                     .font(.system(size: 18, weight: .semibold))
                     .frame(width: 40, height: 40)
             }
+            .guideSpot(.sidebarToggle)
             .accessibilityLabel(sidebarHidden ? "Visa listorna" : "Dölj listorna")
             if sidebarHidden {
                 ClockLabel()
@@ -415,8 +418,10 @@ private struct SongTopBar: View {
             }
             if let onSelect {
                 SongStepButtons(previous: previous, next: next, onSelect: onSelect)
+                    .guideSpot(.stepButtons)
             }
             SettingsButton(size: 36)
+                .guideSpot(.settings)
         }
         .padding(.horizontal, 12)
         .frame(height: 50)

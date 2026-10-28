@@ -197,6 +197,7 @@ struct GigFooter: View {
             .buttonStyle(.bordered)
             .buttonBorderShape(.roundedRectangle(radius: 12))
             .controlSize(.large)
+            .guideSpot(.newGig)
             let count = songs.filter(player.isPlayedTonight).count
             Text(count == 1 ? "1 spelad" : "\(count) spelade")
                 .font(.footnote)
@@ -211,6 +212,7 @@ struct GigFooter: View {
             }
             .buttonStyle(.bordered)
             .buttonBorderShape(.circle)
+            .guideSpot(.pause)
             .accessibilityLabel("Paus – skärmsläckare")
         }
         .confirmationDialog("Starta en ny spelning?", isPresented: $confirming, titleVisibility: .visible) {

@@ -11,8 +11,7 @@ struct LaunchAnimation: View {
                 ZStack {
                     Color(.systemBackground)
                         .opacity(phase == 0 ? 1 : 0)
-                    Image("LPLogo")
-                        .resizable()
+                    VectorRecord()
                         .frame(width: phase == 0 ? 260 : 46, height: phase == 0 ? 260 : 46)
                         .rotationEffect(.degrees(angle))
                         .shadow(color: .black.opacity(0.3), radius: 16, y: 8)
@@ -287,9 +286,7 @@ struct ScratchRecord: View {
     var body: some View {
         // Fingret mäts mot ramen runt skivan (som inte snurrar), inte mot skivan själv.
         ZStack {
-            Image("LPLogo")
-                .resizable()
-                .rotationEffect(.degrees(angle))
+            VectorRecord(angle: angle)
                 .shadow(color: .black.opacity(0.25), radius: 14, y: 8)
         }
         .frame(width: size, height: size)
@@ -335,13 +332,15 @@ struct ScratchRecord: View {
     }
 }
 
-/// Skärmsläckaren i pauserna: loggan snurrar på en skivspelare. Tryck var som helst –
-/// skivan snurrar fort, krymper och lägger sig på loggans plats uppe till vänster.
+/// Skärmsläckaren i pauserna: loggan snurrar sakta på en skivspelare. Tryck var som
+/// helst – skivan snurrar fort, krymper och lägger sig på loggans plats uppe till vänster.
 struct ScreensaverView: View {
     let onClose: () -> Void
     @State private var started = Date()
     @State private var leaving: Date?
     private static let exitDuration = 0.75
+    /// Grader per sekund – en lugn snurr.
+    private static let speed = 40.0
 
     var body: some View {
         GeometryReader { proxy in
@@ -353,29 +352,30 @@ struct ScreensaverView: View {
                 let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2 - 30)
                 let recordSize = min(proxy.size.width, proxy.size.height) * 0.5
                 let home = CGPoint(x: 39, y: 52)
-                // 33 varv/minut, plus några snabba varv på vägen hem.
-                let spin = now.timeIntervalSince(started) * 200 + exit * 1080
+                let spin = now.timeIntervalSince(started) * Self.speed + exit * 1080
+                let fade = 1 - min(1, exit * 2)
                 ZStack {
                     Color.black
                         .opacity(1 - exit)
-                    Turntable(recordSize: recordSize)
+                    TurntableBase(recordSize: recordSize)
                         .position(center)
-                        .opacity(1 - min(1, exit * 2))
-                    Image("LPLogo")
-                        .resizable()
+                        .opacity(fade)
+                    VectorRecord(angle: spin)
                         .frame(width: recordSize, height: recordSize)
                         .shadow(color: .black.opacity(0.5), radius: 10, y: 4)
-                        .rotationEffect(.degrees(spin))
                         .scaleEffect(1 - (1 - 46 / recordSize) * exit)
                         .position(
                             x: center.x + (home.x - center.x) * exit,
                             y: center.y + (home.y - center.y) * exit
                         )
+                    // Tonarmen ligger ovanpå skivan.
+                    Tonearm(center: center, radius: recordSize / 2)
+                        .opacity(fade)
                     Text(now, format: Date.FormatStyle(locale: Locale(identifier: "sv_SE")).hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
                         .font(.system(size: 54, weight: .light))
                         .monospacedDigit()
                         .foregroundStyle(.white.opacity(0.7))
-                        .position(x: center.x, y: center.y + recordSize * 0.5 + 90)
+                        .position(x: center.x, y: center.y + recordSize * 0.5 + 100)
                         .opacity(1 - min(1, exit * 3))
                 }
             }
@@ -395,39 +395,154 @@ struct ScreensaverView: View {
     }
 }
 
-/// Skivspelaren under skivan: chassi, tallrik och en tonarm som vilar på skivan.
-private struct Turntable: View {
+/// Skivspelarens chassi och tallrik (under skivan).
+private struct TurntableBase: View {
     let recordSize: CGFloat
 
     var body: some View {
-        let width = recordSize * 1.55
-        let height = recordSize * 1.22
+        let width = recordSize * 1.6
+        let height = recordSize * 1.28
         ZStack {
             RoundedRectangle(cornerRadius: recordSize * 0.06)
-                .fill(LinearGradient(colors: [Color(white: 0.2), Color(white: 0.1)], startPoint: .top, endPoint: .bottom))
+                .fill(LinearGradient(colors: [Color(white: 0.22), Color(white: 0.1)], startPoint: .top, endPoint: .bottom))
                 .overlay(RoundedRectangle(cornerRadius: recordSize * 0.06).stroke(Color.white.opacity(0.08), lineWidth: 1))
                 .frame(width: width, height: height)
+                .offset(x: recordSize * 0.2)
             Circle()
-                .fill(Color(white: 0.06))
-                .frame(width: recordSize * 1.06, height: recordSize * 1.06)
-                .offset(x: -width * 0.12)
-            // Tonarmen: fästet uppe till höger och armen in över skivan.
-            Circle()
-                .fill(Color(white: 0.35))
-                .frame(width: recordSize * 0.16, height: recordSize * 0.16)
-                .offset(x: width * 0.36, y: -height * 0.32)
-            Capsule()
-                .fill(LinearGradient(colors: [Color(white: 0.85), Color(white: 0.55)], startPoint: .leading, endPoint: .trailing))
-                .frame(width: recordSize * 0.035, height: recordSize * 0.72)
-                .overlay(alignment: .bottom) {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(Color(white: 0.75))
-                        .frame(width: recordSize * 0.07, height: recordSize * 0.1)
-                }
-                .rotationEffect(.degrees(28), anchor: .top)
-                .offset(x: width * 0.36, y: -height * 0.32 + recordSize * 0.36)
+                .fill(Color(white: 0.05))
+                .frame(width: recordSize * 1.05, height: recordSize * 1.05)
         }
-        .frame(width: width, height: height)
-        .offset(x: width * 0.12)
+    }
+}
+
+/// Tonarmen: fästet uppe till höger, armen in över skivan och pickupen på skivans
+/// yttre spår. Ritas ovanpå skivan.
+private struct Tonearm: View {
+    let center: CGPoint
+    let radius: CGFloat
+
+    var body: some View {
+        Canvas { context, _ in
+            let pivot = CGPoint(x: center.x + radius * 1.22, y: center.y - radius * 0.78)
+            let needle = CGPoint(x: center.x + radius * 0.62, y: center.y + radius * 0.32)
+            let elbow = CGPoint(x: needle.x + radius * 0.12, y: needle.y - radius * 0.3)
+            // Motvikten bakom fästet.
+            let back = CGPoint(x: pivot.x + (pivot.x - elbow.x) * 0.22, y: pivot.y + (pivot.y - elbow.y) * 0.22)
+            var counterweight = Path()
+            counterweight.move(to: pivot)
+            counterweight.addLine(to: back)
+            context.stroke(counterweight, with: .color(Color(white: 0.4)), style: StrokeStyle(lineWidth: radius * 0.11, lineCap: .round))
+
+            context.fill(Path(ellipseIn: CGRect(x: pivot.x - radius * 0.14, y: pivot.y - radius * 0.14, width: radius * 0.28, height: radius * 0.28)), with: .color(Color(white: 0.3)))
+            context.fill(Path(ellipseIn: CGRect(x: pivot.x - radius * 0.07, y: pivot.y - radius * 0.07, width: radius * 0.14, height: radius * 0.14)), with: .color(Color(white: 0.6)))
+
+            var arm = Path()
+            arm.move(to: pivot)
+            arm.addLine(to: elbow)
+            arm.addLine(to: needle)
+            context.stroke(arm, with: .color(.black.opacity(0.4)), style: StrokeStyle(lineWidth: radius * 0.05, lineCap: .round, lineJoin: .round))
+            context.stroke(arm, with: .linearGradient(Gradient(colors: [Color(white: 0.9), Color(white: 0.6)]), startPoint: pivot, endPoint: needle), style: StrokeStyle(lineWidth: radius * 0.035, lineCap: .round, lineJoin: .round))
+
+            // Pickupen i armens riktning.
+            let dx = needle.x - elbow.x
+            let dy = needle.y - elbow.y
+            let length = max(hypot(dx, dy), 1)
+            let unit = CGPoint(x: dx / length, y: dy / length)
+            var head = Path()
+            head.move(to: CGPoint(x: needle.x - unit.x * radius * 0.1, y: needle.y - unit.y * radius * 0.1))
+            head.addLine(to: CGPoint(x: needle.x + unit.x * radius * 0.04, y: needle.y + unit.y * radius * 0.04))
+            context.stroke(head, with: .color(Color(white: 0.8)), style: StrokeStyle(lineWidth: radius * 0.09, lineCap: .butt))
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+/// Potpurri-skivan ritad som vektorgrafik – skarp i alla storlekar. Etiketten snurrar
+/// (`angle`); spåren och ljusreflexen står still, som på en riktig skiva.
+struct VectorRecord: View {
+    var angle: Double = 0
+
+    private static let grooves: [(radius: CGFloat, light: Bool)] = [
+        (42.40, true), (41.65, false), (40.90, true), (40.15, false), (39.40, true), (38.65, false), (37.90, true),
+        (35.85, true), (35.10, false), (34.35, true), (33.60, false), (32.85, true), (32.10, false),
+        (30.05, false), (29.30, true), (28.55, false), (27.80, true), (27.05, false), (26.30, true),
+        (24.25, true), (23.50, false), (22.75, true)
+    ]
+
+    /// Duvan på etiketten (samma som i appikonen).
+    private static let dove: [CGPoint] = {
+        let raw: [(Double, Double)] = [
+        (80.0, 11.9), (77.5, 9.6), (74.5, 8.6), (71.5, 8.9), (68.4, 10.6), (66.7, 12.9), (66.2, 14.4), (65.9, 17.2),
+        (66.4, 21.4), (66.2, 23.2), (65.2, 25.7), (60.7, 31.0), (53.2, 38.5), (9.3, 66.8), (1.0, 72.6), (17.0, 70.1),
+        (31.8, 72.1), (45.6, 72.6), (50.9, 75.6), (51.9, 79.1), (51.6, 80.1), (46.6, 80.1), (46.9, 82.4), (61.4, 82.4),
+        (61.4, 80.1), (54.9, 80.1), (54.2, 79.1), (53.2, 74.3), (56.2, 71.6), (61.4, 70.6), (64.9, 69.3), (68.2, 67.6),
+        (70.5, 65.8), (74.2, 61.0), (76.0, 57.5), (77.7, 50.8), (77.7, 23.2), (79.5, 21.4), (80.2, 21.4), (87.0, 24.4),
+        (81.2, 14.9)
+            ]
+        return raw.map { CGPoint(x: -15 + 0.3 * $0.0, y: -16 + 0.3 * $0.1) }
+    }()
+
+    var body: some View {
+        Canvas { context, size in
+            let unit = min(size.width, size.height) / 88
+            var base = context
+            base.translateBy(x: size.width / 2, y: size.height / 2)
+            var disc = base
+            disc.scaleBy(x: unit, y: unit)
+            func circle(_ r: CGFloat) -> Path { Path(ellipseIn: CGRect(x: -r, y: -r, width: 2 * r, height: 2 * r)) }
+
+            disc.fill(circle(44), with: .color(Color(red: 0.03, green: 0.03, blue: 0.04)))
+            disc.stroke(circle(43.6), with: .color(Color(red: 0.35, green: 0.35, blue: 0.38)), lineWidth: 0.8)
+            for groove in Self.grooves {
+                let shade = groove.light ? Color(red: 0.2, green: 0.2, blue: 0.23) : Color(red: 0.15, green: 0.15, blue: 0.17)
+                disc.stroke(circle(groove.radius), with: .color(shade), lineWidth: 0.3)
+            }
+
+            // Etiketten snurrar.
+            var label = disc
+            label.rotate(by: .degrees(angle))
+            label.fill(circle(19.5), with: .color(Color(red: 0.984, green: 0.569, blue: 1)))
+            label.stroke(circle(18.2), with: .color(.black.opacity(0.5)), lineWidth: 0.25)
+            var dove = Path()
+            dove.addLines(Self.dove)
+            dove.closeSubpath()
+            label.fill(dove, with: .color(Color(white: 0.07)))
+            label.fill(circle(1.9), with: .color(Color(red: 0.15, green: 0.15, blue: 0.17)))
+            label.stroke(circle(2.15), with: .color(Color(red: 0.984, green: 0.569, blue: 1)), lineWidth: 0.55)
+            // Texten ritas i full storlek (inte uppskalad) så att den blir skarp.
+            var text = base
+            text.rotate(by: .degrees(angle))
+            text.draw(
+                Text("POTPURRI")
+                    .font(.system(size: 2.5 * unit, weight: .semibold))
+                    .tracking(0.6 * unit)
+                    .foregroundStyle(Color(white: 0.07)),
+                at: CGPoint(x: 0, y: 14.6 * unit)
+            )
+
+            // Ljusreflexen står still medan skivan snurrar.
+            let sheen = GraphicsContext.Shading.linearGradient(
+                Gradient(stops: [
+                    .init(color: .white.opacity(0), location: 0),
+                    .init(color: .white.opacity(0.22), location: 0.5),
+                    .init(color: .white.opacity(0), location: 1)
+                ]),
+                startPoint: CGPoint(x: -50, y: -50), endPoint: CGPoint(x: 50, y: 50)
+            )
+            for (from, to, opacity) in [(-80.0, -40.0, 0.9), (100.0, 140.0, 0.6)] {
+                var wedge = Path()
+                wedge.move(to: .zero)
+                for step in 0...16 {
+                    let degrees = from + (to - from) * Double(step) / 16
+                    let radians = degrees * .pi / 180
+                    wedge.addLine(to: CGPoint(x: 43 * cos(radians), y: 43 * sin(radians)))
+                }
+                wedge.closeSubpath()
+                var shine = disc
+                shine.opacity = opacity
+                shine.fill(wedge, with: sheen)
+            }
+        }
+        .accessibilityHidden(true)
     }
 }

@@ -18,7 +18,6 @@ struct ContentView: View {
     @AppStorage("migratedSongNotes") private var migratedSongNotes = false
     @AppStorage("appearance") private var appearance = Appearance.system
     @AppStorage("hasSeenGuide") private var hasSeenGuide = false
-    @State private var showsGuide = false
     /// Sidospaltens bredd – dras i handtaget mellan spalten och låten.
     @AppStorage("sidebarWidth") private var sidebarWidth: Double = 380
     @State private var sidebarDrag: CGFloat?
@@ -114,6 +113,12 @@ struct ContentView: View {
             LaunchAnimation()
         }
         .overlay {
+            if let pages = player.guidePages {
+                GuideTour(pages: pages) { player.guidePages = nil }
+                    .transition(.opacity)
+            }
+        }
+        .overlay {
             if player.screensaverOn {
                 ScreensaverView { player.screensaverOn = false }
                     .transition(.opacity)
@@ -157,8 +162,16 @@ struct ContentView: View {
                 SongTextEditor(song: found)
             }
         }
-        .sheet(isPresented: $showsGuide) {
-            GuideView().themedBackground()
+        .sheet(isPresented: Binding(get: { player.guideChooserOpen }, set: { player.guideChooserOpen = $0 })) {
+            GuideChooser { pages in
+                player.guideChooserOpen = false
+                // Rundturen börjar när valet har stängts.
+                Task {
+                    try? await Task.sleep(for: .milliseconds(450))
+                    player.guidePages = pages
+                }
+            }
+            .themedBackground()
         }
         .preferredColorScheme(appearance.colorScheme)
         .environment(player)
@@ -208,7 +221,7 @@ struct ContentView: View {
                 hasSeenGuide = true
                 Task {
                     try? await Task.sleep(for: .seconds(2.5))
-                    showsGuide = true
+                    player.guideChooserOpen = true
                 }
             }
         }

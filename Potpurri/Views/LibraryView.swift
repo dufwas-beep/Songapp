@@ -355,6 +355,7 @@ struct LibraryView: View {
                 .frame(width: 40, height: 40)
         }
         .disabled(progress.isRunning || player.isLocked)
+        .guideSpot(.addSong)
         .accessibilityLabel("Importera")
     }
 

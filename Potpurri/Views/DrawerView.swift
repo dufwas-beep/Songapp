@@ -76,6 +76,7 @@ struct DrawerView: View {
                         }
                     }
             )
+            .guideSpot(.drawer)
             .accessibilityLabel(player.drawerOpen ? "Stäng lådan" : "Öppna lådan")
     }
 

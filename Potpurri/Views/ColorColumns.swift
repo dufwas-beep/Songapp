@@ -36,6 +36,7 @@ struct ColorColumnsHeader: View {
             .controlSize(.small)
             .tint(colorMode ? .accentColor : .secondary)
             .disabled(player.isLocked)
+            .guideSpot(.categories)
             .padding(.bottom, 4)
             if colorMode {
                 Button {

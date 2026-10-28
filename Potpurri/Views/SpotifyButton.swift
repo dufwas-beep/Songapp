@@ -34,6 +34,7 @@ struct SpotifyButton: View {
         .frame(height: 56)
         .background(.regularMaterial, in: Capsule())
         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+        .guideSpot(.spotify)
         // Håll in för att logga in igen eller koppla från.
         .contextMenu {
             Button {

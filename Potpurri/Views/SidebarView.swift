@@ -47,6 +47,7 @@ struct SidebarView: View {
                     Text("Quiz").tag(SidebarTab.quiz)
                 }
                 .pickerStyle(.segmented)
+                .guideSpot(.tabs)
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
@@ -102,6 +103,7 @@ private struct SidebarHeader: View {
                 .onLongPressGesture(minimumDuration: 0.8) {
                     withAnimation { player.isLocked.toggle() }
                 }
+                .guideSpot(.logo)
                 .accessibilityLabel(player.isLocked ? "Potpurri, scenlåset är på" : "Potpurri")
                 .accessibilityHint("Håll in för att slå på eller av scenlåset")
                 .accessibilityAction(named: player.isLocked ? "Lås upp" : "Scenlås") {
@@ -249,6 +251,7 @@ private struct NextPanel: View {
                 .accessibilityLabel("Ändra storlek på Next-rutan")
             SuggestionsBox(current: selection)
                 .frame(height: liveHeight ?? suggestionsHeight)
+                .guideSpot(.next)
             GigFooter()
         }
         .padding(.horizontal, 12)

@@ -35,7 +35,6 @@ struct SettingsView: View {
     @State private var importing = false
     @State private var pendingRestore: (content: Backup.Content, archive: ZipArchive)?
     @State private var message: String?
-    @State private var showsGuide = false
     @State private var choosingFolder = false
     /// Vad filväljaren är öppen för (finns kvar när den stängs, till svaret).
     @State private var pickingFolder = false
@@ -137,7 +136,12 @@ struct SettingsView: View {
                 .disabled(backupProgress.isRunning)
                 Section("Hjälp") {
                     Button {
-                        showsGuide = true
+                        // Guiden visas ovanpå appen, så inställningarna stängs först.
+                        dismiss()
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(600))
+                            player.guideChooserOpen = true
+                        }
                     } label: {
                         Label("Visa guiden", systemImage: "questionmark.circle")
                     }
@@ -172,9 +176,6 @@ struct SettingsView: View {
                     Button("Klar") { dismiss() }
                 }
             }
-        }
-        .sheet(isPresented: $showsGuide) {
-            GuideView().themedBackground()
         }
         .confirmationDialog("Ta bort \(testSongs.count) testlåtar?", isPresented: $confirmsRemoveTestSongs, titleVisibility: .visible) {
             Button("Ta bort", role: .destructive) {
