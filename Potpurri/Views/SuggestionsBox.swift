@@ -18,7 +18,8 @@ struct SuggestionsBox: View {
     private var suggestions: [Song] {
         guard let current else { return [] }
         let colors = player.activeColors
-        var available = songs.filter { $0.id != current.id && $0.kind != .note && !player.isPlayedTonight($0) }
+        // Anteckningar och quiz föreslås aldrig som nästa låt.
+        var available = songs.filter { $0.id != current.id && $0.kind != .note && !LibraryView.isQuiz($0) && !player.isPlayedTonight($0) }
         if scope == .setlist, let ids = player.setlistSongIDs {
             // Bara låtlistan, i listans ordning. Utan valda färger visas alla som är kvar.
             let order = Dictionary(ids.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })

@@ -505,6 +505,10 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 **Extra**
 - ✅ Fliken Quiz bredvid Låtlistor och Bibliotek: alla låtar/anteckningar som heter något med "Quiz" eller "HLS" (sök, sortering och kategorier fungerar som i biblioteket).
 
+- ✅ Låtlistans ⋯ → "Dela titlarna": namnet och titlarna numrerade per set som text (Anteckningar, Meddelanden …).
+- ✅ Quiz och HLS ligger bara i Quiz-fliken (inte i biblioteket och aldrig bland förslagen i Next). Är Quiz-fliken avstängd ligger de i biblioteket.
+- ✅ Idélådan: alla kategorier syns alltid; håll in en rad och dra den till en annan kategori. Tryck på en rad = ändra text/kategori eller ta bort. Svep åt vänster = ta bort/ändra.
+
 **Senare – Idélådan och val av funktioner**
 - ✅ Under kugghjulet: en avdelning där man stänger av funktioner man inte använder (t.ex. soundboard, Spotify, Lådan, ackord, hopplinjer, timer), så att appen blir så ren man vill.
 - ✅ Egen idélåda (glödlampan bredvid Ny spelning): skriv fritt (låtförslag man fått, saker att köpa som kablar, något att testa, förbättringar för appen). Varje rad sorteras automatiskt i kategorier: Att köpa, Att repa in, Att testa, Att komma ihåg, Appen. Läggs in när det passar.

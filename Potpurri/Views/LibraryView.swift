@@ -27,9 +27,13 @@ struct LibraryView: View {
     /// Quiz-fliken: bara låtar som heter något med "Quiz" eller "HLS".
     var quizOnly = false
 
-    /// Låtarna fliken visar (hela biblioteket eller bara quizen).
+    @AppStorage(Feature.quiz.key) private var quizTabOn = true
+
+    /// Låtarna fliken visar: quizen i Quiz-fliken, allt annat i biblioteket.
+    /// (Är Quiz-fliken avstängd ligger quizen kvar i biblioteket.)
     private var songs: [Song] {
-        quizOnly ? allSongs.filter(Self.isQuiz) : allSongs
+        if quizOnly { return allSongs.filter(Self.isQuiz) }
+        return quizTabOn ? allSongs.filter { !Self.isQuiz($0) } : allSongs
     }
 
     static func isQuiz(_ song: Song) -> Bool {

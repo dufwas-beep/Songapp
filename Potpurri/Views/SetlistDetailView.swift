@@ -60,6 +60,26 @@ struct SetlistDetailView: View {
         return visibleColorColumns(songs.filter { ids.contains($0.id) }, colorMode: colorMode, count: codes.count)
     }
 
+    /// Låtlistan som text: namnet, och titlarna numrerade per set.
+    private var titlesText: String {
+        let byID = Dictionary(songs.map { ($0.id, $0.title) }, uniquingKeysWith: { first, _ in first })
+        var lines = [setlist.name]
+        var lastSet = 0
+        for row in rows {
+            guard case .song(let id) = row.item else { continue }
+            if hasSets && row.setNumber != lastSet {
+                lines.append("")
+                lines.append("SET \(row.setNumber)")
+                lastSet = row.setNumber
+            } else if lastSet == 0 && !hasSets {
+                lines.append("")
+                lastSet = 1
+            }
+            lines.append("\(row.number). \(byID[id] ?? "Låt")")
+        }
+        return lines.joined(separator: "\n")
+    }
+
     private var hasSets: Bool {
         !setlist.setBreaks.isEmpty
     }
@@ -227,6 +247,10 @@ struct SetlistDetailView: View {
         Menu {
             Button(action: onRename) { Label("Byt namn", systemImage: "pencil") }
             Button(action: onDuplicate) { Label("Duplicera", systemImage: "plus.square.on.square") }
+            // Titlarna som text, t.ex. till Anteckningar eller ett meddelande till dem man repar med.
+            ShareLink(item: titlesText, subject: Text(setlist.name)) {
+                Label("Dela titlarna (Anteckningar …)", systemImage: "square.and.arrow.up")
+            }
             Button(role: .destructive, action: onDelete) { Label("Ta bort låtlistan", systemImage: "trash") }
         } label: {
             Image(systemName: "ellipsis.circle")

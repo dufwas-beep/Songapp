@@ -2,14 +2,17 @@ import SwiftData
 import SwiftUI
 
 /// Idélådan: skriv fritt – låtförslag man fått, kablar att köpa, något att testa eller
-/// förbättringar för appen. Varje rad hamnar automatiskt i en kategori.
+/// förbättringar för appen. Varje rad hamnar automatiskt i en kategori. Alla kategorier
+/// finns alltid; håll in en rad och dra den till en annan kategori. Tryck för att ändra.
 struct IdeaBoxView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Idea.created, order: .reverse) private var ideas: [Idea]
     @State private var draft = ""
     @State private var showsDone = false
-    @State private var lastAdded: Idea?
+    @State private var lastAdded: UUID?
+    @State private var editing: Idea?
+    @State private var dropTarget: IdeaCategory?
     @FocusState private var writing: Bool
 
     private var trimmed: String {
@@ -21,14 +24,31 @@ struct IdeaBoxView: View {
             List {
                 ForEach(IdeaCategory.allCases) { category in
                     let rows = ideas.filter { $0.category == category && (showsDone || !$0.done) }
-                    if !rows.isEmpty {
-                        Section {
-                            ForEach(rows) { idea in
-                                row(idea)
-                            }
-                        } header: {
-                            Label("\(category.title) (\(rows.count))", systemImage: category.symbol)
+                    Section {
+                        ForEach(rows) { idea in
+                            row(idea)
+                                .dropDestination(for: String.self) { items, _ in
+                                    move(items, to: category)
+                                } isTargeted: { target(category, $0) }
                         }
+                        if rows.isEmpty {
+                            Text("Dra hit en rad")
+                                .font(.footnote)
+                                .foregroundStyle(.tertiary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
+                                .dropDestination(for: String.self) { items, _ in
+                                    move(items, to: category)
+                                } isTargeted: { target(category, $0) }
+                        }
+                    } header: {
+                        Label("\(category.title) (\(rows.count))", systemImage: category.symbol)
+                            .foregroundStyle(dropTarget == category ? Color.accentColor : Color.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                            .dropDestination(for: String.self) { items, _ in
+                                move(items, to: category)
+                            } isTargeted: { target(category, $0) }
                     }
                 }
             }
@@ -47,8 +67,8 @@ struct IdeaBoxView: View {
                             .disabled(trimmed.isEmpty)
                     }
                     let guess = IdeaCategory.guess(for: trimmed)
-                    Label(trimmed.isEmpty ? "Kategorin väljs utifrån orden – \"köp\", \"repa\", \"testa\", \"appen\" …" : "Hamnar under \(guess.title)",
-                          systemImage: trimmed.isEmpty ? "wand.and.stars" : guess.symbol)
+                    Label(trimmed.isEmpty ? "Tryck på en rad för att ändra eller ta bort den. Håll in och dra för att flytta." : "Hamnar under \(guess.title)",
+                          systemImage: trimmed.isEmpty ? "hand.tap" : guess.symbol)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -56,11 +76,6 @@ struct IdeaBoxView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
                 .background(.bar)
-            }
-            .overlay {
-                if ideas.isEmpty {
-                    ContentUnavailableView("Tomt i lådan", systemImage: "lightbulb", description: Text("Skriv något ovanför. Håll in en rad för att flytta den till en annan kategori."))
-                }
             }
             .navigationTitle("Idélådan")
             .navigationBarTitleDisplayMode(.inline)
@@ -78,7 +93,9 @@ struct IdeaBoxView: View {
                     .disabled(ideas.isEmpty)
                 }
             }
-            .onAppear { writing = true }
+            .sheet(item: $editing) { idea in
+                IdeaEditor(idea: idea)
+            }
         }
     }
 
@@ -102,36 +119,50 @@ struct IdeaBoxView: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
+            Spacer(minLength: 0)
         }
-        .listRowBackground(lastAdded?.id == idea.id ? Color.accentColor.opacity(0.15) : nil)
-        .contextMenu {
-            Menu {
-                ForEach(IdeaCategory.allCases) { category in
-                    Button {
-                        idea.category = category
-                        try? context.save()
-                    } label: {
-                        Label(category.title, systemImage: category.symbol)
-                    }
-                }
-            } label: {
-                Label("Flytta till", systemImage: "folder")
-            }
-            Button(role: .destructive) {
-                context.delete(idea)
-                try? context.save()
-            } label: {
-                Label("Ta bort", systemImage: "trash")
-            }
-        }
+        .contentShape(Rectangle())
+        // Tryck = ändra texten, kategorin eller ta bort.
+        .onTapGesture { editing = idea }
+        .listRowBackground(lastAdded == idea.id ? Color.accentColor.opacity(0.15) : nil)
+        .draggable("idea:" + idea.id.uuidString)
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
-                context.delete(idea)
-                try? context.save()
+                delete(idea)
             } label: {
                 Label("Ta bort", systemImage: "trash")
             }
+            Button {
+                editing = idea
+            } label: {
+                Label("Ändra", systemImage: "pencil")
+            }
         }
+    }
+
+    private func target(_ category: IdeaCategory, _ targeted: Bool) {
+        if targeted {
+            dropTarget = category
+        } else if dropTarget == category {
+            dropTarget = nil
+        }
+    }
+
+    /// En rad släpps i en kategori.
+    private func move(_ items: [String], to category: IdeaCategory) -> Bool {
+        dropTarget = nil
+        let ids = items.compactMap { $0.hasPrefix("idea:") ? UUID(uuidString: String($0.dropFirst(5))) : nil }
+        guard !ids.isEmpty else { return false }
+        for idea in ideas where ids.contains(idea.id) {
+            idea.category = category
+        }
+        try? context.save()
+        return true
+    }
+
+    private func delete(_ idea: Idea) {
+        context.delete(idea)
+        try? context.save()
     }
 
     private func add() {
@@ -139,7 +170,7 @@ struct IdeaBoxView: View {
         let idea = Idea(text: trimmed, category: IdeaCategory.guess(for: trimmed))
         context.insert(idea)
         try? context.save()
-        lastAdded = idea
+        lastAdded = idea.id
         draft = ""
         writing = true
     }
@@ -152,5 +183,67 @@ struct IdeaBoxView: View {
             return category.title.uppercased() + "\n" + rows.map { "• " + $0.text }.joined(separator: "\n")
         }
         .joined(separator: "\n\n")
+    }
+}
+
+/// Ändra en rad i Idélådan: texten och kategorin, eller ta bort den.
+private struct IdeaEditor: View {
+    @Bindable var idea: Idea
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+    @State private var text = ""
+    @State private var category = IdeaCategory.remember
+    @State private var confirmsDelete = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Text") {
+                    TextField("Text", text: $text, axis: .vertical)
+                        .lineLimit(3...10)
+                }
+                Section("Kategori") {
+                    Picker("Kategori", selection: $category) {
+                        ForEach(IdeaCategory.allCases) { category in
+                            Label(category.title, systemImage: category.symbol).tag(category)
+                        }
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                }
+                Section {
+                    Button("Ta bort", role: .destructive) {
+                        confirmsDelete = true
+                    }
+                }
+            }
+            .navigationTitle("Ändra")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Avbryt") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Spara") {
+                        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !trimmed.isEmpty { idea.text = trimmed }
+                        idea.category = category
+                        try? context.save()
+                        dismiss()
+                    }
+                }
+            }
+            .confirmationDialog("Ta bort raden?", isPresented: $confirmsDelete, titleVisibility: .visible) {
+                Button("Ta bort", role: .destructive) {
+                    context.delete(idea)
+                    try? context.save()
+                    dismiss()
+                }
+            }
+            .onAppear {
+                text = idea.text
+                category = idea.category
+            }
+        }
     }
 }
