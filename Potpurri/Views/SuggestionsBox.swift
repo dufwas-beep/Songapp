@@ -185,7 +185,6 @@ struct GigFooter: View {
     @Query private var songs: [Song]
     @Environment(Player.self) private var player
     @State private var confirming = false
-    @State private var showsIdeas = false
     @AppStorage(Feature.pause.key) private var pauseOn = true
     @AppStorage(Feature.ideas.key) private var ideasOn = true
 
@@ -222,7 +221,7 @@ struct GigFooter: View {
             // Idélådan: låtförslag, saker att köpa, testa …
             if ideasOn {
                 Button {
-                    showsIdeas = true
+                    player.ideasOpen = true
                 } label: {
                     Image(systemName: "lightbulb")
                         .font(.system(size: 17, weight: .semibold))
@@ -233,9 +232,6 @@ struct GigFooter: View {
                 .guideSpot(.ideas)
                 .accessibilityLabel("Idélådan")
             }
-        }
-        .sheet(isPresented: $showsIdeas) {
-            IdeaBoxView()
         }
         .confirmationDialog("Starta en ny spelning?", isPresented: $confirming, titleVisibility: .visible) {
             Button("Ny spelning") { player.newGig() }

@@ -69,6 +69,9 @@ final class Player {
     var doveFlights = 0
     /// Skärmsläckaren (pausen) visas.
     var screensaverOn = false
+    /// Idélådan är öppen. Visas från ContentView – raden längst ner i sidospalten döljs
+    /// medan tangentbordet är uppe och kan därför inte hålla i rutan.
+    var ideasOpen = false
     /// Guidens val (kort/lång) visas, och rundturen som pågår.
     var guideChooserOpen = false
     var guidePages: [GuidePage]?

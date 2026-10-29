@@ -19,26 +19,6 @@ struct IdeaBoxView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    HStack(spacing: 10) {
-                        TextField("Låtförslag, något att köpa, testa eller komma ihåg …", text: $draft, axis: .vertical)
-                            .lineLimit(1...4)
-                            .focused($writing)
-                            .onSubmit(add)
-                        Button("Lägg till", action: add)
-                            .buttonStyle(.borderedProminent)
-                            .foregroundStyle(.black)
-                            .disabled(trimmed.isEmpty)
-                    }
-                    if !trimmed.isEmpty {
-                        let guess = IdeaCategory.guess(for: trimmed)
-                        Label("Hamnar under \(guess.title)", systemImage: guess.symbol)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                } footer: {
-                    Text("Kategorin väljs utifrån orden – \"köp\", \"repa\", \"testa\", \"appen\" … Håll in en rad för att flytta den.")
-                }
                 ForEach(IdeaCategory.allCases) { category in
                     let rows = ideas.filter { $0.category == category && (showsDone || !$0.done) }
                     if !rows.isEmpty {
@@ -50,6 +30,36 @@ struct IdeaBoxView: View {
                             Label("\(category.title) (\(rows.count))", systemImage: category.symbol)
                         }
                     }
+                }
+            }
+            // Skrivfältet ligger fast ovanför listan, så att inget hoppar medan man skriver.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 10) {
+                        TextField("Låtförslag, något att köpa, testa eller komma ihåg …", text: $draft)
+                            .textFieldStyle(.roundedBorder)
+                            .focused($writing)
+                            .submitLabel(.done)
+                            .onSubmit(add)
+                        Button("Lägg till", action: add)
+                            .buttonStyle(.borderedProminent)
+                            .foregroundStyle(.black)
+                            .disabled(trimmed.isEmpty)
+                    }
+                    let guess = IdeaCategory.guess(for: trimmed)
+                    Label(trimmed.isEmpty ? "Kategorin väljs utifrån orden – \"köp\", \"repa\", \"testa\", \"appen\" …" : "Hamnar under \(guess.title)",
+                          systemImage: trimmed.isEmpty ? "wand.and.stars" : guess.symbol)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(.bar)
+            }
+            .overlay {
+                if ideas.isEmpty {
+                    ContentUnavailableView("Tomt i lådan", systemImage: "lightbulb", description: Text("Skriv något ovanför. Håll in en rad för att flytta den till en annan kategori."))
                 }
             }
             .navigationTitle("Idélådan")

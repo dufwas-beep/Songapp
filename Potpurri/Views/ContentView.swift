@@ -164,6 +164,9 @@ struct ContentView: View {
                 SongTextEditor(song: found)
             }
         }
+        .sheet(isPresented: Binding(get: { player.ideasOpen }, set: { player.ideasOpen = $0 })) {
+            IdeaBoxView()
+        }
         .sheet(isPresented: Binding(get: { player.guideChooserOpen }, set: { player.guideChooserOpen = $0 })) {
             GuideChooser { pages in
                 player.guideChooserOpen = false
