@@ -1,7 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// Rubriken ovanför kategorikolumnerna: knappen "Kategorier" (kategoriläget) och namnen.
+/// Rubriken ovanför kategorikolumnerna: knappen "Markera" (markeringsläget, där man
+/// kryssar i flera låtar och ger dem kategorier, tar bort dem m.m.) och namnen.
 /// Vanligt läge: tryck på en rubrik = visa bara låtar i den kategorin (som i Next).
 /// Kategoriläget: tryck på en rubrik = ge alla ikryssade låtar kategorin (eller ta bort
 /// den om alla redan har den). Håll in en rubrik för att byta namn.
@@ -28,7 +29,7 @@ struct ColorColumnsHeader: View {
             Button {
                 withAnimation { colorMode.toggle() }
             } label: {
-                Label(colorMode ? "Klar" : "Kategorier", systemImage: colorMode ? "checkmark" : "tag")
+                Label(colorMode ? "Klar" : "Markera", systemImage: colorMode ? "checkmark" : "checkmark.circle")
                     .font(.footnote.weight(.medium))
             }
             .buttonStyle(.bordered)
@@ -200,6 +201,19 @@ struct CheckedActionsBar: View {
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
             .controlSize(.small)
+            // Ta bort ligger synligt – det man oftast vill göra med flera låtar.
+            Button(role: .destructive) {
+                confirmsDelete = true
+            } label: {
+                // Kort text så att raden får plats; frågan säger exakt vad som händer.
+                Label("Ta bort", systemImage: "trash")
+                    .font(.footnote.weight(.semibold))
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .controlSize(.small)
+            .tint(.red)
+            .disabled(checkedCount == 0)
             Menu {
                 Menu {
                     ForEach(0..<codes.count, id: \.self) { index in
@@ -225,14 +239,8 @@ struct CheckedActionsBar: View {
                         Label("Dela (AirDrop …)", systemImage: "square.and.arrow.up")
                     }
                 }
-                Divider()
-                Button(role: .destructive) {
-                    confirmsDelete = true
-                } label: {
-                    Label(deleteTitle, systemImage: "trash")
-                }
             } label: {
-                Label("Gör", systemImage: "ellipsis.circle")
+                Label("Mer", systemImage: "ellipsis.circle")
                     .font(.footnote.weight(.semibold))
             }
             .buttonStyle(.borderedProminent)

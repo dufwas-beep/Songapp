@@ -51,7 +51,7 @@ struct GuideChooser: View {
                   text: "Förslag på nästa låt, styrda av kategorierna. Spelade låtar blir gråa och en ny spelning börjar av sig själv nästa dag.",
                   spot: .next),
         GuidePage(symbol: "tag", title: "Kategorier",
-                  text: "Tryck på Kategorier för att märka flera låtar på en gång. Tryck på en kategorirubrik för att bara se de låtarna.",
+                  text: "Tryck på Markera för att kryssa i flera låtar på en gång – ge dem en kategori, lägg dem i en låtlista eller ta bort dem. Tryck på en kategorirubrik för att bara se de låtarna.",
                   spot: .categories, tab: .library),
         GuidePage(symbol: "tray", title: "Lådan",
                   text: "Handtaget i högerkanten drar ut Lådan – en låt eller anteckning med ett gult fält för egna anteckningar.",
