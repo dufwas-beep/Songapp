@@ -41,6 +41,23 @@ struct SuggestionsBox: View {
         return pinned + matching.prefix(40)
     }
 
+    private func scopeButton(_ title: String, systemImage: String, value: NextScope) -> some View {
+        let isOn = scope == value
+        return Button {
+            scope = value
+        } label: {
+            Label(title, systemImage: systemImage)
+                .font(.footnote.weight(.semibold))
+                .padding(.horizontal, 12)
+                .frame(minHeight: 36)
+                .foregroundStyle(isOn ? Color.black : Color.primary)
+                .background(isOn ? Color.accentColor : Color(.tertiarySystemFill), in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
     /// Låtens kategorier (bara de som används).
     private var columns: [Int] {
         (current?.colorTags ?? []).filter { $0 < codes.count }
@@ -56,18 +73,12 @@ struct SuggestionsBox: View {
                         .font(.system(size: 11, weight: .semibold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
-                    Menu {
-                        Picker("Visa", selection: $scope) {
-                            Label("Hela biblioteket", systemImage: "books.vertical").tag(NextScope.library)
-                            Label("Bara låtlistan", systemImage: "list.bullet").tag(NextScope.setlist)
-                        }
-                    } label: {
-                        HStack(spacing: 3) {
-                            Text(scope == .library ? "Hela biblioteket" : "Bara låtlistan")
-                            Image(systemName: "chevron.down")
-                        }
-                        .font(.caption.weight(.semibold))
+                    // Två stora knappar: förslag ur hela biblioteket eller bara låtlistan.
+                    HStack(spacing: 6) {
+                        scopeButton("Bibliotek", systemImage: "books.vertical", value: .library)
+                        scopeButton("Låtlista", systemImage: "list.bullet", value: .setlist)
                     }
+                    .padding(.vertical, 2)
                     Text(current == nil ? "Välj en låt" : (current?.colorTags.isEmpty == true ? "Låten har inga kategorier" : "Tryck på kategorierna"))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
