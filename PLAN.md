@@ -507,7 +507,13 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 
 - ✅ Låtlistans ⋯ → "Dela titlarna": namnet och titlarna numrerade per set som text (Anteckningar, Meddelanden …).
 - ✅ Quiz och HLS ligger bara i Quiz-fliken (inte i biblioteket och aldrig bland förslagen i Next). Är Quiz-fliken avstängd ligger de i biblioteket.
-- ✅ Idélådan: alla kategorier syns alltid; håll in en rad och dra den till en annan kategori. Tryck på en rad = ändra text/kategori eller ta bort. Svep åt vänster = ta bort/ändra.
+- ✅ Idélådan: alla kategorier syns alltid; håll in en rad och dra den till en annan kategori. Tryck på en rad = ändra text/kategori eller ta bort. Håll in = meny med Flytta till, Ändra, Ta bort. (Byggd som egen lista – i iPadens lista kom släppen aldrig fram.)
+
+**Lista 2026-10-30**
+- ✅ ABC vid sidan av Alla låtlistor (när det finns fler än 15 listor).
+- ✅ Logg och kraschrapporter (Inställningar → Hjälp): händelser, fel ⚠️, frysningar 🧊 (vakt: appen svarar inte på 2 s) och krascher 💥 med var i koden. "Förra gången avslutades appen oväntat" om den dog medan den var öppen. Dela-knapp. Systemets egna rapporter (MetricKit) skrivs in när de kommer.
+- Frysning när en textfil (från Anteckningar) importerades via filväljaren: orsaken inte hittad i koden. Anteckningar tolkas nu en gång i stället för vid varje omritning, och långsam tolkning loggas. Väntar på loggen när det händer igen.
+- Tangentbordet på skärmen när Bluetooth-tangentbord är anslutet, överallt där man skriver: iPadOS låter inte appar välja detta. Väntar på svar om ett inofficiellt sätt ska provas.
 
 **Senare – Idélådan och val av funktioner**
 - ✅ Under kugghjulet: en avdelning där man stänger av funktioner man inte använder (t.ex. soundboard, Spotify, Lådan, ackord, hopplinjer, timer), så att appen blir så ren man vill.
