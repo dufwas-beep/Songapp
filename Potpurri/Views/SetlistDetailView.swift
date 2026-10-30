@@ -88,10 +88,13 @@ struct SetlistDetailView: View {
         let songsByID = Dictionary(songs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let allRows = rows
         let counts = Dictionary(grouping: allRows.filter { if case .song = $0.item { return true } else { return false } }, by: \.setNumber).mapValues(\.count)
+        // Alfabetet vid sidan när listan har fler än tio låtar.
+        let showsAlphabet = setlist.songIDs.count > 10 && !colorMode
+        let trailing: CGFloat = showsAlphabet ? 28 : 16
 
         VStack(spacing: 0) {
             header
-            ColorColumnsHeader(colorMode: $colorMode, columns: columns, trailing: 16, filter: $categoryFilter) { index in
+            ColorColumnsHeader(colorMode: $colorMode, columns: columns, trailing: trailing, filter: $categoryFilter) { index in
                 applyColor(index, to: songs.filter { checked.contains($0.id) })
             }
             .onChange(of: colorMode) { _, on in
@@ -134,6 +137,7 @@ struct SetlistDetailView: View {
             Divider()
             // Egen lista (i stället för iPadens): håll in en rad och dra – en rosa linje
             // visar var raden hamnar.
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 0) {
                     if showsFirstHeader(allRows) {
@@ -143,7 +147,8 @@ struct SetlistDetailView: View {
                             .background(Self.tint(for: 1))
                     }
                     ForEach(shownRows) { row in
-                        rowView(row, songsByID: songsByID, counts: counts)
+                        rowView(row, songsByID: songsByID, counts: counts, trailing: trailing)
+                            .id(row.id)
                             .overlay(alignment: .top) {
                                 if dropTarget == row.id { DropLine() }
                             }
@@ -167,6 +172,22 @@ struct SetlistDetailView: View {
                             target(end, targeted)
                         }
                 }
+            }
+            .overlay(alignment: .trailing) {
+                if showsAlphabet {
+                    // Hoppar till den första låten (i listans ordning) på bokstaven.
+                    let letters = shownRows.compactMap { row -> (Int, String)? in
+                        guard case .song(let id) = row.item, let song = songsByID[id] else { return nil }
+                        return (row.id, song.indexLetter)
+                    }
+                    AlphabetScrubber(available: Set(letters.map(\.1))) { letter in
+                        if let first = letters.first(where: { $0.1 == letter }) {
+                            proxy.scrollTo(first.0, anchor: .top)
+                        }
+                    }
+                    .padding(.trailing, 2)
+                }
+            }
             }
             .overlay {
                 if setlist.songIDs.isEmpty {
@@ -317,7 +338,7 @@ struct SetlistDetailView: View {
     }
 
     @ViewBuilder
-    private func rowView(_ row: Row, songsByID: [UUID: Song], counts: [Int: Int]) -> some View {
+    private func rowView(_ row: Row, songsByID: [UUID: Song], counts: [Int: Int], trailing: CGFloat) -> some View {
         switch row.item {
         case .setBreak:
             SetHeaderRow(number: row.setNumber, count: counts[row.setNumber] ?? 0, onRemove: removeAction(at: row.id))
@@ -353,7 +374,7 @@ struct SetlistDetailView: View {
                 }
             }
             .padding(.leading, 12)
-            .padding(.trailing, 16)
+            .padding(.trailing, trailing)
             .frame(height: Self.songHeight)
             .background(rowBackground(row, songsByID[id]))
             // Svep åt vänster = ta bort ur listan, åt höger = lägg i Lådan.
