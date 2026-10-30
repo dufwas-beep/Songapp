@@ -3,7 +3,8 @@ import SwiftUI
 
 /// Idélådan: skriv fritt – låtförslag man fått, kablar att köpa, något att testa eller
 /// förbättringar för appen. Varje rad hamnar automatiskt i en kategori. Alla kategorier
-/// finns alltid; håll in en rad och dra den till en annan kategori. Tryck för att ändra.
+/// finns alltid; håll in en rad och dra den till en annan kategori (eller välj "Flytta
+/// till" i menyn som kommer när man håller in). Tryck för att ändra.
 struct IdeaBoxView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -21,37 +22,17 @@ struct IdeaBoxView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(IdeaCategory.allCases) { category in
-                    let rows = ideas.filter { $0.category == category && (showsDone || !$0.done) }
-                    Section {
-                        ForEach(rows) { idea in
-                            row(idea)
-                                .dropDestination(for: String.self) { items, _ in
-                                    move(items, to: category)
-                                } isTargeted: { target(category, $0) }
-                        }
-                        if rows.isEmpty {
-                            Text("Dra hit en rad")
-                                .font(.footnote)
-                                .foregroundStyle(.tertiary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                                .dropDestination(for: String.self) { items, _ in
-                                    move(items, to: category)
-                                } isTargeted: { target(category, $0) }
-                        }
-                    } header: {
-                        Label("\(category.title) (\(rows.count))", systemImage: category.symbol)
-                            .foregroundStyle(dropTarget == category ? Color.accentColor : Color.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                            .dropDestination(for: String.self) { items, _ in
-                                move(items, to: category)
-                            } isTargeted: { target(category, $0) }
+            // Egen lista i stället för iPadens: i den inbyggda kom släppen aldrig fram till
+            // kategorierna. Hela kategorirutan tar emot en rad som dras dit.
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    ForEach(IdeaCategory.allCases) { category in
+                        section(category)
                     }
                 }
+                .padding(16)
             }
+            .background(Color(.systemGroupedBackground))
             // Skrivfältet ligger fast ovanför listan, så att inget hoppar medan man skriver.
             .safeAreaInset(edge: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -99,6 +80,42 @@ struct IdeaBoxView: View {
         }
     }
 
+    private func section(_ category: IdeaCategory) -> some View {
+        let rows = ideas.filter { $0.category == category && (showsDone || !$0.done) }
+        let targeted = dropTarget == category
+        return VStack(alignment: .leading, spacing: 0) {
+            Label("\(category.title) (\(rows.count))", systemImage: category.symbol)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(targeted ? Color.accentColor : Color.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+            ForEach(rows) { idea in
+                Divider().padding(.leading, 16)
+                row(idea)
+            }
+            if rows.isEmpty {
+                Divider().padding(.leading, 16)
+                Text(targeted ? "Släpp här" : "Dra hit en rad")
+                    .font(.footnote)
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.accentColor, lineWidth: targeted ? 3 : 0)
+        }
+        .scaleEffect(targeted ? 1.01 : 1)
+        .animation(.easeOut(duration: 0.15), value: targeted)
+        .contentShape(RoundedRectangle(cornerRadius: 12))
+        .dropDestination(for: String.self) { items, _ in
+            move(items, to: category)
+        } isTargeted: { target(category, $0) }
+    }
+
     private func row(_ idea: Idea) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Button {
@@ -121,21 +138,41 @@ struct IdeaBoxView: View {
             }
             Spacer(minLength: 0)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(lastAdded == idea.id ? Color.accentColor.opacity(0.15) : Color.clear)
         .contentShape(Rectangle())
         // Tryck = ändra texten, kategorin eller ta bort.
         .onTapGesture { editing = idea }
-        .listRowBackground(lastAdded == idea.id ? Color.accentColor.opacity(0.15) : nil)
-        .draggable("idea:" + idea.id.uuidString)
-        .swipeActions(edge: .trailing) {
-            Button(role: .destructive) {
-                delete(idea)
+        .draggable("idea:" + idea.id.uuidString) {
+            Text(idea.text)
+                .lineLimit(2)
+                .padding(10)
+                .frame(maxWidth: 320, alignment: .leading)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+        }
+        .contextMenu {
+            Menu {
+                ForEach(IdeaCategory.allCases.filter { $0 != idea.category }) { category in
+                    Button {
+                        idea.category = category
+                        try? context.save()
+                    } label: {
+                        Label(category.title, systemImage: category.symbol)
+                    }
+                }
             } label: {
-                Label("Ta bort", systemImage: "trash")
+                Label("Flytta till", systemImage: "arrow.right.square")
             }
             Button {
                 editing = idea
             } label: {
                 Label("Ändra", systemImage: "pencil")
+            }
+            Button(role: .destructive) {
+                delete(idea)
+            } label: {
+                Label("Ta bort", systemImage: "trash")
             }
         }
     }
