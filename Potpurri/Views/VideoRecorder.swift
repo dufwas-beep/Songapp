@@ -119,21 +119,33 @@ struct RecordingWindow: View {
     }
 }
 
-/// Kamerans bild.
+/// Kamerans bild. Bildlagret kopplas till kameran innan inspelningen startar (att koppla
+/// det under inspelningen stoppade den och låste appen) – rutan visar bara upp det.
 private struct CameraPreview: UIViewRepresentable {
     let session: AVCaptureSession
 
     final class PreviewView: UIView {
-        override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
-        var previewLayer: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
+        let previewLayer = VideoCapture.shared.previewLayer
+
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+            previewLayer.removeFromSuperlayer()
+            layer.addSublayer(previewLayer)
+        }
+
+        required init?(coder: NSCoder) { nil }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            previewLayer.frame = bounds
+            CATransaction.commit()
+        }
     }
 
     func makeUIView(context: Context) -> PreviewView {
-        let view = PreviewView()
-        view.previewLayer.session = session
-        view.previewLayer.videoGravity = .resizeAspectFill
-        VideoCapture.shared.attachPreview(view.previewLayer)
-        return view
+        PreviewView()
     }
 
     func updateUIView(_ view: PreviewView, context: Context) {}
@@ -153,6 +165,7 @@ final class VideoCapture {
     var message: String?
 
     @ObservationIgnored let session = AVCaptureSession()
+    @ObservationIgnored let previewLayer = AVCaptureVideoPreviewLayer()
     @ObservationIgnored private let output = AVCaptureMovieFileOutput()
     @ObservationIgnored private let queue = DispatchQueue(label: "Potpurri.kamera")
     @ObservationIgnored private var camera: AVCaptureDevice?
@@ -178,9 +191,7 @@ final class VideoCapture {
             try? AVAudioSession.sharedInstance().setActive(true)
             let ready = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
                 queue.async {
-                    let ready = self.configure(withAudio: audio)
-                    if ready { self.session.startRunning() }
-                    continuation.resume(returning: ready)
+                    continuation.resume(returning: self.configure(withAudio: audio))
                 }
             }
             guard ready else {
@@ -189,6 +200,14 @@ final class VideoCapture {
                 message = "Kameran gick inte att starta."
                 AppLog.problem("Inspelningen kunde inte starta (kameran).")
                 return
+            }
+            // Bildlagret kopplas in medan kameran står still – sedan startar den.
+            connectPreview()
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                queue.async {
+                    self.session.startRunning()
+                    continuation.resume()
+                }
             }
             let url = FileManager.default.temporaryDirectory.appendingPathComponent("Potpurri-\(UUID().uuidString).mov")
             let angle = captureRotation?.videoRotationAngleForHorizonLevelCapture
@@ -223,9 +242,13 @@ final class VideoCapture {
         }
     }
 
-    /// Bilden i rutan vrids rätt när iPaden vänds.
-    func attachPreview(_ layer: AVCaptureVideoPreviewLayer) {
-        guard let camera else { return }
+    /// Kopplar bildlagret till kameran (en gång) och ser till att bilden vrids rätt när
+    /// iPaden vänds.
+    private func connectPreview() {
+        guard previewLayer.session == nil, let camera else { return }
+        let layer = previewLayer
+        layer.videoGravity = .resizeAspectFill
+        layer.session = session
         let rotation = AVCaptureDevice.RotationCoordinator(device: camera, previewLayer: layer)
         previewRotation = rotation
         previewObservation = rotation.observe(\.videoRotationAngleForHorizonLevelPreview, options: [.initial, .new]) { rotation, _ in
