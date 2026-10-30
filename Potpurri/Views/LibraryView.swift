@@ -31,9 +31,27 @@ struct LibraryView: View {
 
     /// Låtarna fliken visar: quizen i Quiz-fliken, allt annat i biblioteket.
     /// (Är Quiz-fliken avstängd ligger quizen kvar i biblioteket.)
+    /// Sparas tills en titel ändras eller låtar läggs till – urvalet jämför text i varje
+    /// titel och gjordes förut om för varje rad i listan, vilket frös appen i flera sekunder.
     private var songs: [Song] {
-        if quizOnly { return allSongs.filter(Self.isQuiz) }
-        return quizTabOn ? allSongs.filter { !Self.isQuiz($0) } : allSongs
+        var hasher = Hasher()
+        hasher.combine(quizOnly)
+        hasher.combine(quizTabOn)
+        for song in allSongs {
+            hasher.combine(song.id)
+            hasher.combine(song.title)
+        }
+        let key = hasher.finalize()
+        if cache.songsKey == key { return cache.songs }
+        let result: [Song]
+        if quizOnly {
+            result = allSongs.filter(Self.isQuiz)
+        } else {
+            result = quizTabOn ? allSongs.filter { !Self.isQuiz($0) } : allSongs
+        }
+        cache.songsKey = key
+        cache.songs = result
+        return result
     }
 
     static func isQuiz(_ song: Song) -> Bool {
@@ -65,6 +83,8 @@ struct LibraryView: View {
     @State private var expandedQuizzes: Set<UUID> = []
 
     final class ListCache {
+        var songsKey: Int?
+        var songs: [Song] = []
         var key: Int?
         var list: [Song] = []
         var letters: Set<String> = []
@@ -159,7 +179,10 @@ struct LibraryView: View {
 
             let columns = visibleColorColumns(songs, colorMode: colorMode, count: codes.count)
             let list = cachedSongs
-            ColorColumnsHeader(colorMode: $colorMode, columns: columns, trailing: rowTrailing, filter: $colorFilter) { index in
+            // Räknas en gång här, inte för varje rad.
+            let trailing = rowTrailing
+            let sortedSetlists = setlists.sorted { Song.compareTitles($0.name, $1.name) }
+            ColorColumnsHeader(colorMode: $colorMode, columns: columns, trailing: trailing, filter: $colorFilter) { index in
                 applyColor(index, to: list.filter { checked.contains($0.id) })
             }
             .padding(.top, 4)
@@ -198,7 +221,7 @@ struct LibraryView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(list) { song in
-                            libraryRow(song, in: list, columns: columns)
+                            libraryRow(song, in: list, columns: columns, trailing: trailing, setlists: sortedSetlists)
                                 .id(song.id)
                             if quizOnly && expandedQuizzes.contains(song.id) {
                                 QuizSongsList(quiz: song) { child in
@@ -379,26 +402,14 @@ struct LibraryView: View {
     }
 
     @ViewBuilder
-    private func rowMenu(for song: Song) -> some View {
+    private func rowMenu(for song: Song, setlists: [Setlist]) -> some View {
         Button {
             player.renamingSongID = song.id
         } label: {
             Label("Byt namn", systemImage: "pencil")
         }
         Menu {
-            ForEach(setlists.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }) { list in
-                Button {
-                    list.songIDs.append(song.id)
-                    try? context.save()
-                } label: {
-                    // Bock = låten finns redan i listan (går ändå att lägga till igen).
-                    if list.songIDs.contains(song.id) {
-                        Label(list.name + " (finns redan)", systemImage: "checkmark")
-                    } else {
-                        Text(list.name)
-                    }
-                }
-            }
+            AddToSetlistItems(songID: song.id, setlists: setlists)
         } label: {
             Label("Lägg till i låtlista", systemImage: "text.badge.plus")
         }
@@ -428,7 +439,7 @@ struct LibraryView: View {
     }
 
     /// En rad i biblioteket. Svep åt höger = Lådan, åt vänster = ta bort.
-    private func libraryRow(_ song: Song, in list: [Song], columns: [Int]) -> some View {
+    private func libraryRow(_ song: Song, in list: [Song], columns: [Int], trailing: CGFloat, setlists: [Setlist]) -> some View {
         HStack(spacing: 8) {
             if colorMode {
                 ColorModeCheckbox(isChecked: checked.contains(song.id)) {
@@ -463,7 +474,7 @@ struct LibraryView: View {
             ColorDots(song: song, editable: colorMode, columns: columns)
         }
         .padding(.leading, 16)
-        .padding(.trailing, rowTrailing)
+        .padding(.trailing, trailing)
         .frame(minHeight: 44)
         .padding(.vertical, 4)
         .contentShape(Rectangle())
@@ -496,7 +507,7 @@ struct LibraryView: View {
             } label: {
                 Label("Dela (AirDrop …)", systemImage: "square.and.arrow.up")
             }
-            if !player.isLocked { rowMenu(for: song) }
+            if !player.isLocked { rowMenu(for: song, setlists: setlists) }
         }
     }
 
@@ -563,6 +574,30 @@ private struct SelectedRowBackground: View {
             Color.accentColor.opacity(0.3)
         } else {
             Color.clear
+        }
+    }
+}
+
+/// Låtlistorna i menyn "Lägg till i låtlista". Egen vy så att listornas innehåll bara
+/// läses när menyn öppnas – inte för varje rad när biblioteket ritas.
+private struct AddToSetlistItems: View {
+    let songID: UUID
+    let setlists: [Setlist]
+    @Environment(\.modelContext) private var context
+
+    var body: some View {
+        ForEach(setlists) { list in
+            Button {
+                list.songIDs.append(songID)
+                try? context.save()
+            } label: {
+                // Bock = låten finns redan i listan (går ändå att lägga till igen).
+                if list.songIDs.contains(songID) {
+                    Label(list.name + " (finns redan)", systemImage: "checkmark")
+                } else {
+                    Text(list.name)
+                }
+            }
         }
     }
 }
