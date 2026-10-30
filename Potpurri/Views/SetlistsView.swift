@@ -27,8 +27,11 @@ struct SetlistsView: View {
     }
 
     private var sorted: [Setlist] {
-        setlists.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        setlists.sorted { Song.compareTitles($0.name, $1.name) }
     }
+
+    /// Alfabetet vid sidan visas när listorna är många.
+    private var showsAlphabet: Bool { setlists.count > 15 }
 
     var body: some View {
         Group {
@@ -82,6 +85,7 @@ struct SetlistsView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
 
+            ScrollViewReader { proxy in
             List {
                 ForEach(sorted) { list in
                     Button {
@@ -99,9 +103,11 @@ struct SetlistsView: View {
                             Image(systemName: "chevron.right")
                                 .foregroundStyle(.tertiary)
                         }
+                        .padding(.trailing, showsAlphabet ? 20 : 0)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .id(list.id)
                     .swipeActions(edge: .trailing) {
                         if !player.isLocked {
                             Button(role: .destructive) {
@@ -127,6 +133,18 @@ struct SetlistsView: View {
                 }
             }
             .listStyle(.plain)
+            .overlay(alignment: .trailing) {
+                if showsAlphabet {
+                    let ordered = sorted
+                    AlphabetScrubber(available: Set(ordered.map { Song.indexLetter(of: $0.name) })) { letter in
+                        if let first = ordered.first(where: { Song.indexLetter(of: $0.name) == letter }) {
+                            proxy.scrollTo(first.id, anchor: .top)
+                        }
+                    }
+                    .padding(.trailing, 2)
+                }
+            }
+            }
             .overlay {
                 if setlists.isEmpty {
                     ContentUnavailableView(

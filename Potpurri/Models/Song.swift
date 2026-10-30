@@ -114,17 +114,20 @@ extension Song {
         TitleOrder.shared.rank(of: a.title) < TitleOrder.shared.rank(of: b.title)
     }
 
-    fileprivate static func compareTitles(_ a: String, _ b: String) -> Bool {
+    static func compareTitles(_ a: String, _ b: String) -> Bool {
         a.compare(b, options: [.caseInsensitive, .numeric], range: nil, locale: swedish) == .orderedAscending
     }
 
     /// Bokstaven låten sorteras under i alfabetet vid sidan av biblioteket.
-    var indexLetter: String {
+    var indexLetter: String { Self.indexLetter(of: title) }
+
+    /// Bokstaven i alfabetet vid sidan av listan (även för låtlistornas namn).
+    static func indexLetter(of title: String) -> String {
         guard let first = title.trimmingCharacters(in: .whitespaces).first else { return "#" }
         let upper = String(first).uppercased()
         if ["Å", "Ä", "Ö"].contains(upper) { return upper }
         // É, Ü och liknande hamnar under sin grundbokstav.
-        let plain = upper.folding(options: .diacriticInsensitive, locale: Self.swedish)
+        let plain = upper.folding(options: .diacriticInsensitive, locale: swedish)
         if plain.count == 1, let letter = plain.first, letter >= "A", letter <= "Z" {
             return plain
         }
