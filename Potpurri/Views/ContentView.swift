@@ -99,6 +99,12 @@ struct ContentView: View {
             .overlay(alignment: .bottomLeading) {
                 SwitchTimerLabel().padding(24)
             }
+            // Rec: kamerabilden i en liten ruta medan det spelar in.
+            .overlay(alignment: .bottomTrailing) {
+                RecordingWindow()
+                    .padding(.trailing, 24)
+                    .padding(.bottom, 96)
+            }
             .overlay(alignment: .leading) {
                 // Liggande: dra i handtaget vid kanten för att göra listorna bredare/smalare.
                 if columnVisibility != .detailOnly && windowSize.width > windowSize.height {
