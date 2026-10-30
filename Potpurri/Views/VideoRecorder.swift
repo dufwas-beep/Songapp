@@ -25,7 +25,23 @@ struct RecordButton: View {
         }
         .buttonStyle(.plain)
         .disabled(capture.isBusy)
+        // Håll in: välj kamera (valet sparas till nästa gång).
+        .contextMenu {
+            if !capture.isRecording {
+                Button {
+                    capture.start(backCamera: false)
+                } label: {
+                    Label("Spela in med framkameran", systemImage: capture.usesBackCamera ? "person.crop.square" : "checkmark")
+                }
+                Button {
+                    capture.start(backCamera: true)
+                } label: {
+                    Label("Spela in med bakkameran", systemImage: capture.usesBackCamera ? "checkmark" : "camera")
+                }
+            }
+        }
         .accessibilityLabel(capture.isRecording ? "Stoppa inspelningen" : "Spela in film")
+        .accessibilityHint("Håll in för att välja fram- eller bakkamera")
         .alert("Rec", isPresented: Binding(get: { capture.message != nil }, set: { if !$0 { capture.message = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -108,7 +124,8 @@ struct RecordingWindow: View {
                 withAnimation(.spring(response: 0.3)) { small.toggle() }
             }
             .gesture(
-                DragGesture(minimumDistance: 4)
+                // Mäts i skärmens koordinater: mätt i rutan själv (som flyttas) hoppade den.
+                DragGesture(minimumDistance: 4, coordinateSpace: .global)
                     .onChanged { drag = $0.translation }
                     .onEnded { value in
                         offset.width += value.translation.width
@@ -160,6 +177,8 @@ final class VideoCapture {
     /// Startar eller sparar just nu (knappen väntar under tiden).
     private(set) var isBusy = false
     private(set) var started: Date?
+    /// Bakkameran i stället för framkameran (sparas till nästa gång).
+    private(set) var usesBackCamera = UserDefaults.standard.bool(forKey: "recordBackCamera")
     /// "Filmen är sparad i Bilder" visas en kort stund.
     private(set) var savedNotice = false
     var message: String?
@@ -169,14 +188,22 @@ final class VideoCapture {
     @ObservationIgnored private let output = AVCaptureMovieFileOutput()
     @ObservationIgnored private let queue = DispatchQueue(label: "Potpurri.kamera")
     @ObservationIgnored private var camera: AVCaptureDevice?
+    @ObservationIgnored private var cameraInput: AVCaptureDeviceInput?
+    @ObservationIgnored private var previewCamera: AVCaptureDevice?
     @ObservationIgnored private var configured = false
     @ObservationIgnored private var captureRotation: AVCaptureDevice.RotationCoordinator?
     @ObservationIgnored private var previewRotation: AVCaptureDevice.RotationCoordinator?
     @ObservationIgnored private var previewObservation: NSKeyValueObservation?
     @ObservationIgnored private let delegate = RecordingDelegate()
 
-    func start() {
+    /// `backCamera`: välj kamera (annars samma som sist).
+    func start(backCamera: Bool? = nil) {
         guard !isRecording, !isBusy else { return }
+        if let backCamera {
+            usesBackCamera = backCamera
+            UserDefaults.standard.set(backCamera, forKey: "recordBackCamera")
+        }
+        let back = usesBackCamera
         isBusy = true
         Task { @MainActor in
             let video = await AVCaptureDevice.requestAccess(for: .video)
@@ -191,7 +218,7 @@ final class VideoCapture {
             try? AVAudioSession.sharedInstance().setActive(true)
             let ready = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
                 queue.async {
-                    continuation.resume(returning: self.configure(withAudio: audio))
+                    continuation.resume(returning: self.configure(withAudio: audio, backCamera: back))
                 }
             }
             guard ready else {
@@ -219,7 +246,7 @@ final class VideoCapture {
                     // Framkameran filmar som man ser sig själv i en spegel.
                     if connection.isVideoMirroringSupported {
                         connection.automaticallyAdjustsVideoMirroring = false
-                        connection.isVideoMirrored = true
+                        connection.isVideoMirrored = !back
                     }
                 }
                 self.output.startRecording(to: url, recordingDelegate: self.delegate)
@@ -245,10 +272,13 @@ final class VideoCapture {
     /// Kopplar bildlagret till kameran (en gång) och ser till att bilden vrids rätt när
     /// iPaden vänds.
     private func connectPreview() {
-        guard previewLayer.session == nil, let camera else { return }
+        guard let camera, previewCamera !== camera else { return }
+        previewCamera = camera
         let layer = previewLayer
-        layer.videoGravity = .resizeAspectFill
-        layer.session = session
+        if layer.session == nil {
+            layer.videoGravity = .resizeAspectFill
+            layer.session = session
+        }
         let rotation = AVCaptureDevice.RotationCoordinator(device: camera, previewLayer: layer)
         previewRotation = rotation
         previewObservation = rotation.observe(\.videoRotationAngleForHorizonLevelPreview, options: [.initial, .new]) { rotation, _ in
@@ -261,29 +291,42 @@ final class VideoCapture {
         }
     }
 
-    /// Körs på kamerans kö.
-    private func configure(withAudio audio: Bool) -> Bool {
-        if configured { return true }
-        guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front)
+    /// Körs på kamerans kö. Byts kameran byts bara dess ingång.
+    private func configure(withAudio audio: Bool, backCamera: Bool) -> Bool {
+        let position: AVCaptureDevice.Position = backCamera ? .back : .front
+        if configured, camera?.position == position { return true }
+        guard let newCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position)
                 ?? AVCaptureDevice.default(for: .video),
-              let cameraInput = try? AVCaptureDeviceInput(device: camera) else { return false }
+              let newInput = try? AVCaptureDeviceInput(device: newCamera) else { return false }
         session.beginConfiguration()
-        session.automaticallyConfiguresApplicationAudioSession = false
-        session.sessionPreset = .high
-        guard session.canAddInput(cameraInput), session.canAddOutput(output) else {
+        if !configured {
+            session.automaticallyConfiguresApplicationAudioSession = false
+            session.sessionPreset = .high
+        }
+        if let old = cameraInput { session.removeInput(old) }
+        guard session.canAddInput(newInput) else {
+            if let old = cameraInput { session.addInput(old) }
             session.commitConfiguration()
             return false
         }
-        session.addInput(cameraInput)
-        if audio, let microphone = AVCaptureDevice.default(for: .audio),
-           let microphoneInput = try? AVCaptureDeviceInput(device: microphone),
-           session.canAddInput(microphoneInput) {
-            session.addInput(microphoneInput)
+        session.addInput(newInput)
+        if !configured {
+            if audio, let microphone = AVCaptureDevice.default(for: .audio),
+               let microphoneInput = try? AVCaptureDeviceInput(device: microphone),
+               session.canAddInput(microphoneInput) {
+                session.addInput(microphoneInput)
+            }
+            guard session.canAddOutput(output) else {
+                session.removeInput(newInput)
+                session.commitConfiguration()
+                return false
+            }
+            session.addOutput(output)
         }
-        session.addOutput(output)
         session.commitConfiguration()
-        self.camera = camera
-        captureRotation = AVCaptureDevice.RotationCoordinator(device: camera, previewLayer: nil)
+        cameraInput = newInput
+        camera = newCamera
+        captureRotation = AVCaptureDevice.RotationCoordinator(device: newCamera, previewLayer: nil)
         configured = true
         return true
     }

@@ -498,7 +498,7 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 - ✅ Webbsökningen i helskärm, med en enkel reklamspärr (de vanligaste annonsnätverken blockeras).
 - Flytande appfönster ovanpå (t.ex. Spotify): styrs av iPadOS (Inställningar → Multitasking). Potpurri spärrar inget (inget krav på helskärm).
 - ✅ Dela låtar via AirDrop: ⋯ → Dela låten, håll in en låt i listan → Dela, eller Gör → Dela för markerade låtar. En .potpurri-fil med kategorier, notes, markeringar, hopplinjer och ackord. Mottagarens Potpurri lägger till låtarna (befintliga hoppas över, inget ersätts). Filtypen registreras i Potpurri-Info.plist.
-- ✅ Rec-knapp (röd, i raden överst): filmar i bakgrunden med framkameran och ljud. Bilden syns i en liten flytande ruta (dra = flytta, tryck = mindre/större, ■ = stopp) med röd prick och tid. Filmen sparas i Bilder.
+- ✅ Rec-knapp (röd, i raden överst): filmar i bakgrunden med ljud, framkameran som standard (håll in Rec = välj fram- eller bakkamera, valet sparas). Bilden syns i en liten flytande ruta (dra = flytta, tryck = mindre/större, ■ = stopp) med röd prick och tid. Filmen sparas i Bilder.
 - ✅ Zoom sparas direkt (gick förlorad om appen stängdes innan den hann spara). Läget i låten sparas när man byter låt: i sidled alltid, i höjdled bara om man var kvar i början (annars börjar låten överst).
 - ✅ Quiz-meny: i ett quiz (t.ex. HLS 45) en ruta uppe till vänster med quizets låtar (fälls ihop med rubriken). Tryck = låten i förhandsrutan, håll in = ta bort, "Lägg till låtar". I Quiz-fliken visas låtarna under quizet (knappen med antal).
 
