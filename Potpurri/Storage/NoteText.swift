@@ -29,6 +29,31 @@ enum NoteText {
         return answers >= 1 && questions >= 1
     }
 
+    /// Som `parse`, men varje anteckning tolkas bara en gång (och igen när texten ändras).
+    /// Vyn ritas om ofta – vid zoom, storleksbyte och scroll – och långa texter tog tid.
+    static func cachedParse(_ text: String, for id: UUID) -> [Line] {
+        let key = text.hashValue
+        cacheLock.lock()
+        if let hit = cache[id], hit.key == key {
+            cacheLock.unlock()
+            return hit.lines
+        }
+        cacheLock.unlock()
+        let started = Date()
+        let lines = parse(text)
+        let seconds = Date().timeIntervalSince(started)
+        if seconds > 0.5 {
+            AppLog.problem("Anteckningen tog \(String(format: "%.1f", seconds)) s att tolka (\(text.utf16.count) tecken, \(lines.count) rader).")
+        }
+        cacheLock.lock()
+        cache[id] = (key, lines)
+        cacheLock.unlock()
+        return lines
+    }
+
+    private static let cacheLock = NSLock()
+    private static var cache: [UUID: (key: Int, lines: [Line])] = [:]
+
     static func parse(_ text: String) -> [Line] {
         var result: [Line] = []
         for raw in text.components(separatedBy: .newlines) {

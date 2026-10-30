@@ -26,7 +26,7 @@ struct TextSongView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if showsAsNote {
-                        ForEach(Array(NoteText.parse(song.text ?? "").enumerated()), id: \.offset) { _, line in
+                        ForEach(Array(NoteText.cachedParse(song.text ?? "", for: song.id).enumerated()), id: \.offset) { _, line in
                             NoteLineView(line: line, scale: scale)
                         }
                     } else {
