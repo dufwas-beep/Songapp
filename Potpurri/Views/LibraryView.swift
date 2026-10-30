@@ -165,7 +165,8 @@ struct LibraryView: View {
     }
 
     private var showsAlphabet: Bool {
-        sort == .name && query.isEmpty && colorFilter.isEmpty && !colorMode && songs.count > 20
+        // Inte i Quiz-fliken (där är det för få för att behövas).
+        !quizOnly && sort == .name && query.isEmpty && colorFilter.isEmpty && !colorMode && songs.count > 20
     }
 
     /// Avstånd till högerkanten för raderna och färgrubrikerna (plats för alfabetet).

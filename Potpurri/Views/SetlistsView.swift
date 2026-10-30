@@ -30,8 +30,8 @@ struct SetlistsView: View {
         setlists.sorted { Song.compareTitles($0.name, $1.name) }
     }
 
-    /// Alfabetet vid sidan visas när listorna är många.
-    private var showsAlphabet: Bool { setlists.count > 15 }
+    /// Alfabetet vid sidan av listorna.
+    private var showsAlphabet: Bool { !setlists.isEmpty }
 
     var body: some View {
         Group {

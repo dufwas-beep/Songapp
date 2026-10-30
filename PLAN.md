@@ -510,7 +510,7 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 - ✅ Idélådan: alla kategorier syns alltid; håll in en rad och dra den till en annan kategori. Tryck på en rad = ändra text/kategori eller ta bort. Håll in = meny med Flytta till, Ändra, Ta bort. (Byggd som egen lista – i iPadens lista kom släppen aldrig fram.)
 
 **Lista 2026-10-30**
-- ✅ ABC vid sidan av Alla låtlistor (när det finns fler än 15 listor).
+- ✅ ABC vid sidan av Alla låtlistor (alltid). Inte i Quiz-fliken.
 - ✅ Logg och kraschrapporter (Inställningar → Hjälp): händelser, fel ⚠️, frysningar 🧊 (vakt: appen svarar inte på 2 s) och krascher 💥 med var i koden. "Förra gången avslutades appen oväntat" om den dog medan den var öppen. Dela-knapp. Systemets egna rapporter (MetricKit) skrivs in när de kommer.
 - ✅ Frysning efter import av textfil (3–9 s gång på gång): vaktens logg visade att varje rad i biblioteket räknade om hela urvalet av låtar (textjämförelse i alla titlar) och byggde menyn med alla låtlistor. Urvalet sparas nu, och raderna får det färdigt.
 - ✅ Importerad fil öppnas direkt och syns i listan (scrollas fram). Quiz/HLS hamnar i Quiz-fliken, som visas.
