@@ -23,23 +23,31 @@ enum SongImporter {
     static func importFiles(_ urls: [URL], into context: ModelContext, progress: TaskProgress) async -> ImportResult {
         var result = ImportResult()
         progress.start("Importerar låtar", total: urls.count)
+        AppLog.info("Importerar \(urls.count) fil(er): \(urls.map(\.lastPathComponent).joined(separator: ", "))")
         for url in urls {
             // Låtens namn är filnamnet utan ändelse.
             let title = url.deletingPathExtension().lastPathComponent
             progress.currentName = title
             if kind(of: url) == .note, let text = await readTextInBackground(url) {
+                AppLog.info("Läste textfilen \"\(url.lastPathComponent)\" (\(text.count) tecken, \(text.split(separator: "\n", omittingEmptySubsequences: false).count) rader)")
                 context.insert(Song(title: title, kind: .note, text: text))
                 result.imported += 1
             } else if let kind = kind(of: url), kind != .note, let fileName = await copyInBackground(url) {
                 context.insert(Song(title: title, kind: kind, fileName: fileName))
                 result.imported += 1
             } else {
+                AppLog.problem("Kunde inte importera \"\(url.lastPathComponent)\"")
                 result.failed.append(url.lastPathComponent)
             }
             progress.done += 1
         }
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            AppLog.problem("Importen kunde inte sparas: \(error.localizedDescription)")
+        }
         progress.finish()
+        AppLog.info("Importen klar: \(result.imported) av \(urls.count)")
         return result
     }
 

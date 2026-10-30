@@ -218,6 +218,10 @@ struct ContentView: View {
             player.requestedSongID = nil
         }
         .onChange(of: selection) { _, song in
+            if let song {
+                let length = song.text?.utf16.count ?? 0
+                AppLog.info("Öppnar \"\(song.title)\" (\(song.kindRaw), \(length) tecken text)")
+            }
             player.markSwitchSelected()
             // Har appen stått öppen över natten börjar en ny spelning vid första låten.
             player.startNewGigIfStale()

@@ -3,6 +3,10 @@ import SwiftUI
 
 @main
 struct PotpurriApp: App {
+    init() {
+        AppLog.start()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

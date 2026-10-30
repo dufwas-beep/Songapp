@@ -144,6 +144,11 @@ struct SettingsView: View {
                     Text("Stäng av delar du inte använder, så blir appen renare.")
                 }
                 Section("Hjälp") {
+                    NavigationLink {
+                        LogView()
+                    } label: {
+                        Label("Logg och kraschrapporter", systemImage: "doc.text.magnifyingglass")
+                    }
                     Button {
                         // Guiden visas ovanpå appen, så inställningarna stängs först.
                         dismiss()
@@ -265,6 +270,63 @@ struct SettingsView: View {
         } catch {
             message = "Säkerhetskopian kunde inte skapas: \(error.localizedDescription)"
         }
+    }
+}
+
+/// Appens logg. Problem visas i färg, och hela loggen kan delas (t.ex. med AirDrop eller Mail).
+private struct LogView: View {
+    @State private var lines: [String] = []
+    @State private var confirmsClear = false
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 2) {
+                    ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                        Text(line)
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(color(of: line))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    Color.clear.frame(height: 1).id("slut")
+                }
+                .padding()
+                .textSelection(.enabled)
+            }
+            .onAppear {
+                lines = AppLog.lines()
+                DispatchQueue.main.async { proxy.scrollTo("slut", anchor: .bottom) }
+            }
+        }
+        .overlay {
+            if lines.allSatisfy(\.isEmpty) {
+                ContentUnavailableView("Loggen är tom", systemImage: "doc.text")
+            }
+        }
+        .navigationTitle("Logg")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button("Rensa", role: .destructive) { confirmsClear = true }
+                ShareLink(item: AppLog.url) {
+                    Label("Dela loggen", systemImage: "square.and.arrow.up")
+                }
+                .simultaneousGesture(TapGesture().onEnded { AppLog.flush() })
+            }
+        }
+        .confirmationDialog("Rensa loggen?", isPresented: $confirmsClear, titleVisibility: .visible) {
+            Button("Rensa", role: .destructive) {
+                AppLog.clear()
+                lines = AppLog.lines()
+            }
+        }
+    }
+
+    private func color(of line: String) -> Color {
+        if line.contains("💥") { return .red }
+        if line.contains("🧊") || line.contains("⚠️") { return .orange }
+        if line.contains("———") { return .accentColor }
+        return .primary
     }
 }
 
