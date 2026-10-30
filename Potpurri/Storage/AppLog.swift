@@ -134,8 +134,12 @@ enum AppLog {
     // MARK: Frysningar
 
     /// Frågar appen var halvsekund om den svarar. Gör den inte det på två sekunder skrivs
-    /// det i loggen, och när den svarar igen skrivs hur länge den hängde.
+    /// det i loggen tillsammans med var i koden appen står (upp till tre gånger under
+    /// samma frysning), och när den svarar igen skrivs hur länge den hängde.
     private static func startWatchdog() {
+        mainThreadPort = mach_thread_self()
+        let top = UInt(bitPattern: pthread_get_stackaddr_np(pthread_self()))
+        mainStack = (top - UInt(pthread_get_stacksize_np(pthread_self())))...top
         let thread = Thread {
             while true {
                 let answered = DispatchSemaphore(value: 0)
@@ -143,8 +147,14 @@ enum AppLog {
                 DispatchQueue.main.async { answered.signal() }
                 if answered.wait(timeout: .now() + 2) == .timedOut {
                     let event = queue.sync { lastEvent }
-                    add("🧊 Appen har frusit – den har inte svarat på 2 sekunder. Senast hände: \(event)")
-                    answered.wait()
+                    add("🧊 Appen har frusit – den har inte svarat på 2 sekunder. Senast hände: \(event)\n" + mainThreadStack())
+                    var samples = 1
+                    while answered.wait(timeout: .now() + 1) == .timedOut {
+                        if samples < 3 {
+                            samples += 1
+                            add("🧊 Fortfarande frusen efter \(String(format: "%.1f", Date().timeIntervalSince(started))) s, nu här:\n" + mainThreadStack())
+                        }
+                    }
                     let seconds = Date().timeIntervalSince(started)
                     add("🧊 Appen svarar igen efter \(String(format: "%.1f", seconds)) sekunder.")
                 }
@@ -154,6 +164,79 @@ enum AppLog {
         thread.name = "Potpurri.vakt"
         thread.qualityOfService = .utility
         thread.start()
+    }
+
+    private static var mainThreadPort: thread_t = 0
+    /// Huvudtrådens minnesområde – vakten läser aldrig utanför det.
+    private static var mainStack: ClosedRange<UInt> = 0...0
+
+    /// Var huvudtråden (den som ritar skärmen) står just nu, som läsbara rader.
+    /// Tråden stoppas ett ögonblick medan adresserna läses (inget får skapas i minnet då,
+    /// eftersom den stoppade tråden kan hålla minneslåset).
+    private static func mainThreadStack() -> String {
+        #if arch(arm64)
+        guard mainThreadPort != 0 else { return "" }
+        let capacity = 48
+        let addresses = UnsafeMutablePointer<UInt>.allocate(capacity: capacity)
+        defer { addresses.deallocate() }
+        var found = 0
+        var state = arm_thread_state64_t()
+        var count = mach_msg_type_number_t(MemoryLayout<arm_thread_state64_t>.size / MemoryLayout<natural_t>.size)
+        guard thread_suspend(mainThreadPort) == KERN_SUCCESS else { return "" }
+        let result = withUnsafeMutablePointer(to: &state) { pointer in
+            pointer.withMemoryRebound(to: natural_t.self, capacity: Int(count)) {
+                thread_get_state(mainThreadPort, thread_state_flavor_t(ARM_THREAD_STATE64), $0, &count)
+            }
+        }
+        if result == KERN_SUCCESS {
+            // Systemets delar kan ha signerade adresser – de övre bitarna tas bort.
+            let mask: UInt = 0x0000_000F_FFFF_FFFF
+            addresses[0] = UInt(state.__pc) & mask
+            addresses[1] = UInt(state.__lr) & mask
+            found = 2
+            var frame = UInt(state.__fp) & mask
+            let stack = mainStack
+            while found < capacity, frame % 8 == 0, stack.contains(frame), stack.contains(frame + 16) {
+                guard let pointer = UnsafePointer<UInt>(bitPattern: frame) else { break }
+                let next = pointer[0] & mask
+                let returnAddress = pointer[1] & mask
+                if returnAddress == 0 { break }
+                addresses[found] = returnAddress
+                found += 1
+                if next <= frame { break }
+                frame = next
+            }
+        }
+        thread_resume(mainThreadPort)
+        let lines = (0..<found).map { describe(addresses[$0]) }
+        return lines.enumerated().map { "    \($0.offset)  \($0.element)" }.joined(separator: "\n")
+        #else
+        return ""
+        #endif
+    }
+
+    /// En adress som "▶ Potpurri  LibraryView.body.getter" (▶ = appens egen kod).
+    private static func describe(_ address: UInt) -> String {
+        var info = Dl_info()
+        guard let pointer = UnsafeRawPointer(bitPattern: address), dladdr(pointer, &info) != 0 else {
+            return "0x" + String(address, radix: 16)
+        }
+        let image = info.dli_fname.map { (String(cString: $0) as NSString).lastPathComponent } ?? "?"
+        let own = image.hasPrefix("Potpurri")
+        var symbol = "0x" + String(address, radix: 16)
+        if let name = info.dli_sname {
+            symbol = demangle(name)
+        }
+        let line = (own ? "▶ " : "  ") + image + "  " + symbol
+        return line.count > 220 ? String(line.prefix(220)) + "…" : line
+    }
+
+    private static func demangle(_ name: UnsafePointer<CChar>) -> String {
+        if let readable = _swiftDemangle(name, UInt(strlen(name)), nil, nil, 0) {
+            defer { free(readable) }
+            return String(cString: readable)
+        }
+        return String(cString: name)
     }
 
     // MARK: Krascher
@@ -210,3 +293,13 @@ enum AppLog {
         }
     }
 }
+
+/// Swifts egen funktion som gör om interna namn ("$s8Potpurri…") till läsbara.
+@_silgen_name("swift_demangle")
+private func _swiftDemangle(
+    _ mangledName: UnsafePointer<CChar>?,
+    _ mangledNameLength: UInt,
+    _ outputBuffer: UnsafeMutablePointer<CChar>?,
+    _ outputBufferSize: UnsafeMutablePointer<UInt>?,
+    _ flags: UInt32
+) -> UnsafeMutablePointer<CChar>?
