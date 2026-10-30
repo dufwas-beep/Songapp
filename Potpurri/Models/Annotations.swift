@@ -57,12 +57,35 @@ final class Highlight {
     }
 }
 
+/// Ett streck ritat med pennan. Punkterna (x, y, x, y …) och tjockleken i förhållande
+/// till låtbladets bredd, så att strecket följer med när låten zoomas.
+@Model
+final class InkStroke {
+    var id: UUID = UUID()
+    var songID: UUID = UUID()
+    var colorHex: String = NoteColors.inks[0]
+    var lineWidth: Double = 0.0035
+    var points: [Double] = []
+    var created: Date = Date()
+
+    init(songID: UUID, colorHex: String, lineWidth: Double, points: [Double]) {
+        self.id = UUID()
+        self.songID = songID
+        self.colorHex = colorHex
+        self.lineWidth = lineWidth
+        self.points = points
+        self.created = Date()
+    }
+}
+
 enum NoteColors {
     static let yellow = "FFE873"
     /// Lapparnas färger: gul, rosa, grön, blå, orange, vit.
     static let notes = ["FFE873", "FFB3F9", "9BE7C4", "A8D8FF", "FFC68A", "FFFFFF"]
     /// Pennornas färger: gul, grön, rosa, blå, orange.
     static let pens = ["FFE45C", "6EE7A0", "FF8FE8", "7CC4FF", "FFB25C"]
+    /// Ritpennans färger: svart, röd, blå, grön.
+    static let inks = ["1C1C1E", "E5322D", "1F63D6", "2E9E4F"]
 }
 
 /// En hopplinje i en låt (högst 10). Ett tryck på skärmen, pedalen eller AirTurn

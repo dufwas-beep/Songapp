@@ -10,16 +10,22 @@ struct AnnotationSync: View {
     @Environment(\.modelContext) private var context
     @Environment(Player.self) private var player
     @Query private var highlights: [Highlight]
+    @Query private var strokes: [InkStroke]
 
     init(song: Song, overlay: AnnotationOverlay) {
         self.song = song
         self.overlay = overlay
         let id = song.id
         _highlights = Query(filter: #Predicate<Highlight> { $0.songID == id })
+        _strokes = Query(filter: #Predicate<InkStroke> { $0.songID == id }, sort: \InkStroke.created)
     }
 
     private var highlightItems: [AnnotationOverlay.HighlightItem] {
         highlights.map { .init(id: $0.id, colorHex: $0.colorHex, x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
+    }
+
+    private var strokeItems: [AnnotationOverlay.StrokeItem] {
+        strokes.map { .init(id: $0.id, colorHex: $0.colorHex, lineWidth: $0.lineWidth, points: $0.points) }
     }
 
     var body: some View {
@@ -31,12 +37,20 @@ struct AnnotationSync: View {
                 push()
             }
             .onChange(of: highlightItems) { push() }
+            .onChange(of: strokeItems) { push() }
             .onChange(of: player.pen) { push() }
+            .onChange(of: player.eraserSize) { push() }
             .onChange(of: player.isLocked) { push() }
     }
 
     private func push() {
-        overlay.update(highlights: highlightItems, pen: player.isLocked ? .off : player.pen)
+        let radii = Player.eraserRadii
+        overlay.update(
+            highlights: highlightItems,
+            strokes: strokeItems,
+            pen: player.isLocked ? .off : player.pen,
+            eraserRadius: radii[min(max(player.eraserSize, 0), radii.count - 1)]
+        )
     }
 
     private func connect() {
@@ -48,6 +62,14 @@ struct AnnotationSync: View {
         overlay.onEraseHighlight = { id in
             if let highlight = try? context.fetch(FetchDescriptor<Highlight>(predicate: #Predicate { $0.id == id })).first {
                 context.delete(highlight)
+            }
+        }
+        overlay.onAddStroke = { hex, width, points in
+            context.insert(InkStroke(songID: songID, colorHex: hex, lineWidth: width, points: points))
+        }
+        overlay.onEraseStroke = { id in
+            if let stroke = try? context.fetch(FetchDescriptor<InkStroke>(predicate: #Predicate { $0.id == id })).first {
+                context.delete(stroke)
             }
         }
     }
@@ -368,25 +390,64 @@ struct NoteEditor: View {
     }
 }
 
-/// Knappen "Penna på · Stäng av" med pennfärger och sudd.
+/// Raden för att rita: markeringspenna eller penna, färgerna, suddet (tre storlekar),
+/// ångra och "Stäng av".
 struct PenBar: View {
     @Environment(Player.self) private var player
+    @AppStorage("inkColor") private var inkColor = NoteColors.inks[0]
+    @AppStorage("highlightColor") private var highlightColor = NoteColors.pens[0]
+    /// Senaste verktyget (markering eller penna) – suddet byter tillbaka dit.
+    @State private var lastTool: Tool = .highlighter
+
+    private enum Tool {
+        case highlighter, ink
+    }
+
+    private var tool: Tool {
+        switch player.pen {
+        case .ink: return .ink
+        case .color: return .highlighter
+        default: return lastTool
+        }
+    }
 
     var body: some View {
         HStack(spacing: 10) {
-            ForEach(NoteColors.pens, id: \.self) { hex in
+            HStack(spacing: 2) {
+                toolButton(.highlighter, systemImage: "highlighter", label: "Markeringspenna")
+                toolButton(.ink, systemImage: "pencil.tip", label: "Penna")
+            }
+            .padding(2)
+            .background(Color(.tertiarySystemFill), in: Capsule())
+
+            let colors = tool == .ink ? NoteColors.inks : NoteColors.pens
+            ForEach(colors, id: \.self) { hex in
+                let selected = player.pen == .color(hex) || player.pen == .ink(hex)
                 Button {
-                    player.pen = .color(hex)
+                    choose(hex)
                 } label: {
-                    Capsule()
-                        .fill(Color(uiColor: UIColor(hex: hex)))
-                        .frame(width: 34, height: 22)
-                        .overlay(Capsule().stroke(player.pen == .color(hex) ? Color.primary : .clear, lineWidth: 3))
+                    Group {
+                        if tool == .ink {
+                            Circle()
+                                .fill(Color(uiColor: UIColor(hex: hex)))
+                                .frame(width: 24, height: 24)
+                        } else {
+                            Capsule()
+                                .fill(Color(uiColor: UIColor(hex: hex)))
+                                .frame(width: 34, height: 22)
+                        }
+                    }
+                    .padding(3)
+                    .overlay(Capsule().stroke(selected ? Color.primary : .clear, lineWidth: 3))
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Pennfärg")
-                .accessibilityAddTraits(player.pen == .color(hex) ? .isSelected : [])
+                .accessibilityLabel(tool == .ink ? "Pennfärg" : "Markeringsfärg")
+                .accessibilityAddTraits(selected ? .isSelected : [])
             }
+
+            Divider().frame(height: 28)
+
             Button {
                 player.pen = .eraser
             } label: {
@@ -397,11 +458,30 @@ struct PenBar: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Sudd")
+            if player.pen == .eraser {
+                // Suddets storlek: liten, mellan, stor.
+                ForEach(0..<Player.eraserRadii.count, id: \.self) { index in
+                    let selected = player.eraserSize == index
+                    Button {
+                        player.eraserSize = index
+                    } label: {
+                        Circle()
+                            .stroke(Color.primary, lineWidth: 1.5)
+                            .background(Circle().fill(selected ? Color.accentColor.opacity(0.5) : .clear))
+                            .frame(width: CGFloat(10 + index * 7), height: CGFloat(10 + index * 7))
+                            .frame(width: 32, height: 36)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(["Litet sudd", "Mellanstort sudd", "Stort sudd"][index])
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
+            }
             UndoButtons()
             Button {
                 player.pen = .off
             } label: {
-                Text("Penna på · Stäng av")
+                Text("Stäng av")
                     .font(.subheadline.weight(.semibold))
                     .padding(.horizontal, 14)
                     .frame(height: 40)
@@ -414,6 +494,41 @@ struct PenBar: View {
         .padding(.vertical, 8)
         .background(.regularMaterial, in: Capsule())
         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+        .onAppear {
+            if case .ink = player.pen { lastTool = .ink }
+        }
+    }
+
+    private func toolButton(_ value: Tool, systemImage: String, label: String) -> some View {
+        let selected = tool == value && player.pen != .eraser
+        return Button {
+            lastTool = value
+            switch value {
+            case .highlighter: player.pen = .color(highlightColor)
+            case .ink: player.pen = .ink(inkColor)
+            }
+        } label: {
+            Image(systemName: systemImage)
+                .font(.system(size: 17, weight: .semibold))
+                .frame(width: 44, height: 36)
+                .foregroundStyle(selected ? Color.black : Color.primary)
+                .background(selected ? Color.accentColor : .clear, in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func choose(_ hex: String) {
+        switch tool {
+        case .ink:
+            inkColor = hex
+            player.pen = .ink(hex)
+        case .highlighter:
+            highlightColor = hex
+            player.pen = .color(hex)
+        }
     }
 }
 

@@ -45,7 +45,7 @@ struct GuideChooser: View {
                   text: "Tryck i låten eller använd pedalen för att gå vidare. Här byter du till förra och nästa låt.",
                   spot: .stepButtons),
         GuidePage(symbol: "pencil.tip.crop.circle", title: "Penna, notes, hopplinjer och ackord",
-                  text: "Under ⋯ finns markeringspenna, notes, hopplinjer, ackord, kategorier och autoscroll.",
+                  text: "Under ⋯ finns penna och markering (med sudd), notes, hopplinjer, ackord, kategorier och autoscroll.",
                   spot: .songMenu),
         GuidePage(symbol: "sparkles", title: "Next",
                   text: "Förslag på nästa låt, styrda av kategorierna. Spelade låtar blir gråa och en ny spelning börjar av sig själv nästa dag.",

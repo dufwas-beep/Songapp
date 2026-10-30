@@ -264,7 +264,7 @@ struct SongDetailView: View {
                 player.pen = .color(NoteColors.pens[0])
                 player.chordsOn = false
             } label: {
-                Label("Markeringspenna", systemImage: "highlighter")
+                Label("Penna och markering", systemImage: "pencil.tip")
             }
             }
             if chordsFeature {

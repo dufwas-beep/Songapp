@@ -516,6 +516,7 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 - ✅ Importerad fil öppnas direkt och syns i listan (scrollas fram). Quiz/HLS hamnar i Quiz-fliken, som visas.
 - ✅ Next: två stora knappar Bibliotek / Låtlista i stället för den lilla menyn.
 - ✅ Markera flera: knappen ovanför listorna heter Markera (förut Kategorier). Ta bort ligger som egen knapp; Mer = kategori, låtlista, dela. Bibliotek, Quiz och låtlistor.
+- ✅ Penna och markering (⋯): välj markeringspenna eller penna (rita fritt; svart, röd, blå, grön), sudd i tre storlekar som tar bort allt fingret dras över (markeringar och streck), ångra. Strecken sparas per låt (InkStroke), följer zoom och scroll och följer med i säkerhetskopian och vid delning.
 - Tangentbordet på skärmen när Bluetooth-tangentbord är anslutet, överallt där man skriver: iPadOS låter inte appar välja detta. Väntar på svar om ett inofficiellt sätt ska provas.
 
 **Senare – Idélådan och val av funktioner**

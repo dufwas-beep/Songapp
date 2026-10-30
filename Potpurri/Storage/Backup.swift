@@ -13,6 +13,8 @@ enum Backup {
         var setlists: [SetlistData] = []
         var notes: [NoteData] = []
         var highlights: [HighlightData] = []
+        /// Pennans streck (finns inte i äldre kopior).
+        var strokes: [StrokeData]? = nil
         var markers: [MarkerData] = []
         var chords: [ChordData] = []
         var sounds: [SoundData] = []
@@ -30,6 +32,7 @@ enum Backup {
     struct SetlistData: Codable { var id: UUID, name: String, created: Date, songIDs: [UUID], setBreaks: [Int] }
     struct NoteData: Codable { var id: UUID, songID: UUID, text: String, colorHex: String, x: Double, y: Double, width: Double, height: Double, pinned: Bool, fixedFontSize: Double?, created: Date }
     struct HighlightData: Codable { var id: UUID, songID: UUID, colorHex: String, x: Double, y: Double, width: Double, height: Double }
+    struct StrokeData: Codable { var id: UUID, songID: UUID, colorHex: String, lineWidth: Double, points: [Double], created: Date }
     struct MarkerData: Codable { var id: UUID, songID: UUID, y: Double, number: Int }
     struct ChordData: Codable { var id: UUID, songID: UUID, root: Int, quality: String, bass: Int?, x: Double, y: Double, groupID: UUID?, flats: Bool? }
     struct SoundData: Codable { var id: UUID, name: String, colorHex: String, fileName: String, order: Int, trimStart: Double, trimEnd: Double, volumeDB: Double }
@@ -60,6 +63,7 @@ enum Backup {
         if only == nil { content.setlists = try context.fetch(FetchDescriptor<Setlist>()).map { SetlistData(id: $0.id, name: $0.name, created: $0.created, songIDs: $0.songIDs, setBreaks: $0.setBreaks) } }
         content.notes = try context.fetch(FetchDescriptor<SongNote>()).filter { belongs($0.songID) }.map { NoteData(id: $0.id, songID: $0.songID, text: $0.text, colorHex: $0.colorHex, x: $0.x, y: $0.y, width: $0.width, height: $0.height, pinned: $0.pinned, fixedFontSize: $0.fixedFontSize, created: $0.created) }
         content.highlights = try context.fetch(FetchDescriptor<Highlight>()).filter { belongs($0.songID) }.map { HighlightData(id: $0.id, songID: $0.songID, colorHex: $0.colorHex, x: $0.x, y: $0.y, width: $0.width, height: $0.height) }
+        content.strokes = try context.fetch(FetchDescriptor<InkStroke>()).filter { belongs($0.songID) }.map { StrokeData(id: $0.id, songID: $0.songID, colorHex: $0.colorHex, lineWidth: $0.lineWidth, points: $0.points, created: $0.created) }
         content.markers = try context.fetch(FetchDescriptor<JumpMarker>()).filter { belongs($0.songID) }.map { MarkerData(id: $0.id, songID: $0.songID, y: $0.y, number: $0.number) }
         content.chords = try context.fetch(FetchDescriptor<ChordStamp>()).filter { belongs($0.songID) }.map { ChordData(id: $0.id, songID: $0.songID, root: $0.root, quality: $0.quality, bass: $0.bass, x: $0.x, y: $0.y, groupID: $0.groupID, flats: $0.flats) }
         content.sounds = sounds.map { SoundData(id: $0.id, name: $0.name, colorHex: $0.colorHex, fileName: $0.fileName, order: $0.order, trimStart: $0.trimStart, trimEnd: $0.trimEnd, volumeDB: $0.volumeDB) }
@@ -138,6 +142,11 @@ enum Backup {
         for item in content.highlights where addedIDs.contains(item.songID) {
             context.insert(Highlight(songID: item.songID, colorHex: item.colorHex, x: item.x, y: item.y, width: item.width, height: item.height))
         }
+        for item in content.strokes ?? [] where addedIDs.contains(item.songID) {
+            let stroke = InkStroke(songID: item.songID, colorHex: item.colorHex, lineWidth: item.lineWidth, points: item.points)
+            stroke.created = item.created
+            context.insert(stroke)
+        }
         for item in content.markers where addedIDs.contains(item.songID) {
             context.insert(JumpMarker(songID: item.songID, y: item.y, number: item.number))
         }
@@ -159,6 +168,7 @@ enum Backup {
         try context.delete(model: Setlist.self)
         try context.delete(model: SongNote.self)
         try context.delete(model: Highlight.self)
+        try context.delete(model: InkStroke.self)
         try context.delete(model: JumpMarker.self)
         try context.delete(model: ChordStamp.self)
         try context.delete(model: GigLog.self)
@@ -201,6 +211,11 @@ enum Backup {
             let highlight = Highlight(songID: item.songID, colorHex: item.colorHex, x: item.x, y: item.y, width: item.width, height: item.height)
             highlight.id = item.id
             context.insert(highlight)
+        }
+        for item in content.strokes ?? [] {
+            let stroke = InkStroke(songID: item.songID, colorHex: item.colorHex, lineWidth: item.lineWidth, points: item.points)
+            stroke.id = item.id; stroke.created = item.created
+            context.insert(stroke)
         }
         for item in content.markers {
             let marker = JumpMarker(songID: item.songID, y: item.y, number: item.number)

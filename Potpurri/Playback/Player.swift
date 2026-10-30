@@ -17,6 +17,9 @@ final class Player {
     var pinned: [UUID] = []
     /// En låt som listan ska scrolla fram till (t.ex. den man nyss importerat).
     var revealSongID: UUID?
+    /// Suddets storlek: 0 liten, 1 mellan, 2 stor.
+    var eraserSize = 1
+    static let eraserRadii: [CGFloat] = [10, 22, 44]
     /// Låten i förhandsrutan under huvudlåten.
     var previewID: UUID?
     /// Förslaget som spelas just nu (valt i förhandsrutan). Då bläddrar pedalen bara

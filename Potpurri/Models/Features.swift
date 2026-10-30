@@ -23,7 +23,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .pause: "Paus (skärmsläckare)"
         case .ideas: "Idélådan"
         case .notes: "Notes"
-        case .pen: "Markeringspenna"
+        case .pen: "Penna och markering"
         case .markers: "Hopplinjer"
         case .chords: "Ackord"
         }
