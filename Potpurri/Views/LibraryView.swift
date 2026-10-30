@@ -55,9 +55,15 @@ struct LibraryView: View {
     }
 
     static func isQuiz(_ song: Song) -> Bool {
-        song.title.range(of: "quiz", options: [.caseInsensitive, .diacriticInsensitive]) != nil
-            || song.title.range(of: "hls", options: .caseInsensitive) != nil
+        isQuizTitle(song.title)
     }
+
+    static func isQuizTitle(_ title: String) -> Bool {
+        title.range(of: "quiz", options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            || title.range(of: "hls", options: .caseInsensitive) != nil
+    }
+
+    @AppStorage("sidebarTab") private var sidebarTab = SidebarView.SidebarTab.setlists
     @Query private var setlists: [Setlist]
 
     @AppStorage("librarySort") private var sort = LibrarySort.name
@@ -247,6 +253,9 @@ struct LibraryView: View {
                         Color.clear.frame(height: 40)
                     }
                 }
+                // En nyss importerad låt: scrolla fram till den (när listan hunnit få den).
+                .onChange(of: player.revealSongID) { _, id in reveal(id, proxy: proxy) }
+                .onAppear { reveal(player.revealSongID, proxy: proxy) }
                 // Nästa/förra låt följer biblioteket när man valt en låt här.
                 .overlay(alignment: .trailing) {
                     if showsAlphabet {
@@ -326,7 +335,8 @@ struct LibraryView: View {
                     readOnSong(url)
                 } else {
                     Task {
-                        importMessage = await SongImporter.importFiles(urls, into: context, progress: progress).summary
+                        let result = await SongImporter.importFiles(urls, into: context, progress: progress)
+                        showImported(result)
                     }
                 }
             case .failure(let error):
@@ -418,6 +428,40 @@ struct LibraryView: View {
             delete(song)
         } label: {
             Label("Ta bort", systemImage: "trash")
+        }
+    }
+
+    /// Efter importen: den (sista) nya låten öppnas och syns i listan – quiz och HLS i
+    /// Quiz-fliken, allt annat i biblioteket. Meddelande bara om något gick fel eller
+    /// om flera filer importerades.
+    private func showImported(_ result: ImportResult) {
+        if !result.failed.isEmpty || result.imported > 1 {
+            importMessage = result.summary
+        }
+        guard let last = result.added.last else { return }
+        typedQuery = ""
+        query = ""
+        colorFilter = []
+        sidebarTab = quizTabOn && Self.isQuizTitle(last.title) ? .quiz : .library
+        player.startSwitchTimer()
+        player.setlistSongIDs = nil
+        player.requestedSongID = last.id
+        player.revealSongID = last.id
+    }
+
+    private func reveal(_ id: UUID?, proxy: ScrollViewProxy) {
+        guard let id else { return }
+        Task {
+            // Listan får den nya låten först när den ritats om – försök några gånger.
+            for _ in 0..<5 {
+                try? await Task.sleep(for: .milliseconds(300))
+                guard player.revealSongID == id else { return }
+                if cache.list.contains(where: { $0.id == id }) {
+                    withAnimation { proxy.scrollTo(id, anchor: .center) }
+                    player.revealSongID = nil
+                    return
+                }
+            }
         }
     }
 

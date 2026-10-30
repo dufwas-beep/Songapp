@@ -15,6 +15,8 @@ final class Player {
     var activeColors: Set<Int> = []
     /// Låtar som fästs överst bland förslagen för kvällen.
     var pinned: [UUID] = []
+    /// En låt som listan ska scrolla fram till (t.ex. den man nyss importerat).
+    var revealSongID: UUID?
     /// Låten i förhandsrutan under huvudlåten.
     var previewID: UUID?
     /// Förslaget som spelas just nu (valt i förhandsrutan). Då bläddrar pedalen bara
