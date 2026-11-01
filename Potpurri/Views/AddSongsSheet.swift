@@ -28,7 +28,7 @@ struct AddSongsSheet: View {
 
     private var visible: [Song] {
         let q = query.trimmingCharacters(in: .whitespaces)
-        let filtered = q.isEmpty ? songs : songs.filter { $0.title.localizedCaseInsensitiveContains(q) }
+        let filtered = q.isEmpty ? songs : songs.filter { $0.title.range(of: q, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
         return filtered.sorted(by: Song.swedishOrder)
     }
 
@@ -66,7 +66,14 @@ struct AddSongsSheet: View {
                     .buttonStyle(.plain)
                 }
             }
-            .searchable(text: $query, prompt: "Sök låt")
+            .listStyle(.plain)
+            // Egen sökruta överst – den inbyggda syntes inte alltid i rutan.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                SearchField(text: $query, prompt: "Sök låt")
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.bar)
+            }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -24,6 +24,14 @@ final class SoundEngine {
     init() {
         try? AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
         try? AVAudioSession.sharedInstance().setActive(true)
+        // Byts ljudutgången (t.ex. hörlurar eller Bluetooth) stannar ljudmotorn – starta om den.
+        NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, !self.voices.isEmpty, !self.engine.isRunning else { return }
+                try? self.engine.start()
+                for voice in self.voices.values { voice.node.play() }
+            }
+        }
     }
 
     func isPlaying(_ clip: SoundClip) -> Bool {
@@ -54,7 +62,8 @@ final class SoundEngine {
         if !engine.isRunning { try? engine.start() }
 
         let id = clip.id
-        node.scheduleSegment(file, startingFrame: AVAudioFramePosition(start * rate), frameCount: frames, at: nil) { [weak self] in
+        // Klart först när ljudet har *spelats* – inte när filen lästs in (då klipptes slutet bort).
+        node.scheduleSegment(file, startingFrame: AVAudioFramePosition(start * rate), frameCount: frames, at: nil, completionCallbackType: .dataPlayedBack) { [weak self] _ in
             Task { @MainActor in self?.finished(id, node: node) }
         }
         node.play()
