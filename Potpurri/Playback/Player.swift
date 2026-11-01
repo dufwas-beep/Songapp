@@ -20,6 +20,8 @@ final class Player {
     var wheelTicks = 0
     var wheelSpinning = false
     var wheelSongID: UUID?
+    /// Tillbaka till välkomstsidan (med lyckohjulet): ökas av hemknappen.
+    var homeRequests = 0
     /// En låt som listan ska scrolla fram till (t.ex. den man nyss importerat).
     var revealSongID: UUID?
     /// Suddets storlek: 0 liten, 1 mellan, 2 stor.

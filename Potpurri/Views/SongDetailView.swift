@@ -477,6 +477,17 @@ private struct SongTopBar: View {
             if sidebarHidden {
                 ClockLabel()
             }
+            if title != nil {
+                // Tillbaka till välkomstsidan med lyckohjulet.
+                Button {
+                    player.homeRequests += 1
+                } label: {
+                    Image(systemName: "house")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 40, height: 40)
+                }
+                .accessibilityLabel("Till startsidan med lyckohjulet")
+            }
             if let title {
                 Text(title)
                     .font(.headline)

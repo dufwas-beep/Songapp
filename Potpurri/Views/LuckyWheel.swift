@@ -1,4 +1,3 @@
-import AudioToolbox
 import SwiftData
 import SwiftUI
 import UIKit
@@ -21,6 +20,7 @@ struct LuckyWheel: View {
     /// Pilen knycker till vid varje klick.
     @State private var flick = false
     @State private var lastClick = Date.distantPast
+    @State private var sound: WheelClickSound?
 
     private static let segments = 16
     private static var segmentAngle: Double { 360 / Double(segments) }
@@ -45,6 +45,10 @@ struct LuckyWheel: View {
         .onTapGesture {
             guard !spinning else { return }
             spin(velocity: Double.random(in: 900...1500))
+        }
+        .onDisappear {
+            sound?.stop()
+            sound = nil
         }
         .accessibilityLabel("Lyckohjulet – snurra för att slumpa fram en låt")
         .accessibilityAddTraits(.isButton)
@@ -155,15 +159,16 @@ struct LuckyWheel: View {
         let passed = abs(after - before)
         guard passed > 0 else { return }
         player.wheelTicks += passed
-        click()
+        click(speed: min(abs(delta) / 40, 1))
     }
 
-    private func click() {
+    private func click(speed: Double) {
         let now = Date()
-        // Högst ett klickljud var 35:e millisekund – fortare låter det bara som ett surr.
-        guard now.timeIntervalSince(lastClick) > 0.035 else { return }
+        // Högst ett klickljud var 25:e millisekund – fortare låter det bara som ett surr.
+        guard now.timeIntervalSince(lastClick) > 0.025 else { return }
         lastClick = now
-        AudioServicesPlaySystemSound(1104)
+        if sound == nil { sound = WheelClickSound() }
+        sound?.click(speed: speed)
         UISelectionFeedbackGenerator().selectionChanged()
         withAnimation(.easeOut(duration: 0.04)) { flick = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {

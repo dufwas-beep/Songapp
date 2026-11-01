@@ -223,6 +223,11 @@ struct ContentView: View {
             selection = song(id)
             player.requestedSongID = nil
         }
+        // Hemknappen: ingen låt vald = välkomstsidan med lyckohjulet.
+        .onChange(of: player.homeRequests) {
+            player.playingSuggestionID = nil
+            selection = nil
+        }
         .onChange(of: selection) { _, song in
             if let song {
                 let length = song.text?.utf16.count ?? 0

@@ -490,7 +490,7 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 
 **Paket 4 – kul och snyggt**
 - ✅ Duvan ritas som vektorgrafik (grå duva med skimrande hals, svartbandad stjärt, vingband) med mjuka vingslag, glid och broms före landning. Flyger en mjuk slinga som alltid håller sig innanför skärmen.
-- ✅ Lyckohjul på välkomstsidan (ersätter scratch-skivan): dra och släpp eller tryck så snurrar det och saktar in, med klick för varje fält. Markeringen rullar genom biblioteket i takt med klicken och låten där hjulet stannar öppnas.
+- ✅ Lyckohjul på välkomstsidan (ersätter scratch-skivan): dra och släpp eller tryck så snurrar det och saktar in, med klick för varje fält. Markeringen rullar genom biblioteket i takt med klicken och låten där hjulet stannar öppnas. Klicket är ett eget lyckohjulsljud (plastflik mot pinne). Hemknappen (huset i låtens översta rad) tar en tillbaka till välkomstsidan.
 - ✅ Skärmsläckare (koppen bredvid Ny spelning): skivan (ritad som vektorgrafik, skarp) snurrar sakta på svart botten med klockan under (skivspelaren borttagen på begäran). Tryck = snurrar fort, krymper och lägger sig på loggans plats. Välkomstsidans och startens skiva är också vektorgrafik.
 - ✅ Guiden börjar med ett val: Snabbintro (Next, hopplinjer, soundboard, ackord, kategorier, Lådan) eller Hela guiden. Rundturen visas ovanpå appen: allt tonas ner utom stället den pratar om, som ramas in i rosa (byter flik vid behov).
 
