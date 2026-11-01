@@ -198,7 +198,8 @@ private struct NoteCard: View {
 }
 
 /// Hopplinjerna: rosa streckade linjer med nummer. I redigeringsläget kan man dra i
-/// numret för att flytta linjen och trycka på det för att byta nummer eller ta bort.
+/// numret för att flytta linjen, trycka på det för att byta nummer, och ta bort linjen
+/// med ✕ längst till höger.
 struct MarkersLayer: View {
     let song: Song
     let geometry: SheetGeometry
@@ -238,6 +239,20 @@ struct MarkersLayer: View {
                                 .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2.5, dash: [8, 6]))
                                 .frame(height: 2.5)
                                 .allowsHitTesting(false)
+                            if player.editingMarkers {
+                                Button {
+                                    context.delete(marker)
+                                } label: {
+                                    Image(systemName: "xmark")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .frame(width: 32, height: 32)
+                                        .background(Color.accentColor, in: Circle())
+                                        .foregroundStyle(.black)
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.trailing, 12)
+                                .accessibilityLabel("Ta bort hopplinje \(marker.number)")
+                            }
                         }
                         .frame(width: proxy.size.width)
                         .position(x: proxy.size.width / 2, y: y)
@@ -539,6 +554,7 @@ struct MarkerBar: View {
     @Environment(Player.self) private var player
     @Environment(\.modelContext) private var context
     @Query private var markers: [JumpMarker]
+    @State private var confirmsRemoveAll = false
 
     init(song: Song, geometry: SheetGeometry) {
         self.song = song
@@ -563,6 +579,13 @@ struct MarkerBar: View {
             }
             .buttonStyle(.bordered)
             .disabled(markers.count >= 10)
+            Button(role: .destructive) {
+                confirmsRemoveAll = true
+            } label: {
+                Label("Ta bort alla", systemImage: "trash")
+            }
+            .buttonStyle(.bordered)
+            .disabled(markers.isEmpty)
             UndoButtons()
             Button {
                 player.editingMarkers = false
@@ -580,5 +603,10 @@ struct MarkerBar: View {
         .padding(.vertical, 8)
         .background(.regularMaterial, in: Capsule())
         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+        .confirmationDialog("Ta bort alla \(markers.count) hopplinjer?", isPresented: $confirmsRemoveAll, titleVisibility: .visible) {
+            Button("Ta bort alla", role: .destructive) {
+                for marker in markers { context.delete(marker) }
+            }
+        }
     }
 }

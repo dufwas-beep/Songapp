@@ -2,7 +2,8 @@ import SwiftData
 import SwiftUI
 
 /// Låtarna som hör till ett quiz (t.ex. "HLS 45"), i ordning. Tryck = visa låten,
-/// håll in = ta bort ur quizet. "Lägg till låtar" väljer fler ur biblioteket.
+/// håll in = ta bort ur quizet, håll in och dra = flytta (en rosa linje visar var).
+/// "Lägg till låtar" väljer fler ur biblioteket; en låt kan också dras hit från listorna.
 struct QuizSongsList: View {
     let quiz: Song
     let onOpen: (Song) -> Void
@@ -10,6 +11,7 @@ struct QuizSongsList: View {
     @Environment(Player.self) private var player
     @Environment(\.modelContext) private var context
     @State private var adding = false
+    @State private var dropTarget: Int?
 
     var body: some View {
         let byID = Dictionary(songs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
@@ -49,7 +51,31 @@ struct QuizSongsList: View {
                             }
                         }
                     }
+                    .draggable("quizsong:\(index)") {
+                        Text(song.title)
+                            .padding(10)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+                    }
+                    .overlay(alignment: .top) {
+                        if dropTarget == index { DropLine() }
+                    }
+                    .dropDestination(for: String.self) { items, _ in
+                        drop(items, before: index)
+                    } isTargeted: { target(index, $0) }
                 }
+            }
+            if !quiz.quizSongIDs.isEmpty {
+                // Släpp här = sist i quizet.
+                let end = quiz.quizSongIDs.count
+                Color.clear
+                    .frame(height: 14)
+                    .contentShape(Rectangle())
+                    .overlay(alignment: .top) {
+                        if dropTarget == end { DropLine() }
+                    }
+                    .dropDestination(for: String.self) { items, _ in
+                        drop(items, before: end)
+                    } isTargeted: { target(end, $0) }
             }
             if !player.isLocked {
                 Button {
@@ -68,6 +94,35 @@ struct QuizSongsList: View {
                 try? context.save()
             }
         }
+    }
+
+    private func target(_ index: Int, _ targeted: Bool) {
+        if targeted {
+            dropTarget = index
+        } else if dropTarget == index {
+            dropTarget = nil
+        }
+    }
+
+    /// En låt i quizet flyttas, eller en låt från listorna läggs till, före `index`.
+    private func drop(_ items: [String], before index: Int) -> Bool {
+        dropTarget = nil
+        guard !player.isLocked, let item = items.first else { return false }
+        var ids = quiz.quizSongIDs
+        if item.hasPrefix("quizsong:"), let from = Int(item.dropFirst(9)), ids.indices.contains(from) {
+            guard from != index, from + 1 != index else { return true }
+            let id = ids.remove(at: from)
+            ids.insert(id, at: from < index ? index - 1 : index)
+        } else if item.hasPrefix("song:"), let id = UUID(uuidString: String(item.dropFirst(5))) {
+            ids.insert(id, at: min(index, ids.count))
+        } else {
+            return false
+        }
+        withAnimation(.easeOut(duration: 0.2)) {
+            quiz.quizSongIDs = ids
+        }
+        try? context.save()
+        return true
     }
 
     private func remove(at index: Int) {

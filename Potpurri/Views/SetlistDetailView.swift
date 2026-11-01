@@ -461,7 +461,7 @@ struct SetlistDetailView: View {
 }
 
 /// Den rosa linjen som visar var en dragen låt hamnar.
-private struct DropLine: View {
+struct DropLine: View {
     var body: some View {
         Capsule()
             .fill(Color.accentColor)
