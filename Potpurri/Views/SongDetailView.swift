@@ -192,10 +192,10 @@ struct SongDetailView: View {
             HStack(spacing: 0) {
                 ZStack(alignment: .bottomTrailing) {
                     VStack(spacing: 18) {
-                        ScratchRecord()
+                        LuckyWheel()
                         Text("Hej!")
                             .font(.system(size: 44, weight: .semibold))
-                        Text("Välj en låt så kör vi!")
+                        Text("Välj en låt – eller snurra hjulet!")
                             .font(.title2)
                             .foregroundStyle(.secondary)
                     }

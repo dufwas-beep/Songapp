@@ -85,6 +85,8 @@ struct LibraryView: View {
     @State private var webQuery: String?
     @State private var showsNewSong = false
     @State private var sharing: Set<UUID>?
+    /// Lyckohjulet: var i listan markeringen började (index) och vid vilket klick.
+    @State private var wheelStart: (index: Int, ticks: Int)?
     /// Quiz-fliken: quiz vars låtar visas under raden.
     @State private var expandedQuizzes: Set<UUID> = []
 
@@ -252,6 +254,26 @@ struct LibraryView: View {
                             }
                         }
                         Color.clear.frame(height: 40)
+                    }
+                }
+                // Lyckohjulet: markeringen rullar genom listan och låten där hjulet stannar
+                // öppnas.
+                .onChange(of: player.wheelTicks) { _, ticks in
+                    guard !quizOnly, !list.isEmpty else { return }
+                    if wheelStart == nil { wheelStart = (Int.random(in: 0..<list.count), ticks) }
+                    guard let start = wheelStart else { return }
+                    let index = ((start.index + ticks - start.ticks) % list.count + list.count) % list.count
+                    player.wheelSongID = list[index].id
+                    proxy.scrollTo(list[index].id, anchor: .center)
+                }
+                .onChange(of: player.wheelSpinning) { _, spinning in
+                    guard !spinning, !quizOnly else { return }
+                    wheelStart = nil
+                    guard let id = player.wheelSongID, let song = list.first(where: { $0.id == id }) else { return }
+                    open(song, in: list)
+                    Task {
+                        try? await Task.sleep(for: .seconds(1.2))
+                        if player.wheelSongID == id { player.wheelSongID = nil }
                     }
                 }
                 // En nyss importerad låt: scrolla fram till den (när listan hunnit få den).
@@ -615,7 +637,10 @@ private struct SelectedRowBackground: View {
     @Environment(Player.self) private var player
 
     var body: some View {
-        if player.selectedSongID == songID {
+        if player.wheelSongID == songID {
+            // Lyckohjulets markering.
+            Color.accentColor.opacity(0.75)
+        } else if player.selectedSongID == songID {
             Color.accentColor.opacity(0.3)
         } else {
             Color.clear

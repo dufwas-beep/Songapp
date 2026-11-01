@@ -15,6 +15,11 @@ final class Player {
     var activeColors: Set<Int> = []
     /// Låtar som fästs överst bland förslagen för kvällen.
     var pinned: [UUID] = []
+    /// Lyckohjulet på välkomstsidan: varje klick flyttar markeringen en låt i biblioteket
+    /// (`wheelSongID`); när hjulet stannar öppnas den låten.
+    var wheelTicks = 0
+    var wheelSpinning = false
+    var wheelSongID: UUID?
     /// En låt som listan ska scrolla fram till (t.ex. den man nyss importerat).
     var revealSongID: UUID?
     /// Suddets storlek: 0 liten, 1 mellan, 2 stor.

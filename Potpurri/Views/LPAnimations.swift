@@ -273,65 +273,6 @@ struct ImportArm: View {
     }
 }
 
-/// Välkomstsidans LP: dra runt skivan med fingret så scratchar den – framåt och bakåt,
-/// med ljud i samma takt. Släpper man stannar skivan.
-struct ScratchRecord: View {
-    var size: CGFloat = 180
-    @State private var angle: Double = 0
-    @State private var lastAngle: Double?
-    @State private var lastTime: Date?
-    @State private var updates = 0
-    @State private var sound: ScratchSound?
-
-    var body: some View {
-        // Fingret mäts mot ramen runt skivan (som inte snurrar), inte mot skivan själv.
-        ZStack {
-            VectorRecord(angle: angle)
-                .shadow(color: .black.opacity(0.25), radius: 14, y: 8)
-        }
-        .frame(width: size, height: size)
-            .contentShape(Circle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        let center = CGPoint(x: size / 2, y: size / 2)
-                        let current = atan2(Double(value.location.y - center.y), Double(value.location.x - center.x)) * 180 / .pi
-                        let now = Date()
-                        if sound == nil { sound = ScratchSound() }
-                        sound?.start()
-                        if let lastAngle, let lastTime {
-                            var delta = current - lastAngle
-                            if delta > 180 { delta -= 360 }
-                            if delta < -180 { delta += 360 }
-                            angle += delta
-                            let seconds = max(now.timeIntervalSince(lastTime), 0.008)
-                            // 33 varv/minut ≈ 200 grader/s = vanlig fart.
-                            sound?.setRate(delta / seconds / 200)
-                        }
-                        lastAngle = current
-                        lastTime = now
-                        // Håller fingret still: tyst efter en kort stund.
-                        updates += 1
-                        let mark = updates
-                        Task {
-                            try? await Task.sleep(for: .milliseconds(70))
-                            if updates == mark { sound?.setRate(0) }
-                        }
-                    }
-                    .onEnded { _ in
-                        lastAngle = nil
-                        lastTime = nil
-                        sound?.setRate(0)
-                    }
-            )
-            .onDisappear {
-                sound?.stop()
-                sound = nil
-            }
-            .accessibilityLabel("Potpurri-skivan – dra runt för att scratcha")
-    }
-}
-
 /// Skärmsläckaren i pauserna: skivan snurrar sakta mitt på svart botten. Tryck var som
 /// helst – skivan snurrar fort, krymper och lägger sig på loggans plats uppe till vänster.
 struct ScreensaverView: View {
