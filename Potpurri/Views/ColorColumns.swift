@@ -268,6 +268,10 @@ struct ColorNamesSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var drafts: [String] = []
     @State private var count = ColorCodes.recommendedCount
+    /// Rutan som skrivs i – en ny kategori får tangentbordet direkt.
+    @FocusState private var focused: Int?
+    /// Antalet som senast visades (så att det inte räknas som "fler" när rutan öppnas).
+    @State private var shownCount: Int?
 
     var body: some View {
         NavigationStack {
@@ -284,7 +288,12 @@ struct ColorNamesSheet: View {
                         HStack(spacing: 12) {
                             Circle().fill(ColorCodes.colors[index]).frame(width: 18, height: 18)
                             TextField("Namn", text: $drafts[index])
+                                .focused($focused, equals: index)
+                                .submitLabel(.done)
                         }
+                        .contentShape(Rectangle())
+                        // Tryck var som helst på raden för att skriva.
+                        .onTapGesture { focused = index }
                     }
                 } footer: {
                     Text("Namnen visas överst i kolumnerna och i Next.")
@@ -311,7 +320,18 @@ struct ColorNamesSheet: View {
             }
             .onAppear {
                 drafts = codes.names
+                shownCount = codes.count
                 count = codes.count
+            }
+            // Fler kategorier: den nya rutan töms och tangentbordet kommer upp där.
+            .onChange(of: count) { _, new in
+                defer { shownCount = new }
+                guard let shown = shownCount, new > shown, drafts.indices.contains(new - 1) else { return }
+                drafts[new - 1] = ""
+                Task {
+                    try? await Task.sleep(for: .milliseconds(250))
+                    focused = new - 1
+                }
             }
         }
     }
