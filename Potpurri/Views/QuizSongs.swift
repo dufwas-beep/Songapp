@@ -77,16 +77,27 @@ struct QuizSongsList: View {
                         drop(items, before: end)
                     } isTargeted: { target(end, $0) }
             }
-            if !player.isLocked {
-                Button {
-                    adding = true
-                } label: {
-                    Label("Lägg till låtar", systemImage: "plus")
-                        .font(.subheadline.weight(.medium))
+            HStack(spacing: 12) {
+                if !player.isLocked {
+                    Button {
+                        adding = true
+                    } label: {
+                        Label("Lägg till låtar", systemImage: "plus")
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .buttonStyle(.borderless)
                 }
-                .buttonStyle(.borderless)
-                .padding(.vertical, 8)
+                Spacer(minLength: 0)
+                // Quizets låtar som text, t.ex. till Anteckningar.
+                if !quiz.quizSongIDs.isEmpty {
+                    ShareLink(item: titlesText(byID), subject: Text(quiz.title)) {
+                        Label("Dela titlarna", systemImage: "square.and.arrow.up")
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .buttonStyle(.borderless)
+                }
             }
+            .padding(.vertical, 8)
         }
         .sheet(isPresented: $adding) {
             AddSongsSheet(title: "Låtar till \(quiz.title)", existing: quiz.quizSongIDs) { ids in
@@ -94,6 +105,13 @@ struct QuizSongsList: View {
                 try? context.save()
             }
         }
+    }
+
+    /// "HLS 45" och låtarna numrerade, en per rad.
+    private func titlesText(_ byID: [UUID: Song]) -> String {
+        let titles = quiz.quizSongIDs.compactMap { byID[$0]?.title }
+        let lines = titles.enumerated().map { "\($0.offset + 1). \($0.element)" }
+        return ([quiz.title, ""] + lines).joined(separator: "\n")
     }
 
     private func target(_ index: Int, _ targeted: Bool) {
