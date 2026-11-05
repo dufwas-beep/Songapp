@@ -525,6 +525,11 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 - ✅ Under kugghjulet: en avdelning där man stänger av funktioner man inte använder (t.ex. soundboard, Spotify, Lådan, ackord, hopplinjer, timer), så att appen blir så ren man vill.
 - ✅ Egen idélåda (glödlampan bredvid Ny spelning): skriv fritt (låtförslag man fått, saker att köpa som kablar, något att testa, förbättringar för appen). Varje rad sorteras automatiskt i kategorier: Att köpa, Att repa in, Att testa, Att komma ihåg, Appen. Läggs in när det passar.
 
+**Senare – App Store (avvaktar)**
+- Betalt utvecklarkonto: registrerat via webben, väntar på godkännande (Xcode visar bara Personal Team). Sedan: Team ID in i projektet, delningstillägget för Anteckningar (App Group).
+- Före lansering: beslut om Spotify (dev-läge = max 25 användare; ansök hos Spotify eller ta bort i App Store-versionen), dölja Prestandatest (testlåtar, tid för låtbyte), stänga av swift_demangle i kraschloggen i release, ITSAppUsesNonExemptEncryption = NO, kolla namnet i App Store, integritetspolicy (duvaevent.com), skärmdumpar, App Privacy, EU-näringsidkarstatus.
+- RigList (annan app, annat repo) ska också till App Store – samma konto.
+
 ## Sparas per låt
 Allt som läggs på eller ställs in för en låt följer med låten och finns kvar nästa gång
 den öppnas: notes, markeringar, ackord och grupper, tonart, zoom (huvudvy och
