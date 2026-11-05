@@ -518,6 +518,7 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 - ✅ Markera flera: knappen ovanför listorna heter Markera (förut Kategorier). Ta bort ligger som egen knapp; Mer = kategori, låtlista, dela. Bibliotek, Quiz och låtlistor.
 - ✅ Penna och markering (⋯): välj markeringspenna eller penna (rita fritt; svart, röd, blå, grön), sudd i tre storlekar som tar bort allt fingret dras över (markeringar och streck), ångra. Strecken sparas per låt (InkStroke), följer zoom och scroll och följer med i säkerhetskopian och vid delning.
 - ✅ Quizlistorna (rutan i quizet och listan i Quiz-fliken): håll in och dra för att flytta en låt; låtar kan också dras dit från listorna.
+- ✅ Quiz-fliken: rullist att dra i (fler än 10 quiz) med quizets namn i en bubbla.
 - ✅ Quizlistorna: "Dela titlarna" – quizets namn och låtarna numrerade som text (Anteckningar, Meddelanden …).
 - ✅ Hopplinjer: ✕ på varje linje i redigeringsläget och "Ta bort alla" i raden (förut bara via tryck på numret).
 - Tangentbordet på skärmen när Bluetooth-tangentbord är anslutet, överallt där man skriver: iPadOS låter inte appar välja detta. Väntar på svar om ett inofficiellt sätt ska provas.

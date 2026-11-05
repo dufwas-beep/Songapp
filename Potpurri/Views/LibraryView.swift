@@ -85,6 +85,8 @@ struct LibraryView: View {
     @State private var webQuery: String?
     @State private var showsNewSong = false
     @State private var sharing: Set<UUID>?
+    /// Var listan är scrollad (0–1), för rullisten i Quiz-fliken.
+    @State private var scrollFraction: Double = 0
     /// Lyckohjulet: var i listan markeringen började (index) och vid vilket klick.
     @State private var wheelStart: (index: Int, ticks: Int)?
     /// Quiz-fliken: quiz vars låtar visas under raden.
@@ -171,9 +173,14 @@ struct LibraryView: View {
         !quizOnly && sort == .name && query.isEmpty && colorFilter.isEmpty && !colorMode && songs.count > 20
     }
 
+    /// Quiz-fliken: en rullist att dra i när quizen är många.
+    private var showsScrubber: Bool {
+        quizOnly && !colorMode && songs.count > 10
+    }
+
     /// Avstånd till högerkanten för raderna och färgrubrikerna (plats för alfabetet).
     private var rowTrailing: CGFloat {
-        showsAlphabet ? 28 : 16
+        showsAlphabet || showsScrubber ? 28 : 16
     }
 
     var body: some View {
@@ -256,6 +263,13 @@ struct LibraryView: View {
                         Color.clear.frame(height: 40)
                     }
                 }
+                .onScrollGeometryChange(for: Double.self) { geometry in
+                    let scrollable = geometry.contentSize.height - geometry.containerSize.height
+                    return scrollable > 0 ? Double(geometry.contentOffset.y / scrollable) : 0
+                } action: { _, value in
+                    // Bara märkbara steg – varje ändring ritar om listan.
+                    if showsScrubber, abs(value - scrollFraction) > 0.01 { scrollFraction = value }
+                }
                 // Lyckohjulet: markeringen rullar genom listan och låten där hjulet stannar
                 // öppnas.
                 .onChange(of: player.wheelTicks) { _, ticks in
@@ -281,7 +295,12 @@ struct LibraryView: View {
                 .onAppear { reveal(player.revealSongID, proxy: proxy) }
                 // Nästa/förra låt följer biblioteket när man valt en låt här.
                 .overlay(alignment: .trailing) {
-                    if showsAlphabet {
+                    if showsScrubber {
+                        ScrollScrubber(titles: list.map(\.title), fraction: scrollFraction) { index in
+                            proxy.scrollTo(list[index].id, anchor: .top)
+                        }
+                        .padding(.trailing, 2)
+                    } else if showsAlphabet {
                         AlphabetScrubber(available: cache.letters) { letter in
                             if let first = list.first(where: { $0.indexLetter == letter }) {
                                 proxy.scrollTo(first.id, anchor: .top)

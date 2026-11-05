@@ -86,3 +86,73 @@ struct AlphabetScrubber: View {
         return 1 + 1.1 * max(0, 1 - distance / 60)
     }
 }
+
+/// En rullist att dra i (Quiz-fliken): tummen visar var i listan man är, och drar man
+/// längs den hoppar listan dit, med namnet på raden i en bubbla bredvid.
+struct ScrollScrubber: View {
+    let titles: [String]
+    /// Var listan är scrollad, 0 = överst, 1 = nederst.
+    let fraction: Double
+    let onSelect: (Int) -> Void
+
+    @State private var dragFraction: Double?
+    @State private var current: Int?
+    private let feedback = UISelectionFeedbackGenerator()
+    private let thumbHeight: CGFloat = 44
+
+    var body: some View {
+        GeometryReader { geometry in
+            let travel = max(geometry.size.height - thumbHeight, 1)
+            let shown = min(max(dragFraction ?? fraction, 0), 1)
+            ZStack(alignment: .top) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.15))
+                    .frame(width: 6)
+                    .frame(maxHeight: .infinity)
+                Capsule()
+                    .fill(dragFraction == nil ? Color.secondary.opacity(0.6) : Color.accentColor)
+                    .frame(width: dragFraction == nil ? 8 : 12, height: thumbHeight)
+                    .offset(y: travel * shown)
+            }
+            .frame(width: 26)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .overlay(alignment: .topTrailing) {
+                if let current, titles.indices.contains(current) {
+                    Text(titles[current])
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.regularMaterial, in: Capsule())
+                        .overlay(Capsule().stroke(Color.accentColor, lineWidth: 2))
+                        .fixedSize()
+                        .offset(x: -36, y: travel * shown + thumbHeight / 2 - 18)
+                        .allowsHitTesting(false)
+                }
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        guard !titles.isEmpty else { return }
+                        let f = min(max(Double((value.location.y - thumbHeight / 2) / travel), 0), 1)
+                        dragFraction = f
+                        let index = min(Int((f * Double(titles.count - 1)).rounded()), titles.count - 1)
+                        guard index != current else { return }
+                        current = index
+                        feedback.selectionChanged()
+                        onSelect(index)
+                    }
+                    .onEnded { _ in
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            dragFraction = nil
+                            current = nil
+                        }
+                    }
+            )
+        }
+        .frame(width: 26)
+        .padding(.vertical, 8)
+        .accessibilityHidden(true)
+    }
+}
