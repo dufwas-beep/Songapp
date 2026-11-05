@@ -34,6 +34,8 @@ struct SongDetailView: View {
     @State private var shownSong: Song?
     @State private var restoredSongID: UUID?
     @State private var sharing: Set<UUID>?
+    /// Låtbladets bredd – för att flytta knapparna förbi lådan när den är öppen.
+    @State private var sheetWidth: CGFloat = 0
     // Funktioner som går att stänga av under kugghjulet.
     @AppStorage(Feature.soundboard.key) private var soundboardOn = true
     @AppStorage(Feature.drawer.key) private var drawerOn = true
@@ -41,6 +43,10 @@ struct SongDetailView: View {
     @AppStorage(Feature.pen.key) private var penFeature = true
     @AppStorage(Feature.markers.key) private var markersFeature = true
     @AppStorage(Feature.chords.key) private var chordsFeature = true
+
+    static func drawerWidth(for width: CGFloat) -> CGFloat {
+        min(520, width * 0.48)
+    }
 
     var body: some View {
         if let song {
@@ -82,13 +88,18 @@ struct SongDetailView: View {
                             AutoscrollButton(autoscroller: autoscroller, seconds: secondsBinding(for: song))
                         }
                     }
+                    // Är lådan öppen flyttar knapparna till vänster om den, så att de går
+                    // att trycka på.
+                    .padding(.trailing, drawerOn && player.drawerOpen ? Self.drawerWidth(for: sheetWidth) + 34 : 0)
+                    .animation(.spring(response: 0.55, dampingFraction: 1), value: player.drawerOpen)
                     .padding(24)
                 }
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { sheetWidth = $0 }
                 // Lådan i högerkanten (till vänster om soundboarden när den är öppen).
                 .overlay(alignment: .trailing) {
                     if drawerOn {
                         GeometryReader { proxy in
-                            DrawerView(width: min(520, proxy.size.width * 0.48))
+                            DrawerView(width: Self.drawerWidth(for: proxy.size.width))
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
                         }
                     }
