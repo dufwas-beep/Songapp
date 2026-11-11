@@ -528,7 +528,8 @@ Användarens lista från genomgången, i paket. ✅ = klart.
 - ✅ Egen idélåda (glödlampan bredvid Ny spelning): skriv fritt (låtförslag man fått, saker att köpa som kablar, något att testa, förbättringar för appen). Varje rad sorteras automatiskt i kategorier: Att köpa, Att repa in, Att testa, Att komma ihåg, Appen. Läggs in när det passar.
 
 **Senare – App Store (avvaktar)**
-- Betalt utvecklarkonto: registrerat via webben, väntar på godkännande (Xcode visar bara Personal Team). Sedan: Team ID in i projektet, delningstillägget för Anteckningar (App Group).
+- ✅ Betalt utvecklarkonto (team "Jonny Andersson"). Kvar: Team ID in i projektet, delningstillägget för Anteckningar (App Group).
+- ✅ TestFlight via Xcode Cloud: arbetsflödet "Default" arkiverar main och skickar till den interna gruppen "Jag"; byggnumret sätts av Xcode Cloud. Startar vid varje push till main (25 bygg-timmar/månad ingår) – rena dokumentändringar committas med [ci skip].
 - Före lansering: beslut om Spotify (dev-läge = max 25 användare; ansök hos Spotify eller ta bort i App Store-versionen), dölja Prestandatest (testlåtar, tid för låtbyte), stänga av swift_demangle i kraschloggen i release, ITSAppUsesNonExemptEncryption = NO, kolla namnet i App Store, integritetspolicy (duvaevent.com), skärmdumpar, App Privacy, EU-näringsidkarstatus.
 - RigList (annan app, annat repo) ska också till App Store – samma konto.
 
