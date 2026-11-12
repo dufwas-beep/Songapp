@@ -133,10 +133,12 @@ private struct SoundButton: View {
             ZStack(alignment: .bottomLeading) {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(Color(uiColor: UIColor(hex: clip.colorHex)))
+                // Hela namnet: upp till tre rader, och texten krymper om det behövs.
                 Text(clip.name)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.black)
-                    .lineLimit(2)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.6)
                     .multilineTextAlignment(.center)
                     .padding(6)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -150,7 +152,7 @@ private struct SoundButton: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
             }
-            .frame(height: 58)
+            .frame(height: 64)
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(progress != nil ? Color.black : .clear, lineWidth: 3))
             .overlay(alignment: .topTrailing) {
                 if editing {

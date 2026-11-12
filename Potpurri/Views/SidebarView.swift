@@ -124,12 +124,17 @@ private struct SidebarHeader: View {
                     player.isLocked.toggle()
                 }
             VStack(alignment: .leading, spacing: 0) {
+                // En rad även när spalten är smal – texten krymper i stället för att brytas.
                 Text("POTPURRI")
                     .font(.system(size: 20, weight: .medium))
                     .tracking(1.2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                 Text("av Duva Event")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 0) {

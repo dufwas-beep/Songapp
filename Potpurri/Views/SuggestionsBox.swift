@@ -206,6 +206,8 @@ struct GigFooter: View {
                 confirming = true
             } label: {
                 Text("Ny spelning")
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
@@ -216,6 +218,8 @@ struct GigFooter: View {
             Text(count == 1 ? "1 spelad" : "\(count) spelade")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .fixedSize()
             // Paus: skärmsläckaren med skivan.
             if pauseOn {
                 Button {
